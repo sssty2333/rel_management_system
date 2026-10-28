@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>可靠性综合管理中心 V2.3</title>
+<title>可靠性综合管理中心 V2.4</title>
 <style>
 :root { --bg:#f4f6f8;--surface:#fff;--border:#e2e8f0;--text:#1e293b;--text-sec:#64748b;--primary:#2563eb;--primary-bg:#eff6ff;--success:#10b981;--success-bg:#ecfdf5;--warning:#f59e0b;--warning-bg:#fffbeb;--danger:#dc2626;--danger-bg:#fef2f2; }
 * { box-sizing: border-box; }
@@ -312,12 +312,21 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
 @media(max-width:520px){.leader-metrics{gap:9px;}.leader-metric{padding:15px;}.leader-metric-value{font-size:26px;}.leader-metric-main .leader-metric-value{font-size:32px;}.board-overview-header h2,.theme-detail-title h2{font-size:22px;}.board-phase-legend{gap:10px 14px;}.leader-section-header,.board-phase-body{padding:15px;}.theme-detail-actions{width:100%;}.theme-detail-actions>.primary{flex:1;}.theme-completion-value{font-size:30px;}.theme-work-toolbar .toolbar-left,.theme-work-toolbar .toolbar-right{width:100%;}.theme-work-toolbar .toolbar-right button{flex:1;}.theme-nav-actions{flex-wrap:wrap;}}
 
 .followup-note{padding:10px 12px;background:#f7f9fc;border-radius:6px;color:var(--text-sec);font-size:12px;line-height:1.7;margin:12px 0;}
+
+.preparation-panel{background:var(--surface);border:1px solid #cbdcf8;border-top:3px solid var(--primary);border-radius:10px;margin-bottom:24px;overflow:hidden;}
+.preparation-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:20px 22px 14px;}
+.preparation-heading h3{font-size:20px;margin:5px 0 0;display:flex;align-items:center;gap:10px;}.prep-eyebrow{font-size:11px;color:var(--text-sec);}.prep-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.preparation-summary{display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding:0 22px 16px;font-size:12px;color:var(--text-sec);}.preparation-summary b{font-size:17px;color:var(--primary);}.prep-explanation{font-size:11px;margin-left:auto;}
+.prep-progress-track{height:5px;background:#eaf0fb;}.prep-progress-track>div{height:100%;background:var(--primary);}.prep-table-wrap{overflow-x:auto;}.prep-table-wrap td{white-space:normal;font-size:12px;}.prep-table-wrap th{white-space:nowrap;}.prep-table-wrap input[type=number]{height:31px;}.prep-empty{padding:22px;color:var(--text-sec);font-size:13px;}.prep-completed{border-top:1px solid var(--border);}.prep-completed>summary{padding:13px 22px;font-size:12px;color:var(--text-sec);cursor:pointer;}
+.prep-overview-summary{display:flex;gap:24px;align-items:center;flex-wrap:wrap;padding:18px 20px;font-size:12px;color:var(--text-sec);}.prep-overview-summary strong{color:var(--primary);font-size:16px;}
+@media(max-width:680px){.preparation-heading{padding:16px;}.preparation-summary{padding:0 16px 15px;gap:12px;}.prep-actions{width:100%;}.prep-actions>.primary{flex:1;}.prep-explanation{margin-left:0;}.preparation-heading h3{font-size:18px;}.prep-overview-summary{gap:12px;}}
+
 </style>
 </head>
 <body>
 
 <aside class="app-sidebar">
-  <div class="app-brand"><span class="brand-mark">◈</span><div>可靠性管理<span class="brand-sub">综合管理中心 · V2.3</span></div></div>
+  <div class="app-brand"><span class="brand-mark">◈</span><div>可靠性管理<span class="brand-sub">综合管理中心 · V2.4</span></div></div>
   <nav class="nav-tabs" aria-label="工作模块">
     <button type="button" class="nav-tab active" onclick="switchPage('components')"><span class="nav-number">01</span>元器件台账</button>
     <button type="button" class="nav-tab" onclick="switchPage('chips')"><span class="nav-number">02</span>芯片 / BOM</button>
@@ -407,10 +416,11 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
               </div></details>
             </div>
           </div>
+          <div id="preparationPanel"></div>
           <div id="batchProgress"></div>
           <div class="theme-work-toolbar">
             <div class="toolbar-left"><select id="filterPerson" onchange="renderBoard()" class="filter-select" aria-label="筛选当前主题责任人"><option value="">全部责任人</option></select></div>
-            <div class="toolbar-right"><button class="ghost" onclick="openPrepModal()">实验准备清单</button><button class="ghost" onclick="exportExperimentSchedule()" title="导出当前主题全部安排，不受责任人筛选影响">导出实验安排</button></div>
+            <div class="toolbar-right"><button class="ghost" onclick="exportExperimentSchedule()" title="导出当前主题全部安排，不受责任人筛选影响">导出实验安排</button></div>
           </div>
           <div id="executionAgenda"></div>
           <h3 class="theme-card-caption">试验项与执行进展</h3>
@@ -594,6 +604,22 @@ function commitMaterialChange(nextMaterial) {
     return false;
   }
 }
+
+function normalizePreparationIds(items) {
+  const seen=new Set();
+  items.forEach(item=>{
+    if(!item || typeof item!=='object' || Array.isArray(item))throw new Error('实验准备记录格式错误');
+    const original=item.id==null?'':String(item.id);
+    let id=original.trim()?original:'';
+    if(!id || seen.has(id)){
+      if(id && item.legacyPreparationId===undefined)item.legacyPreparationId=item.id;
+      do{id='p_'+uid();}while(seen.has(id));
+    }
+    item.id=id;seen.add(id);
+  });
+  return items;
+}
+
 function normalizeImportedState(d, currentMaterial = materialDb, currentTest = testDb) {
   if (!d || typeof d !== 'object' || Array.isArray(d)) throw new Error('数据不是有效对象');
   const has = key => Object.prototype.hasOwnProperty.call(d, key);
@@ -654,10 +680,7 @@ function normalizeImportedState(d, currentMaterial = materialDb, currentTest = t
   tests.batches.forEach(batch => {
     if (batch.preparations == null) batch.preparations = [];
     else if (!Array.isArray(batch.preparations)) throw new Error('实验准备记录必须是数组，已取消加载');
-    batch.preparations.forEach(item => {
-      if (!item || typeof item !== 'object' || Array.isArray(item)) throw new Error('实验准备记录格式错误');
-      if (item.id != null) item.id = String(item.id);
-    });
+    normalizePreparationIds(batch.preparations);
   });
   tests.cards.forEach(card => {
     if (card.batchId != null) card.batchId = String(card.batchId);
@@ -873,7 +896,7 @@ window.addEventListener('dragover', e => { e.preventDefault(); });
 window.addEventListener('drop', e => { e.preventDefault(); dragCounter = 0; document.getElementById('dropOverlay')?.classList.remove('on'); const f = e.dataTransfer && e.dataTransfer.files[0]; if (f) handleJsonFile(f); });
 function exportServerJson() {
   forceSave();
-  const allData = { version: '2.3', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
+  const allData = { version: '2.4', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
   const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = DATA_FILE_NAME; a.click();
   setTimeout(() => alert('已导出 ' + DATA_FILE_NAME + '。\n\n请覆盖到共享目录：\n' + SHARE_UNC), 100);
@@ -1307,7 +1330,7 @@ function boardPhaseMarkup(data) {
 
 function renderBoardOverview(data) {
   const value=n=>Number(n)||0,themes=data.themes || [];
-  const risks=t=>[t.overdueCount?`<span class="badge st-danger">标记逾期 ${value(t.overdueCount)}</span>`:'',t.blockedCount?`<span class="badge st-warn">标记需协调 ${value(t.blockedCount)}</span>`:''].filter(Boolean).join('') || '<span style="color:var(--text-sec)">未标记</span>';
+  const risks=t=>[t.overdueCount?`<span class="badge st-danger">标记逾期 ${value(t.overdueCount)}</span>`:'',t.blockedCount?`<span class="badge st-warn">标记需协调 ${value(t.blockedCount)}</span>`:'',t.normalCount?`<span class="badge st-ok">正常 ${value(t.normalCount)}</span>`:'',t.unsetAttentionCount?`<span class="badge st-muted">未设置 ${value(t.unsetAttentionCount)}</span>`:''].filter(Boolean).join('') || '<span style="color:var(--text-sec)">—</span>';
   const forecast=t=>`${esc(t.expectedLabel || '待排期')}${t.expectedMissing?`<div style="font-size:11px;color:var(--text-sec)">另有 ${value(t.expectedMissing)} 项未排期，日期待确认</div>`:''}`;
   const active=value(data.sentCount)+value(data.runningCount)+value(data.returnedCount);
   return `<div class="board-overview-header"><div><h2>整体实验进度</h2><p>${themes.length} 个实验主题 · 查看已完成实验、当前进展和预计完成时间</p></div><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span class="board-date">${esc(getLocalToday())}</span><button class="ghost" onclick="exportBoardOverview()">导出总览</button></div></div>
@@ -1315,11 +1338,12 @@ function renderBoardOverview(data) {
     <div class="leader-metric leader-metric-main"><div class="leader-metric-label">已完成实验</div><div class="leader-metric-value">${value(data.done)}<small>/ ${value(data.total)} 项</small></div><div class="leader-metric-note">实验完成率 <b>${value(data.completionRate)}%</b></div><div class="leader-progress-track"><div class="leader-progress-fill" style="width:${value(data.completionRate)}%"></div></div></div>
     <div class="leader-metric"><div class="leader-metric-label">进行中实验</div><div class="leader-metric-value">${active}<small>项</small></div><div class="leader-metric-note">实验中 ${value(data.runningCount)} · 待结项 ${value(data.returnedCount)}<br>已送样 ${value(data.sentCount)} · 待准备 ${value(data.waitingCount)}</div></div>
     <div class="leader-metric"><div class="leader-metric-label">预计完成时间</div><div class="leader-metric-value" style="font-size:19px;letter-spacing:0;line-height:1.6">${esc(data.expectedLabel || '待排期')}</div><div class="leader-metric-note">${data.expectedComplete?'全部实验已完成':data.expectedMissing?`另有 ${value(data.expectedMissing)} 项未排期，日期待确认`:'以主题计划及未完成实验的最晚预计日期为准'}</div></div>
-    <div class="leader-metric"><div class="leader-metric-label">手动提醒</div><div class="leader-risk-line risk-overdue"><span>标记逾期</span><b>${value(data.overdueCount)}</b></div><div class="leader-risk-line risk-blocked"><span>标记需协调</span><b>${value(data.blockedCount)}</b></div><div class="leader-metric-note">由负责人在实验项中手动维护</div></div>
+    <div class="leader-metric"><div class="leader-metric-label">手动提醒</div><div class="leader-risk-line risk-overdue"><span>标记逾期</span><b>${value(data.overdueCount)}</b></div><div class="leader-risk-line risk-blocked"><span>标记需协调</span><b>${value(data.blockedCount)}</b></div><div class="leader-metric-note">正常 ${value(data.normalCount)} 项 · 未设置 ${value(data.unsetAttentionCount)} 项</div></div>
   </div>
   ${data.orphanCount?`<div class="leader-data-note">${value(data.orphanCount)} 项实验暂未关联到有效主题，请核对所属关系。</div>`:''}
+  <section class="leader-section"><div class="leader-section-header"><h3>实验准备概况</h3><span>准备与验收单独统计，不计入实验完成率</span></div><div class="prep-overview-summary"><strong>就绪 ${value(data.prepReady)} / ${value(data.prepTotal)} 项</strong><span>未备齐 ${value(data.prepQuantityPending)} 项</span><span>待验收 ${value(data.prepVerificationPending)} 项</span><span>准备待办 ${value(data.prepPending)} 项</span></div></section>
   <section class="leader-section"><div class="leader-section-header"><h3>实验进度分布</h3><span>待准备 → 实验进行 → 结项完成</span></div><div class="board-phase-body">${boardPhaseMarkup(data)}</div></section>
-  <section class="leader-section"><div class="leader-section-header"><h3>全部实验主题</h3><span>完成实验与预计完成时间集中展示</span></div>${themes.length?`<div class="leader-table-wrap"><table class="leader-table"><thead><tr><th>实验主题</th><th>已完成实验</th><th>当前进度</th><th>预计完成时间</th><th>手动提醒</th><th></th></tr></thead><tbody>${themes.map(t=>`<tr><td><div class="leader-theme-name">${esc(t.name)}</div><span class="leader-theme-state">${esc(t.state)}</span></td><td><div class="leader-completion"><strong>${value(t.done)} / ${value(t.total)} 项</strong><small>${value(t.completionRate)}%</small><div class="leader-progress-track"><div class="leader-progress-fill" style="width:${value(t.completionRate)}%"></div></div></div></td><td><div class="leader-state-line"><span>待准备 <b>${value(t.waitingCount)}</b></span><span>实验中 <b>${value(t.runningCount)}</b></span><span>待结项 <b>${value(t.returnedCount)}</b></span></div></td><td style="color:var(--text-sec)">${forecast(t)}</td><td><div class="leader-risk-tags">${risks(t)}</div></td><td><button class="link" onclick="openBoardTheme(${esc(JSON.stringify(String(t.id)))})">查看主题 →</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="leader-empty"><h3>尚无实验主题</h3>先建立实验主题，再在主题内新增实验项。<br><button class="primary" onclick="addNewBatch()">＋ 新增试验主题</button></div>'}</section>`;
+  <section class="leader-section"><div class="leader-section-header"><h3>全部实验主题</h3><span>完成实验与预计完成时间集中展示</span></div>${themes.length?`<div class="leader-table-wrap"><table class="leader-table"><thead><tr><th>实验主题</th><th>已完成实验</th><th>当前进度</th><th>预计完成时间</th><th>手动提醒</th><th></th></tr></thead><tbody>${themes.map(t=>`<tr><td><div class="leader-theme-name">${esc(t.name)}</div><span class="leader-theme-state">${esc(t.state)}</span><span class="leader-theme-state" style="color:var(--primary)">实验准备：${value(t.prepReady)} / ${value(t.prepTotal)} 项就绪</span></td><td><div class="leader-completion"><strong>${value(t.done)} / ${value(t.total)} 项</strong><small>${value(t.completionRate)}%</small><div class="leader-progress-track"><div class="leader-progress-fill" style="width:${value(t.completionRate)}%"></div></div></div></td><td><div class="leader-state-line"><span>待准备 <b>${value(t.waitingCount)}</b></span><span>实验中 <b>${value(t.runningCount)}</b></span><span>待结项 <b>${value(t.returnedCount)}</b></span></div></td><td style="color:var(--text-sec)">${forecast(t)}</td><td><div class="leader-risk-tags">${risks(t)}</div></td><td><button class="link" onclick="openBoardTheme(${esc(JSON.stringify(String(t.id)))})">查看主题 →</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="leader-empty"><h3>尚无实验主题</h3>先建立实验主题，再在主题内新增实验项。<br><button class="primary" onclick="addNewBatch()">＋ 新增试验主题</button></div>'}</section>`;
 }
 
 function editBatchName(batchId=currentBatchId) {
@@ -1414,13 +1438,13 @@ function getExpectedCompletion(cards,theme={}) {
   return {date,label:date || '待排期',missing,complete:false,source:date?'estimate':'unset'};
 }
 function getManualExperimentAttention(card) {
-  const status=['none','overdue','coordination','both'].includes(card.attentionStatus)?card.attentionStatus:'none';
+  const status=['none','normal','overdue','coordination','both'].includes(card.attentionStatus)?card.attentionStatus:'none';
   const active=!isCardFinished(card);
   return {status,overdue:active && ['overdue','both'].includes(status),coordination:active && ['coordination','both'].includes(status)};
 }
 function experimentAttentionLabel(card) {
   const flags=getManualExperimentAttention(card);
-  return flags.overdue && flags.coordination?'标记逾期、需协调':flags.overdue?'标记逾期':flags.coordination?'标记需协调':'未标记';
+  return flags.overdue && flags.coordination?'标记逾期、需协调':flags.overdue?'标记逾期':flags.coordination?'标记需协调':flags.status==='normal'?'正常':'未设置';
 }
 function experimentStatusLabel(status) {
   return status==='已FT'?'已完成':status==='已取回'?'待结项':status;
@@ -1428,17 +1452,18 @@ function experimentStatusLabel(status) {
 
 function getBoardOverviewData(today=getLocalToday()) {
   const summarize=(cards,theme={})=>{
-    const tasks=getExecutionTasks(cards,today),pending=cards.filter(c=>!isCardFinished(c));
+    const tasks=getExecutionTasks(cards,today,'',theme.id?theme:null),pending=cards.filter(c=>!isCardFinished(c));
     const byStatus=s=>pending.filter(c=>getCardDisplayStatus(c)===s).length;
     const done=cards.length-pending.length;
     const forecast=getExpectedCompletion(cards,theme);
-    const flags=pending.map(getManualExperimentAttention);
+    const flags=pending.map(getManualExperimentAttention),preparation=prepStats(theme);
     return {total:cards.length,done,completionRate:cards.length?Math.round(done/cards.length*100):0,
       progress:cards.length?Math.round(cards.reduce((n,c)=>n+getCardProgress(c),0)/cards.length):0,
       waitingCount:byStatus('待准备'),sentCount:byStatus('已送样'),runningCount:byStatus('实验中'),returnedCount:byStatus('已取回'),
       unknownCount:pending.filter(c=>!['待准备','已送样','实验中','已取回'].includes(getCardDisplayStatus(c))).length,
-      overdueCount:flags.filter(f=>f.overdue).length,blockedCount:flags.filter(f=>f.coordination).length,
-      unassignedCount:tasks.filter(t=>!String(t.owner || '').trim()).length,
+      overdueCount:flags.filter(f=>f.overdue).length,blockedCount:flags.filter(f=>f.coordination).length,normalCount:flags.filter(f=>f.status==='normal').length,unsetAttentionCount:flags.filter(f=>f.status==='none').length,
+      prepTotal:preparation.total,prepReady:preparation.ready,prepPending:preparation.pending,prepQuantityPending:preparation.pendingQuantity,prepVerificationPending:preparation.pendingVerification,
+      unassignedCount:tasks.filter(t=>!t.shared&&!String(t.owner || '').trim()).length,
       pendingFtCount:pending.reduce((s,c)=>s+(c.elfrBatches || []).reduce((n,b)=>n+(b.ftTests || []).filter(t=>!t.done).length,0),0),
       nextDate:tasks.map(t=>t.date).filter(isValidDateOnly).sort()[0] || '',
       expectedDate:forecast.date,expectedLabel:forecast.label,expectedMissing:forecast.missing,expectedSource:forecast.source,expectedComplete:forecast.complete};
@@ -1458,14 +1483,15 @@ function getBoardOverviewData(today=getLocalToday()) {
   const allDates=known.concat(orphanDates).sort();
   const expectedDate=allDates[allDates.length-1] || '';
   const expectedMissing=pendingThemes.reduce((n,t)=>n+(t.expectedSource==='manual'?0:t.expectedMissing),0)+orphanPending.length-orphanDates.length;
-  return {...overall,themes,orphanCount:orphanCards.length,expectedDate:overall.expectedComplete?overall.expectedDate:expectedDate,
+  const preparationTotals=themes.reduce((s,t)=>{for(const key of ['prepTotal','prepReady','prepPending','prepQuantityPending','prepVerificationPending'])s[key]=(s[key]||0)+(t[key]||0);return s;},{prepTotal:0,prepReady:0,prepPending:0,prepQuantityPending:0,prepVerificationPending:0});
+  return {...overall,...preparationTotals,themes,orphanCount:orphanCards.length,expectedDate:overall.expectedComplete?overall.expectedDate:expectedDate,
     expectedLabel:overall.expectedComplete?'已完成':expectedDate || '待排期',expectedMissing:overall.expectedComplete?0:expectedMissing};
 }
 
 function exportBoardOverview() {
   const data=getBoardOverviewData();if(!data.themes.length)return alert('暂无试验主题可导出');
-  const header=['实验主题','状态','实验总数','已完成实验','实验完成率','预计完成时间','未排期实验数','待准备','已送样','实验中','待结项','手动标记逾期','手动标记需协调'];
-  const row=t=>[t.name,t.state,t.total,t.done,`${t.completionRate}%`,t.expectedLabel,t.expectedMissing,t.waitingCount,t.sentCount,t.runningCount,t.returnedCount,t.overdueCount,t.blockedCount];
+  const header=['实验主题','状态','实验总数','已完成实验','实验完成率','预计完成时间','未排期实验数','待准备','已送样','实验中','待结项','手动标记逾期','手动标记需协调','准备项总数','准备已就绪','准备待执行'];
+  const row=t=>[t.name,t.state,t.total,t.done,`${t.completionRate}%`,t.expectedLabel,t.expectedMissing,t.waitingCount,t.sentCount,t.runningCount,t.returnedCount,t.overdueCount,t.blockedCount,t.prepTotal,t.prepReady,t.prepPending];
   const rows=data.themes.map(row);rows.push(row({...data,name:'合计',state:data.orphanCount?`另有${data.orphanCount}项未归属实验`:'全部主题'}));
   const url=URL.createObjectURL(buildXlsx(header,rows,'实验整体进度')),link=document.createElement('a');
   link.href=url;link.download=`实验整体进度_${dateStr()}.xlsx`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -1479,59 +1505,117 @@ function renderBatchProgress() {
   box.innerHTML=`<section class="theme-progress-panel" aria-label="${esc(title)}"><div class="theme-progress-top"><div><h3>${esc(title)}</h3><div class="theme-completion-value">${data.completionRate}%<small>已完成 ${data.done} / 共 ${data.total} 项实验</small></div></div><div class="theme-progress-context"><strong style="font-size:14px;color:var(--text)">预计完成：${esc(data.expectedLabel)}</strong><br>${data.expectedMissing?`另有 ${data.expectedMissing} 项未排期，请补充确认<br>`:''}${st.total?`准备清单 ${st.done}/${st.total} 项完成`:'尚未建立准备清单'}</div></div><div class="leader-progress-track"><div class="leader-progress-fill" style="width:${data.completionRate}%"></div></div><div class="theme-progress-stats"><span>手动标记逾期<b>${data.overdueCount}</b></span><span>手动标记需协调<b>${data.blockedCount}</b></span><span>待确认分工<b>${data.unassignedCount}</b></span><button class="link" onclick="editBatchName()">维护预计完成时间</button></div>${boardPhaseMarkup(data)}</section>`;
 }
 
-function prepStats(batch) {
-  const list = (batch && batch.preparations) || [];
-  return { total: list.length, done: list.filter(p => p.status === '已完成').length, itemsDone: list.reduce((s, p) => s + Number(p.done || 0), 0), itemsNeed: list.reduce((s, p) => s + Number(p.qty || 0), 0) };
+function prepQuantityReady(item) {
+  const need=Number(item.qty),prepared=Number(item.done);
+  return Number.isFinite(need) && need>0 && Number.isFinite(prepared) && prepared>=need;
 }
+function prepVerified(item) { return item.verified===true || item.verified===1 || item.verified==='是' || item.verified==='true'; }
+function prepReady(item) { return prepQuantityReady(item) && prepVerified(item); }
+function prepStage(item) { return prepReady(item)?'已就绪':prepQuantityReady(item)?'待验收':Number(item.done)>0?'准备中':'待准备'; }
+function prepStats(batch) {
+  const list=Array.isArray(batch?.preparations)?batch.preparations:[];
+  const prepared=list.filter(prepQuantityReady).length,ready=list.filter(prepReady).length;
+  return {total:list.length,done:prepared,ready,pending:list.length-ready,pendingQuantity:list.length-prepared,pendingVerification:prepared-ready,
+    percent:list.length?Math.round(ready/list.length*100):0,
+    itemsDone:list.reduce((n,p)=>n+(Number(p.done)||0),0),itemsNeed:list.reduce((n,p)=>n+(Number(p.qty)||0),0)};
+}
+function preparationTaskRows(batch,person='') {
+  if(!batch)return [];
+  return (batch.preparations || []).filter(p=>!prepReady(p)).filter(p=>!person || !String(p.person || '').trim() || p.person===person).map(p=>({
+    kind:'prep',batchId:batch.id,prepId:p.id,cardId:'prep:'+batch.id+':'+p.id,title:p.name || '未命名准备项',
+    action:prepQuantityReady(p)?'已备齐，等待验收':`准备 ${p.done ?? 0} / ${p.qty ?? 0}`,
+    owner:p.person || '',shared:!String(p.person || '').trim(),date:p.dueDate || '',blocker:p.remark || '',
+    overdue:false,coordination:false,attentionStatus:'none',stage:prepStage(p)
+  }));
+}
+function preparationTableRows(items) {
+  return items.map(p=>{
+    const id=esc(JSON.stringify(String(p.id))),ready=prepReady(p),stage=prepStage(p);
+    const mismatch=p.status==='已完成'&&!prepQuantityReady(p)?'<div style="font-size:11px;color:var(--text-sec)">原记录为已完成，请核对数量</div>':'';
+    return `<tr><td><strong>${esc(p.name)}</strong><div><span class="badge ${ready?'st-ok':prepQuantityReady(p)?'st-info':'st-warn'}">${stage}</span></div>${mismatch}</td><td><input type="number" min="0" step="1" aria-label="${esc(p.name)}已备数量" value="${esc(p.done ?? 0)}" style="width:74px" onchange="updatePrepDone(${id},this.value)"> / ${esc(p.qty ?? 0)}</td><td><label style="display:flex;align-items:center;gap:5px;white-space:nowrap"><input type="checkbox" ${prepVerified(p)?'checked':''} onchange="togglePrepVerified(${id},this.checked)">已验收</label></td><td>${esc(p.person || '共同准备')}</td><td>${esc(p.dueDate || '待排期')}</td><td style="white-space:normal;max-width:230px">${esc(p.remark || '—')}</td><td><button class="link" onclick="openPrepItemEditor(${id})">编辑</button><button class="link danger" onclick="delPrepItem(${id})">删除</button></td></tr>`;
+  }).join('');
+}
+function preparationTable(items) {
+  return `<div class="prep-table-wrap"><table><thead><tr><th>准备事项</th><th>已备 / 需要</th><th>验收</th><th>责任人</th><th>计划日期</th><th>跟进说明</th><th></th></tr></thead><tbody>${preparationTableRows(items)}</tbody></table></div>`;
+}
+function renderPreparationPanel() {
+  const host=$('#preparationPanel');if(!host)return;
+  const batch=testDb.batches.find(b=>b.id===currentBatchId);if(!batch){host.innerHTML='';return;}
+  const items=batch.preparations || [],st=prepStats(batch),pending=items.filter(p=>!prepReady(p)),ready=items.filter(prepReady);
+  host.innerHTML=`<section class="preparation-panel" aria-label="${esc(batch.name)}实验准备"><div class="preparation-heading"><div><span class="prep-eyebrow">实验开始前的准备与验收</span><h3>实验准备 <span class="badge ${st.total&&st.pending===0?'st-ok':'st-info'}">${st.total?st.pending?'进行中':'已就绪':'尚未建立'}</span></h3></div><div class="prep-actions"><button class="primary" onclick="openPrepItemEditor()">＋ 新增准备事项</button><button class="ghost" onclick="openPrepModal()">管理完整清单</button></div></div><div class="preparation-summary"><span><b>${st.ready}</b> / ${st.total} 项就绪</span><span>未备齐 <b>${st.pendingQuantity}</b> 项</span><span>待验收 <b>${st.pendingVerification}</b> 项</span><span class="prep-explanation">准备待办同步显示在下方待执行清单</span></div><div class="prep-progress-track"><div style="width:${st.percent}%"></div></div>${pending.length?preparationTable(pending):`<div class="prep-empty">${st.total?'所有准备事项已备齐并验收。':'请列出样品、板卡、治具、设备或实验室安排等准备事项。'}</div>`}${ready.length?`<details class="prep-completed"><summary>已就绪 ${ready.length} 项</summary>${preparationTable(ready)}</details>`:''}</section>`;
+}
+function commitPreparationChange(batchId,change) {
+  try{
+    assertStorageCurrent();
+    const next=JSON.parse(JSON.stringify(testDb)),batch=next.batches.find(b=>b.id===batchId);
+    if(!batch)throw new Error('试验主题已不存在');
+    if(change(batch)===false)return false;
+    const payload=statePayload(materialDb,next);
+    localStorage.setItem(STORE_KEY,payload);
+    clearTimeout(saveTimer);testDb=next;storageSnapshot=payload;memorySnapshot=payload;
+    setStatus('实验准备已保存','var(--success)');
+    renderPrepModal();renderBatches();renderBoard();return true;
+  }catch(err){alert('实验准备未保存：'+err.message);renderPrepModal();renderPreparationPanel();return false;}
+}
+function openPrepItemEditor(prepId=null,batchId=currentBatchId) {
+  const batch=testDb.batches.find(b=>b.id===batchId);if(!batch)return alert('请先选择试验主题');
+  const item=prepId==null?null:(batch.preparations || []).find(p=>p.id===prepId);
+  if(prepId!=null&&!item)return alert('准备事项已不存在，请刷新后重试');
+  const before=item?JSON.stringify(item):null;
+  openInputModal(item?'编辑实验准备':'新增实验准备',[
+    {id:'name',label:'准备事项名称',value:item?.name || ''},
+    {id:'qty',label:'需要数量',type:'number',value:item?.qty ?? 1},
+    {id:'done',label:'已备数量',type:'number',value:item?.done ?? 0},
+    {id:'verified',label:'验收确认',type:'select',options:['未验收','已验收'],value:prepVerified(item || {})?'已验收':'未验收'},
+    {id:'person',label:'责任人（可留空作为共同准备）',value:item?.person || ''},
+    {id:'dueDate',label:'计划日期（选填）',type:'date',value:item?.dueDate || ''},
+    {id:'remark',label:'跟进说明',value:item?.remark || ''}
+  ],values=>{
+    const name=String(values.name || '').trim();if(!name){alert('请填写准备事项名称');return false;}
+    let qty,done;try{qty=stockInteger(values.qty,'需要数量');done=stockInteger(values.done,'已备数量');}catch(err){alert(err.message);return false;}
+    const dueDate=String(values.dueDate || '');if(dueDate&&!isValidDateOnly(dueDate)){alert('请填写有效日期');return false;}
+    return commitPreparationChange(batchId,next=>{
+      const list=next.preparations || (next.preparations=[]),record=item?list.find(p=>p.id===prepId):{id:'p_'+uid()};
+      if(item&&(!record||JSON.stringify(record)!==before))throw new Error('准备事项已变化，请重新打开后编辑');
+      const quantityChanged=!item || Number(item.qty)!==qty || Number(item.done)!==done;
+      Object.assign(record,{name,qty,done,verified:values.verified==='已验收',person:String(values.person || '').trim(),dueDate,remark:String(values.remark || '').trim()});
+      if(quantityChanged)autoPrepStatus(record);if(!item)list.push(record);
+    });
+  });
+}
+
 function autoPrepStatus(p) {
   if (Number(p.qty) > 0 && Number(p.done) >= Number(p.qty)) p.status = '已完成';
   else if (Number(p.done) > 0) p.status = '准备中';
   else p.status = '待准备';
 }
 function openPrepModal() {
-  if (!currentBatchId) return alert('请先新增试验主题！');
-  const batch = testDb.batches.find(b => b.id === currentBatchId); if (!batch) return;
-  if (!Array.isArray(batch.preparations)) batch.preparations = [];
-  renderPrepModal();
-  $('#modalPrep').classList.remove('hidden');
+  if(!currentBatchId)return alert('请先新增试验主题');
+  renderPrepModal();showModalOnTop('modalPrep');
 }
+
 function renderPrepModal() {
-  const batch = testDb.batches.find(b => b.id === currentBatchId); if (!batch) return;
-  const list = batch.preparations || []; const st = prepStats(batch);
-  const rows = list.map(p => {
-    const cls = p.status === '已完成' ? 'st-ok' : (p.status === '准备中' ? 'st-warn' : 'st-muted');
-    return `<tr><td><strong>${esc(p.name)}</strong></td><td class="num">${p.qty}</td><td class="num"><input type="number" min="0" value="${p.done}" style="width:74px;height:28px;" onchange="updatePrepDone('${p.id}', this.value)"></td><td><span class="badge ${cls}">${esc(p.status)}</span></td><td style="text-align:center;"><input type="checkbox" ${p.verified ? 'checked' : ''} onchange="togglePrepVerified('${p.id}', this.checked)"></td><td style="max-width:200px; white-space:normal; font-size:12px; color:var(--text-sec);">${esc(p.remark) || '-'}</td><td style="text-align:right;"><button class="link danger" onclick="delPrepItem('${p.id}')">删除</button></td></tr>`;
-  }).join('');
-  $('#prepFormBody').innerHTML = `<div style="font-size:13px; color:var(--text-sec); margin-bottom:14px;">${esc(batch.name)} · 共 ${st.total} 项，已完成 ${st.done} · 已备 ${st.itemsDone}/${st.itemsNeed}</div><div class="table-container" style="margin-bottom:18px; max-height:300px; overflow-y:auto;"><table><thead><tr><th>准备项目</th><th class="num">需要</th><th class="num">已备</th><th>状态</th><th style="text-align:center;">验过</th><th>备注</th><th style="text-align:right;">操作</th></tr></thead><tbody>${rows || '<tr><td colspan="7" class="empty">暂无</td></tr>'}</tbody></table></div><div style="border-top:1px dashed var(--border); padding-top:16px;"><div style="font-weight:600; margin-bottom:12px;">新增准备项</div><div class="form-grid"><div class="form-group full"><label>名称 *</label><input id="prep_name" placeholder="如：可靠性底板"></div><div class="form-group"><label>需要数量</label><input id="prep_qty" type="number" value="1"></div><div class="form-group"><label>已备数量</label><input id="prep_done" type="number" value="0"></div><div class="form-group"><label>状态</label><select id="prep_status"><option>待准备</option><option>准备中</option><option>已完成</option></select></div><div class="form-group"><label>是否验过</label><select id="prep_verified"><option value="否">未验过</option><option value="是">已验过</option></select></div><div class="form-group full"><label>备注</label><input id="prep_remark"></div></div><button class="primary" style="margin-top:14px;" onclick="addPrepItem()">添加准备项</button></div>`;
+  const batch=testDb.batches.find(b=>b.id===currentBatchId);if(!batch)return;
+  const st=prepStats(batch);
+  $('#prepFormBody').innerHTML=`<div style="margin-bottom:16px"><strong>${esc(batch.name)}</strong><p style="color:var(--text-sec);font-size:12px">就绪 ${st.ready}/${st.total} 项 · 未备齐 ${st.pendingQuantity} 项 · 待验收 ${st.pendingVerification} 项</p><button class="primary" onclick="openPrepItemEditor()">＋ 新增准备事项</button></div>${(batch.preparations || []).length?preparationTable(batch.preparations):'<div class="empty">暂无准备事项</div>'}<div style="margin-top:14px;color:var(--text-sec);font-size:12px">数量齐备与验收分别记录；已备齐且验收后，准备待办才会移出待执行清单。</div>`;
 }
-function addPrepItem() {
-  const batch = testDb.batches.find(b => b.id === currentBatchId); if (!batch) return;
-  const name = ($('#prep_name').value || '').trim(); if (!name) return alert('请填写名称');
-  if (!Array.isArray(batch.preparations)) batch.preparations = [];
-  const item = { id: 'p_' + uid(), name, qty: Math.max(0, Number($('#prep_qty').value) || 0), done: Math.max(0, Number($('#prep_done').value) || 0), status: $('#prep_status').value, verified: $('#prep_verified').value === '是', remark: ($('#prep_remark').value || '').trim() };
-  autoPrepStatus(item); batch.preparations.push(item);
-  save(); renderPrepModal(); renderBoard(); renderBatches();
-}
+
+function addPrepItem() { openPrepItemEditor(); }
+
 function delPrepItem(id) {
-  const batch = testDb.batches.find(b => b.id === currentBatchId);
-  if (!batch || !batch.preparations) return;
-  if (!confirm('确定删除？')) return;
-  batch.preparations = batch.preparations.filter(p => p.id !== id);
-  save(); renderPrepModal(); renderBoard(); renderBatches();
+  if(!confirm('确定删除该准备事项？'))return;
+  commitPreparationChange(currentBatchId,b=>{b.preparations=(b.preparations || []).filter(p=>p.id!==id);});
 }
-function updatePrepDone(id, val) {
-  const batch = testDb.batches.find(b => b.id === currentBatchId);
-  const p = batch && batch.preparations ? batch.preparations.find(x => x.id === id) : null;
-  if (!p) return;
-  p.done = Math.max(0, Number(val) || 0); autoPrepStatus(p);
-  save(); renderPrepModal(); renderBoard(); renderBatches();
+
+function updatePrepDone(id,value) {
+  let done;try{done=stockInteger(value,'已备数量');}catch(err){alert(err.message);renderPreparationPanel();renderPrepModal();return;}
+  commitPreparationChange(currentBatchId,b=>{const item=(b.preparations || []).find(p=>p.id===id);if(!item)throw new Error('准备事项已不存在');const changed=Number(item.done)!==done;item.done=done;if(changed)autoPrepStatus(item);});
 }
-function togglePrepVerified(id, checked) {
-  const batch = testDb.batches.find(b => b.id === currentBatchId);
-  const p = batch && batch.preparations ? batch.preparations.find(x => x.id === id) : null;
-  if (!p) return;
-  p.verified = !!checked; save();
+
+function togglePrepVerified(id,checked) {
+  commitPreparationChange(currentBatchId,b=>{const item=(b.preparations || []).find(p=>p.id===id);if(!item)throw new Error('准备事项已不存在');item.verified=!!checked;});
 }
+
 function getLocalToday() {
   const d = new Date();
   return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
@@ -1574,12 +1658,12 @@ function getCardProgress(c) {
   if (c.status === '实验中') return Math.min(70,20 + Math.round(calcTime(c.startDate,c.durationDays).progress * 0.5));
   return stage(c.status);
 }
-function getExecutionTasks(cards,today=getLocalToday(),person='') {
+function getExecutionTasks(cards,today=getLocalToday(),person='',preparationBatch=null) {
   const tasks=[];
   cards.forEach(c=>{
     if(isCardFinished(c))return;
     const status=getCardDisplayStatus(c),flags=getManualExperimentAttention(c);
-    const common={cardId:c.id,overdue:flags.overdue,coordination:flags.coordination,blocker:c.blocker || ''};
+    const common={cardId:c.id,overdue:flags.overdue,coordination:flags.coordination,attentionStatus:flags.status,blocker:c.blocker || ''};
     const fallback={'待准备':'确认物料、治具与送样安排','已送样':'确认实验室接收与开测时间','实验中':'确认实验进展与取回安排','已取回':'安排结项测试并记录实际执行人'};
     tasks.push({...common,title:c.name,action:c.nextAction || fallback[status] || '核对实验进展',date:c.nextDate || '',owner:c.person || '',kind:'card'});
     (c.elfrBatches || []).forEach(b=>{
@@ -1588,16 +1672,23 @@ function getExecutionTasks(cards,today=getLocalToday(),person='') {
       if(!pending.length && !isElfrBatchFtComplete(b) && ['已取回','已FT'].includes(b.status))tasks.push({...common,title:`${c.name} · ${b.name || '未命名批次'}`,action:'核对结项测试数量并补齐记录',date:'',owner:c.person || '',note:'测试记录不足，请核对',kind:'ft'});
     });
   });
-  return tasks.filter(t=>!person || t.owner===person || (t.owners || []).includes(person)).map(t=>({...t,today:!!t.date && t.date===today})).sort((a,b)=>Number(b.overdue)-Number(a.overdue)||Number(b.coordination)-Number(a.coordination)||(a.date || '9999').localeCompare(b.date || '9999'));
+  tasks.push(...preparationTaskRows(preparationBatch,person));
+  return tasks.filter(t=>!person || t.shared || t.owner===person || (t.owners || []).includes(person)).map(t=>({...t,today:!!t.date && t.date===today})).sort((a,b)=>Number(b.overdue)-Number(a.overdue)||Number(b.coordination)-Number(a.coordination)||(a.date || '9999').localeCompare(b.date || '9999'));
 }
 
 function renderExecutionAgenda() {
   const grid=$('#cardGrid');if(!grid)return;
   let host=$('#executionAgenda');if(!host){host=document.createElement('div');host.id='executionAgenda';grid.parentNode.insertBefore(host,grid);}
-  const tasks=getExecutionTasks(testDb.cards.filter(c=>c.batchId===currentBatchId),getLocalToday(),$('#filterPerson')?.value || '');
-  const overdue=new Set(tasks.filter(t=>t.overdue).map(t=>t.cardId)).size,coordination=new Set(tasks.filter(t=>t.coordination).map(t=>t.cardId)).size;
-  const style='padding:10px 12px;border-bottom:1px solid var(--border);white-space:normal;';
-  host.innerHTML=`<details ${overdue || coordination?'open':''} style="margin-bottom:18px;background:var(--surface);border:1px solid var(--border);border-radius:9px"><summary style="padding:13px 15px;cursor:pointer;font-weight:600">执行待办 · ${tasks.length} 项${overdue?` · 手动标记逾期 ${overdue} 项实验`:''}${coordination?` · 手动标记需协调 ${coordination} 项实验`:''}</summary>${tasks.length?`<div style="overflow-x:auto"><table><thead><tr><th>实验 / 下一步</th><th>责任人</th><th>待办日期</th><th>手动提醒</th><th>跟进说明</th><th></th></tr></thead><tbody>${tasks.map(t=>`<tr><td style="${style}"><strong>${esc(t.title)}</strong><div style="font-size:12px;color:var(--text-sec)">${esc(t.action)}</div></td><td style="${style}">${esc(t.owner || '待确认')}</td><td style="${style}">${esc(t.date || '待排期')}${t.today?' · 今天':''}</td><td style="${style}">${t.overdue?'<span class="badge st-danger">标记逾期</span>':''}${t.coordination?'<span class="badge st-warn">标记需协调</span>':''}${!t.overdue&&!t.coordination?'未标记':''}</td><td style="${style}">${esc([t.blocker,t.note].filter(Boolean).join('；') || '—')}</td><td style="${style}"><button class="link" onclick="${t.kind==='ft'?'openElfrModal':'openBoardModal'}(${esc(JSON.stringify(String(t.cardId)))})">处理</button></td></tr>`).join('')}</tbody></table></div>`:'<div style="padding:0 15px 15px;color:var(--text-sec)">当前没有待执行项。</div>'}</details>`;
+  const batch=testDb.batches.find(b=>b.id===currentBatchId);
+  const tasks=getExecutionTasks(testDb.cards.filter(c=>c.batchId===currentBatchId),getLocalToday(),$('#filterPerson')?.value || '',batch);
+  const preparations=tasks.filter(t=>t.kind==='prep'),overdue=new Set(tasks.filter(t=>t.overdue).map(t=>t.cardId)).size,coordination=new Set(tasks.filter(t=>t.coordination).map(t=>t.cardId)).size;
+  const styles='padding:10px 12px;border-bottom:1px solid var(--border);white-space:normal;';
+  const attention=t=>t.kind==='prep'?`<span class="badge st-info">${esc(t.stage)}</span>`:(t.overdue?'<span class="badge st-danger">标记逾期</span>':'')+(t.coordination?'<span class="badge st-warn">标记需协调</span>':'')+(!t.overdue&&!t.coordination?(t.attentionStatus==='normal'?'<span class="badge st-ok">正常</span>':'未设置'):'');
+  const sorted=tasks.slice().sort((a,b)=>Number(b.kind==='prep')-Number(a.kind==='prep'));
+  host.innerHTML=`<details ${preparations.length || overdue || coordination?'open':''} style="margin-bottom:18px;background:var(--surface);border:1px solid var(--border);border-radius:9px"><summary style="padding:13px 15px;cursor:pointer;font-weight:600">待执行事项 · ${tasks.length} 项（实验准备 ${preparations.length} 项）${overdue?` · 手动标记逾期 ${overdue} 项实验`:''}${coordination?` · 手动标记需协调 ${coordination} 项实验`:''}</summary>${tasks.length?`<div style="overflow-x:auto"><table><thead><tr><th>类别 / 事项</th><th>责任人</th><th>计划日期</th><th>状态 / 提醒</th><th>跟进说明</th><th></th></tr></thead><tbody>${sorted.map(t=>{
+    const action=t.kind==='prep'?`openPrepItemEditor(${JSON.stringify(String(t.prepId))},${JSON.stringify(String(t.batchId))})`:`${t.kind==='ft'?'openElfrModal':'openBoardModal'}(${JSON.stringify(String(t.cardId))})`;
+    return `<tr><td style="${styles}"><span class="badge ${t.kind==='prep'?'st-info':'st-muted'}">${t.kind==='prep'?'实验准备':t.kind==='ft'?'测试安排':'实验推进'}</span><strong style="display:block;margin-top:4px">${esc(t.title)}</strong><div style="font-size:12px;color:var(--text-sec)">${esc(t.action)}</div></td><td style="${styles}">${esc(t.owner || (t.shared?'共同准备':'待确认'))}</td><td style="${styles}">${esc(t.date || '待排期')}${t.today?' · 今天':''}</td><td style="${styles}">${attention(t)}</td><td style="${styles}">${esc([t.blocker,t.note].filter(Boolean).join('；') || '—')}</td><td style="${styles}"><button class="link" onclick="${esc(action)}">处理</button></td></tr>`;
+  }).join('')}</tbody></table></div>`:'<div style="padding:0 15px 15px;color:var(--text-sec)">当前没有待执行事项。</div>'}</details>`;
 }
 
 function calcElfrOverview(elfrB) {
@@ -1618,12 +1709,14 @@ function renderBoard() {
     boardViewMode='overview';
     $('#currentBatchTitle').textContent=batch ? batch.name : '请选择试验主题';
     $('#batchProgress').innerHTML='';
+    $('#preparationPanel').innerHTML='';
     $('#executionAgenda').innerHTML='';
     grid.innerHTML='';
     renderBatches();
     return;
   }
   $('#currentBatchTitle').textContent = batch.name;
+  renderPreparationPanel();
   renderBatchProgress();
   const allPersons = new Set();
   testDb.cards.filter(c => c.batchId === currentBatchId).forEach(c => {
@@ -1633,6 +1726,7 @@ function renderBoard() {
       (b.ftTests || []).forEach(t => (t.actualTesters || []).forEach(p => { if (p) allPersons.add(p); }));
     });
   });
+  (batch.preparations || []).forEach(p=>{if(p.person)allPersons.add(p.person);});
   const filter = $('#filterPerson');
   const cur = allPersons.has(filter.value) ? filter.value : '';
   filter.innerHTML = '<option value="">全部责任人</option>' + [...allPersons].map(p => `<option value="${esc(p)}" ${p===cur?'selected':''}>${esc(p)}</option>`).join('');
@@ -1664,8 +1758,8 @@ function renderBoard() {
       }).join('')}</div></div>`;
     }
     const actionHtml=c.nextAction || c.nextDate?`<div class="next-action"><b>下一步</b> ${esc(c.nextAction) || '待确认'}${c.nextDate?`<br><span>下一步日期 ${esc(c.nextDate)}</span>`:''}</div>`:'';
-    const alertBadges=(attention.overdue?'<span class="badge st-danger">手动标记逾期</span>':'')+(attention.coordination?'<span class="badge st-warn">手动标记需协调</span>':'');
-    const blockerHtml=!finished && (alertBadges || c.blocker)?`<div class="${alertBadges?'blocker-note':'followup-note'}">${alertBadges}${c.blocker?`<div>跟进说明：${esc(c.blocker)}</div>`:''}</div>`:'';
+    const alertBadges=(attention.status==='normal'?'<span class="badge st-ok">正常</span>':'')+(attention.overdue?'<span class="badge st-danger">手动标记逾期</span>':'')+(attention.coordination?'<span class="badge st-warn">手动标记需协调</span>':'');
+    const blockerHtml=!finished && (alertBadges || c.blocker)?`<div class="${attention.overdue||attention.coordination?'blocker-note':'followup-note'}">${alertBadges}${c.blocker?`<div>跟进说明：${esc(c.blocker)}</div>`:''}</div>`:'';
     return `<article class="tc-card"><div class="tc-header"><div><h3 class="tc-title">${esc(c.name)}</h3><div class="tc-sub">样品 ${esc(c.qty)} pcs</div></div><span class="badge ${statusClass(status)}">${esc(experimentStatusLabel(status))}</span></div><div class="tc-body">${c.remark ? `<div class="remark-box">${esc(c.remark)}</div>` : '<div class="remark-box empty">当前进展待更新</div>'}${elfrHtml}<div class="info-row"><div class="info-label">试验条件</div><div class="info-val">${esc(c.note) || '未设置'}</div></div><div class="info-row"><div class="info-label">预计完成</div><div class="info-val" style="color:var(--text-sec)">${timeData.endDate || '未设置'}</div></div>${actionHtml}${blockerHtml}<div class="progress-wrap"><div class="progress-bar" style="width:${progress}%"></div></div><div style="display:flex;justify-content:space-between;gap:8px;font-size:10px;margin-top:6px;color:var(--text-sec)"><span>${finished?'实验已完成':`${typeof getCardProgress === 'function'?'执行':'时间'}进度 ${progress}%`}</span><span>更新 ${esc(c.updatedAt) || '未记录'}</span></div></div><div class="tc-footer"><div class="person"><div class="person-avatar">${esc(c.person ? c.person.slice(-1) : '?')}</div>${esc(c.person || '未分配')}</div><div><button class="link" onclick="openBoardModal(${idArg})">更新进展</button><button class="link danger" onclick="delCard(${idArg})">删除</button></div></div></article>`;
   };
   const order = ['待准备','已送样','实验中','已取回','已FT'];
@@ -1696,7 +1790,7 @@ function openBoardModal(id) {
   const selectedProject = getSavedAecProject(c);
   const projectOptions = aecProjects.map(p => `<option value="${p}" ${p===selectedProject?'selected':''}>${p}</option>`).join('');
   const statusOpts = CARD_STATUSES.map(s => `<option value="${s}" ${c.status===s?'selected':''}>${s}</option>`).join('');
-  $('#boardFormBody').innerHTML = `<div class="form-group"><label>实验项目名称</label><input id="bf_name" value="${esc(c.name)}"></div><div style="background: #eff6ff; border: 1px dashed #bfdbfe; padding: 12px; border-radius: 6px;"><div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--primary);">快捷填充 AEC-Q100</div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;"><div class="form-group" style="margin: 0;"><select id="aec_grade" class="filter-select" style="width: 100%;" onchange="fillAecCondition()"><option value="">Grade 未设置（可不选）</option><option value="0" ${selectedGrade==='0'?'selected':''}>Grade 0</option><option value="1" ${selectedGrade==='1'?'selected':''}>Grade 1</option><option value="2" ${selectedGrade==='2'?'selected':''}>Grade 2</option><option value="3" ${selectedGrade==='3'?'selected':''}>Grade 3</option></select></div><div class="form-group" style="margin: 0;"><select id="aec_project" class="filter-select" style="width: 100%;" onchange="fillAecCondition()"><option value="">试验项目未设置（可不选）</option>${projectOptions}</select></div></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;"><div class="form-group"><label>样品数量</label><input id="bf_qty" type="number" value="${esc(c.qty)}"></div><div class="form-group"><label>责任人</label><input id="bf_person" value="${esc(c.person)}"></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;"><div class="form-group"><label>状态</label><select id="bf_status">${statusOpts}</select></div><div class="form-group"><label>送样时间</label><input id="bf_startDate" type="date" value="${esc(c.startDate)}"></div></div><div class="form-group"><label>预计完成日期（选填）</label><input id="bf_expectedCompletionDate" type="date" value="${esc(c.expectedCompletionDate || '')}"><small style="color:var(--text-sec)">留空时按送样日期和预计总时长估算，可随实验室安排调整。</small></div><div class="form-group"><label>进度提醒（手动标记）</label><select id="bf_attentionStatus">${[['none','未标记'],['overdue','标记逾期'],['coordination','标记需协调'],['both','标记逾期且需协调']].map(([value,label])=>`<option value="${value}" ${(c.attentionStatus || 'none')===value?'selected':''}>${label}</option>`).join('')}</select></div><div class="form-group"><label>预计总时长(天)</label><input id="bf_duration" type="number" value="${esc(c.durationDays)}"></div><div class="form-group"><label>当前进展</label><textarea id="bf_remark" rows="2">${esc(c.remark)}</textarea></div><div class="form-group"><label>其他备注</label><textarea id="bf_note" rows="3">${esc(c.note)}</textarea></div><div style="border-top:1px solid var(--border);padding-top:16px;"><div class="form-group"><label>下一步（只写当前最近的一件事）</label><input id="bf_nextAction" value="${esc(c.nextAction || '')}" placeholder="例如：确认实验室档期 / 取回样品 / 完成 FT"></div><div class="form-group"><label>下一步到期日</label><input id="bf_nextDate" type="date" value="${esc(c.nextDate || '')}"></div><div class="form-group"><label>跟进说明</label><textarea id="bf_blocker" rows="2" placeholder="填写需要说明的情况；是否逾期或需协调由上方手动标记">${esc(c.blocker || '')}</textarea></div></div><input type="hidden" id="bf_id" value="${id || ''}">`;
+  $('#boardFormBody').innerHTML = `<div class="form-group"><label>实验项目名称</label><input id="bf_name" value="${esc(c.name)}"></div><div style="background: #eff6ff; border: 1px dashed #bfdbfe; padding: 12px; border-radius: 6px;"><div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--primary);">快捷填充 AEC-Q100</div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;"><div class="form-group" style="margin: 0;"><select id="aec_grade" class="filter-select" style="width: 100%;" onchange="fillAecCondition()"><option value="">Grade 未设置（可不选）</option><option value="0" ${selectedGrade==='0'?'selected':''}>Grade 0</option><option value="1" ${selectedGrade==='1'?'selected':''}>Grade 1</option><option value="2" ${selectedGrade==='2'?'selected':''}>Grade 2</option><option value="3" ${selectedGrade==='3'?'selected':''}>Grade 3</option></select></div><div class="form-group" style="margin: 0;"><select id="aec_project" class="filter-select" style="width: 100%;" onchange="fillAecCondition()"><option value="">试验项目未设置（可不选）</option>${projectOptions}</select></div></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;"><div class="form-group"><label>样品数量</label><input id="bf_qty" type="number" value="${esc(c.qty)}"></div><div class="form-group"><label>责任人</label><input id="bf_person" value="${esc(c.person)}"></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;"><div class="form-group"><label>状态</label><select id="bf_status">${statusOpts}</select></div><div class="form-group"><label>送样时间</label><input id="bf_startDate" type="date" value="${esc(c.startDate)}"></div></div><div class="form-group"><label>预计完成日期（选填）</label><input id="bf_expectedCompletionDate" type="date" value="${esc(c.expectedCompletionDate || '')}"><small style="color:var(--text-sec)">留空时按送样日期和预计总时长估算，可随实验室安排调整。</small></div><div class="form-group"><label>进度提醒（手动标记）</label><select id="bf_attentionStatus">${[['normal','正常'],['overdue','标记逾期'],['coordination','标记需协调'],['both','标记逾期且需协调'],['none','未设置']].map(([value,label])=>`<option value="${value}" ${(c.attentionStatus || (id?'none':'normal'))===value?'selected':''}>${label}</option>`).join('')}</select></div><div class="form-group"><label>预计总时长(天)</label><input id="bf_duration" type="number" value="${esc(c.durationDays)}"></div><div class="form-group"><label>当前进展</label><textarea id="bf_remark" rows="2">${esc(c.remark)}</textarea></div><div class="form-group"><label>其他备注</label><textarea id="bf_note" rows="3">${esc(c.note)}</textarea></div><div style="border-top:1px solid var(--border);padding-top:16px;"><div class="form-group"><label>下一步（只写当前最近的一件事）</label><input id="bf_nextAction" value="${esc(c.nextAction || '')}" placeholder="例如：确认实验室档期 / 取回样品 / 完成 FT"></div><div class="form-group"><label>下一步到期日</label><input id="bf_nextDate" type="date" value="${esc(c.nextDate || '')}"></div><div class="form-group"><label>跟进说明</label><textarea id="bf_blocker" rows="2" placeholder="填写需要说明的情况；是否逾期或需协调由上方手动标记">${esc(c.blocker || '')}</textarea></div></div><input type="hidden" id="bf_id" value="${id || ''}">`;
   showModalOnTop('modalBoard');
 }
 function fillAecCondition() {
@@ -1728,8 +1822,8 @@ function saveCard() {
   if (status === '已FT' && card && hasElfrBatches(card) && !card.elfrBatches.every(isElfrBatchFtComplete)) return alert('仍有 ELFR 批次未完成 FT，请先核对各批实际记录');
   const expectedCompletionDate=$('#bf_expectedCompletionDate').value || '';
   if(expectedCompletionDate && !isValidDateOnly(expectedCompletionDate))return alert('请填写有效的预计完成日期');
-  const requestedAttention=$('#bf_attentionStatus').value || 'none';
-  const attentionStatus=['none','overdue','coordination','both'].includes(requestedAttention)?requestedAttention:'none';
+  const requestedAttention=$('#bf_attentionStatus').value || card?.attentionStatus || (id?'none':'normal');
+  const attentionStatus=['none','normal','overdue','coordination','both'].includes(requestedAttention)?requestedAttention:'none';
   const nextDate = $('#bf_nextDate').value;
   if (nextDate && !isValidDateOnly(nextDate)) return alert('请填写有效的下一步到期日');
   const now = new Date();
@@ -2255,10 +2349,15 @@ function showAssignPreview(result, mode) {
 function experimentScheduleHeaders() {
   return ['实验主题','实验名称','试验项目','批次','工作事项','数量（颗）','计划执行人','当前安排 / 实际执行人','安排 / 执行日期','状态','下一步','下一步日期','当前进展','跟进说明 / 变更原因','试验条件','Grade','预计完成时间','手动提醒'];
 }
+
+function preparationScheduleRows(theme) {
+  return (theme.preparations || []).map(p=>[String(theme.name || ''),'实验准备','',String(p.name || ''),prepReady(p)?'准备已就绪':prepQuantityReady(p)?'验收准备事项':'备齐准备事项',Number(p.qty)||0,String(p.person || ''),String(p.person || ''),String(p.dueDate || ''),prepStage(p),`需要 ${p.qty ?? 0}，已备 ${p.done ?? 0}，${prepVerified(p)?'已验收':'待验收'}`,String(p.dueDate || ''),String(p.remark || ''),'','','',String(p.dueDate || ''),'—']);
+}
+
 function collectExperimentScheduleRows(batchId) {
   const theme = testDb.batches.find(b => b.id === batchId);
   if (!theme) return [];
-  const rows = [];
+  const rows = preparationScheduleRows(theme);
   const people = values => [...new Set((Array.isArray(values) ? values : []).map(p => String(p || '').trim()).filter(Boolean))].join(' / ');
   const quantity = value => value === '' || value == null || !Number.isFinite(Number(value)) ? '' : Number(value);
   const joinNotes = (...values) => values.map(v => String(v || '').trim()).filter(Boolean).join('；');
@@ -2613,7 +2712,7 @@ function buildXlsx(header, rows, sheetName){
 
 function exportJSON() {
   try { forceSave(); } catch (err) { setStatus('导出本页快照：' + err.message, 'var(--warning)'); }
-  const allData = { version: '2.3', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
+  const allData = { version: '2.4', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
   const blob = new Blob([JSON.stringify(allData, null, 2)], {type:'application/json'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `综合系统备份_${dateStr()}.json`; a.click();
   setTimeout(() => alert(`导出完成：元器件 ${(materialDb.components||[]).length} 条，主题 ${(testDb.batches||[]).length} 个，卡片 ${(testDb.cards||[]).length} 条，设备 ${(testDb.equipments||[]).length} 台`), 100);
