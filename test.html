@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>可靠性综合管理中心 V1.8</title>
+<title>可靠性综合管理中心 V2.4</title>
 <style>
 :root { --bg:#f4f6f8;--surface:#fff;--border:#e2e8f0;--text:#1e293b;--text-sec:#64748b;--primary:#2563eb;--primary-bg:#eff6ff;--success:#10b981;--success-bg:#ecfdf5;--warning:#f59e0b;--warning-bg:#fffbeb;--danger:#dc2626;--danger-bg:#fef2f2; }
 * { box-sizing: border-box; }
@@ -166,99 +166,279 @@ aside.board-aside { width: 270px; background: #fff; border: 1px solid var(--bord
 .form-grid .full { grid-column: 1/-1; }
 #dropOverlay { position: fixed; inset: 0; background: rgba(37,99,235,0.15); z-index: 200; border: 3px dashed #2563eb; display: none; align-items: center; justify-content: center; font-size: 22px; font-weight: 600; color: #1d4ed8; pointer-events: none; }
 #dropOverlay.on { display: flex; }
+
+/* V2.0 · 蓝色工作空间：导航、库存和实验使用同一套视觉层级 */
+:root { --bg:#f5f7fb; --surface:#fff; --border:#e5eaf2; --text:#263247; --text-sec:#718096; --primary:#2563eb; --primary-bg:#edf3ff; --success:#24815b; --success-bg:#edf8f1; --warning:#ae741e; --warning-bg:#fff5e7; --danger:#c34c4c; --danger-bg:#fff0ef; }
+body { display:grid; grid-template-columns:190px minmax(0,1fr); grid-template-rows:66px auto minmax(0,1fr); height:100dvh; }
+.app-sidebar { grid-column:1;grid-row:1/-1;background:var(--surface);border-right:1px solid var(--border);padding:26px 14px;display:flex;flex-direction:column;gap:30px;min-height:0; }
+.app-brand { padding:0 9px;font-size:17px;font-weight:600;letter-spacing:-.4px;display:flex;align-items:center;gap:9px; }
+.brand-mark { display:grid;place-items:center;flex-shrink:0;width:30px;height:30px;border-radius:8px;background:var(--primary);color:#fff;font-size:20px; }
+.brand-sub { display:block;font-size:11px;letter-spacing:0;color:var(--text-sec);font-weight:400;margin-top:5px; }
+.nav-tabs { display:grid;gap:5px;overflow:visible; }
+.nav-tab { font:inherit;text-align:left;display:block;width:100%;border:0;background:transparent;padding:13px 15px;color:var(--text-sec);font-weight:400;border-radius:7px; }
+.nav-tab:hover { background:#f6f8fc; }
+.nav-tab.active { background:var(--primary-bg);color:var(--primary);font-weight:500; }
+.nav-number { display:inline-block;width:23px;color:#a3aec0;font-size:11px; }
+.nav-tab.active .nav-number { color:#7095ed; }
+.sidebar-foot { margin-top:auto;padding:16px 10px 0;border-top:1px solid var(--border);font-size:11px;color:var(--text-sec);line-height:1.9; }
+header { grid-column:2;grid-row:1;min-width:0;height:auto;padding:0 28px;gap:16px;z-index:20; }
+.header-caption { font-size:13px;color:var(--text-sec);white-space:nowrap; }
+.header-caption b { font-weight:500;color:var(--text); }
+.hd-actions { min-width:0;gap:10px; }
+#saveStatus { max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px; }
+.data-menu { position:relative; }
+.data-menu summary { list-style:none;cursor:pointer;padding:8px 12px;background:#fff;border:1px solid var(--border);border-radius:6px;white-space:nowrap;font-size:12px; }
+.data-menu summary::-webkit-details-marker { display:none; }
+.data-menu summary::after { content:' ▾';color:var(--text-sec); }
+.data-menu[open] summary { color:var(--primary);background:var(--primary-bg); }
+.data-popover { position:absolute;right:0;top:44px;width:226px;padding:10px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 12px 28px #23345118;display:grid;gap:6px;z-index:40; }
+.data-popover button { text-align:left;padding:9px 11px;border:0;background:#fff;font-size:12px;border-radius:5px; }
+.data-popover button:hover { background:#f5f8fe; }
+.data-popover .hl { background:var(--primary-bg);color:var(--primary);border-color:var(--border);font-weight:500; }
+.data-popover hr { width:100%;margin:3px 0;border:0;border-top:1px solid var(--border); }
+.hint-bar { grid-column:2;grid-row:2;padding:7px 28px;font-size:11px;background:#f7faff;color:#6a7e9a;border-bottom:1px solid var(--border); }
+.hint-bar b { color:#4d6d9b;font-weight:500; }
+.page-container { grid-column:2;grid-row:3;min-width:0;min-height:0; }
+.page,.page.flex-layout { padding:27px 28px; }
+.module-heading { margin-bottom:24px; }
+.module-heading h1 { font-size:24px;margin:0 0 7px;font-weight:600;letter-spacing:-.6px; }
+.module-heading p { margin:0;color:var(--text-sec);font-size:12px;line-height:1.7; }
+.toolbar { margin-bottom:16px;gap:12px; }
+.toolbar-left,.toolbar-right { gap:8px; }
+.search-box { background:white;height:36px;border:0;padding:0;width:250px; }
+.search-box input { width:100%;height:36px;padding-left:35px; }
+.search-box svg { z-index:1; }
+input[type='text'],input[type='number'],input[type='date'],select.filter-select { height:36px; }
+button.primary,button.ghost,.chip-btn { min-height:34px;font-size:12px;padding:8px 12px; }
+button.link { font-size:12px;padding:5px 7px; }
+.table-container { border-radius:9px;box-shadow:none; }
+th,td { padding:13px 14px;border-color:#edf0f5;font-size:12px; }
+th { background:#fafbfd;font-weight:500;font-size:11px; }
+tr:hover td { background:#f8faff; }
+.badge { border-radius:4px;padding:3px 8px;font-size:11px; }
+.st-info,.st-purple { background:var(--primary-bg);color:#2e5fb8; }
+.advanced-toggle { display:inline-flex;align-items:center;gap:5px;color:var(--text-sec);font-size:12px;white-space:nowrap; }
+#page-components:not(:has(#showCompAdvanced:checked)) .table-container :is(th,td):nth-child(n+4):nth-child(-n+8) { display:none; }
+.split { grid-template-columns:225px minmax(0,1fr);gap:18px; }
+.layout-board { min-height:0;gap:22px; }
+aside.board-aside { width:230px;border-radius:9px;padding:15px 0; }
+.board-main { min-width:0;flex:1;padding-right:2px; }
+.board-header { align-items:center;margin:0 0 24px;gap:16px;flex-wrap:wrap; }
+.board-header h2 { font-size:23px;letter-spacing:-.4px;margin-bottom:14px; }
+.board-caption { margin:0 0 22px; }
+.batch-item { padding:14px 15px; }
+.batch-meta { font-size:10px;margin-top:6px; }
+.bp-wrap { min-width:215px; }
+.bp-pct { font-size:24px;font-weight:600; }
+.bp-fill { background:var(--primary); }
+.bp-bar { height:5px;background:#e8eef8; }
+.bp-sub { text-align:left;font-size:10px;line-height:1.7; }
+.board-state-groups { display:grid;gap:24px; }
+.board-group-title { display:flex;align-items:center;gap:9px;margin:0 0 12px;font-size:13px;font-weight:500;color:#536881; }
+.board-group-title span { color:#94a1b5;font-size:11px; }
+.grid-cards { grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:15px; }
+.tc-card { border-radius:9px;box-shadow:none;min-width:0; }
+.tc-header { padding:17px 18px 13px;border-bottom:0;gap:10px; }
+.tc-title { font-size:17px;font-weight:600; }
+.tc-sub { font-size:11px;margin-top:5px; }
+.tc-body { padding:0 18px 18px; }
+.remark-box { background:#f7f9fd;border:0;padding:11px 12px;font-size:12px;line-height:1.7;margin-bottom:16px; }
+.remark-box::before { font-size:10px;font-weight:500;margin-bottom:5px; }
+.info-row { font-size:12px;line-height:1.7;margin-bottom:8px; }
+.info-label { width:72px; }
+.info-val { color:#526780;white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal; }
+.next-action { background:var(--primary-bg);border-radius:6px;padding:11px 12px;margin:14px 0;font-size:12px;line-height:1.7;color:#4e678d; }
+.next-action b { color:#2d5fae;font-weight:500; }
+.blocker-note { padding:9px 11px;background:var(--warning-bg);color:#9b6929;font-size:12px;border-radius:5px;margin:12px 0;line-height:1.7;overflow-wrap:anywhere; }
+.tc-footer { background:#fff;padding:12px 18px;border-color:#edf1f6;gap:10px;flex-wrap:wrap; }
+.person { font-size:12px; }
+.person-avatar { width:22px;height:22px;background:#e9effb;color:#5073ad;font-size:11px; }
+.progress-wrap { height:4px;margin-top:16px;background:#edf1f8; }
+.progress-bar { background:var(--primary); }
+.elfr-box { background:#f5f8ff;border:1px solid #e0e9fb;border-radius:6px;padding:11px;margin-bottom:15px; }
+.elfr-box-title { font-size:12px;font-weight:500;color:#2a5bb4;gap:8px; }
+.elfr-stat { color:#5b74a0;font-size:11px; }
+.elfr-batch-card { border-color:#dbe5f8; }
+.elfr-batch-card-head { background:#f1f6ff;border-color:#dbe5f8; }
+.elfr-batch-card-head select { border-color:#cfddf7; }
+.elfr-summary-bar { background:#f2f6ff;color:#516f9c;border-color:#dde7fb; }
+.elfr-summary-bar b { color:#2a5bb4; }
+.elfr-toolbar { background:#f7faff;border:1px solid #dfe8f8; }
+.elfr-toolbar .hint { color:#6b7e99; }
+.modal-box { box-shadow:0 16px 60px #172f5b26;border-radius:11px; }
+.modal-head { font-size:15px; }
+button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px solid #719cf2;outline-offset:3px; }
+@media(max-width:1100px) { body{grid-template-columns:166px minmax(0,1fr)} .app-sidebar{padding-left:10px;padding-right:10px} .app-brand{font-size:15px;padding:0 5px} header,.hint-bar{padding-left:22px;padding-right:22px} .page,.page.flex-layout{padding:23px 22px} aside.board-aside{width:190px} .layout-board{gap:16px} #saveStatus{max-width:160px} }
+@media(max-width:850px) { aside.board-aside{width:165px} .board-header{align-items:flex-start} .bp-wrap{min-width:180px} .split{grid-template-columns:180px minmax(0,1fr)} .header-caption{display:none} header{justify-content:flex-end} .table-container{max-width:100%} }
+@media(max-width:680px) { body{display:flex;flex-direction:column;height:100dvh} .app-sidebar{flex-shrink:0;padding:12px 14px;gap:12px;border-right:0;border-bottom:1px solid var(--border)} .app-brand{font-size:15px}.brand-sub,.sidebar-foot{display:none}.brand-mark{width:25px;height:25px;font-size:16px}.nav-tabs{display:flex;overflow-x:auto;gap:4px}.nav-tab{width:auto;flex-shrink:0;padding:8px 11px;font-size:12px}.nav-number{display:none} header{min-height:57px;flex-shrink:0;padding:10px 14px;justify-content:space-between}.hd-actions{width:100%;gap:8px;justify-content:flex-end}#saveStatus{margin-right:auto;max-width:135px;font-size:10px}.data-menu summary{font-size:11px;padding:8px}.hint-bar{padding:6px 14px;font-size:10px}.page-container{flex:1;min-height:0}.page,.page.flex-layout{padding:20px 14px}.page.flex-layout{overflow-y:auto}.module-heading{margin-bottom:19px}.module-heading h1{font-size:21px}.toolbar-left,.toolbar-right{width:100%;flex-wrap:wrap}.search-box{width:100%;max-width:100%}.toolbar-left>.search-box{flex-basis:100%}.layout-board{height:auto;min-height:100%;display:block}aside.board-aside{width:100%;max-height:170px;margin-bottom:20px}.board-main{overflow:visible}.board-header h2{font-size:21px}.board-header{gap:18px}.board-header>div:last-child{width:100%}.bp-wrap{min-width:0}.grid-cards{grid-template-columns:1fr}.split{grid-template-columns:1fr}.chip-list{max-height:190px}.form-grid{grid-template-columns:1fr}.form-grid .full{grid-column:auto}.elfr-ft-row{grid-template-columns:60px minmax(100px,1fr) minmax(100px,1fr)}.elfr-ft-row>*{min-width:0}.table-container{overflow-x:auto}.data-popover{right:0}.modal-box{max-height:93dvh}.modal-body{padding:17px}.bp-sub{text-align:left} }
+
+
+/* 实验管理：整体总览与主题执行分开呈现 */
+#page-board .experiment-workspace{gap:22px;}
+#page-board aside.board-aside{width:210px;padding:14px 10px;}
+.theme-nav-title{padding:4px 10px 12px;font-size:12px;color:var(--text-sec);font-weight:500;}
+.theme-nav-actions{display:grid;gap:8px;padding:0 5px 16px;border-bottom:1px solid var(--border);margin-bottom:12px;}
+.theme-overview-button{width:100%;text-align:left;display:block;padding:11px 12px;background:#f7f9fd;border:1px solid var(--border);border-radius:7px;color:#60718b;font:inherit;cursor:pointer;}
+.theme-overview-button.active{color:var(--primary);background:var(--primary-bg);border-color:#b9cff8;font-weight:500;}
+.theme-nav-item{display:block;width:100%;text-align:left;border:0;border-radius:7px;background:transparent;padding:12px 10px;cursor:pointer;font:inherit;color:var(--text);margin:3px 0;}
+.theme-nav-item:hover{background:#f7f9fd;}.theme-nav-item.active{background:var(--primary-bg);color:var(--primary);}
+.theme-nav-item .batch-name{display:block;white-space:normal;overflow-wrap:anywhere;line-height:1.6;}
+.theme-nav-item .batch-meta{display:block;color:var(--text-sec);font-size:11px;margin-top:5px;}
+.board-main{min-width:0;}.board-overview-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:24px;flex-wrap:wrap;}
+.board-overview-header h2{margin:0 0 8px;font-size:25px;letter-spacing:-.5px;}.board-overview-header p{font-size:12px;line-height:1.8;color:var(--text-sec);margin:0;}
+.board-date{font-size:12px;color:var(--text-sec);padding-top:7px;}
+.leader-metrics{display:grid;grid-template-columns:1.65fr repeat(3,minmax(0,1fr));gap:13px;margin-bottom:20px;}
+.leader-metric{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;min-width:0;}
+.leader-metric-label{font-size:12px;color:var(--text-sec);margin-bottom:12px;}.leader-metric-value{font-size:30px;font-weight:600;letter-spacing:-1px;color:var(--text);line-height:1.1;}
+.leader-metric-value small{font-size:12px;font-weight:400;letter-spacing:0;color:var(--text-sec);margin-left:4px;}.leader-metric-note{font-size:11px;color:var(--text-sec);line-height:1.7;margin-top:10px;}
+.leader-metric-main{background:var(--primary-bg);border-color:#d5e2fb;}.leader-metric-main .leader-metric-value{color:var(--primary);font-size:38px;}
+.leader-risk-line{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;line-height:2;}.leader-risk-line b{font-size:20px;font-weight:600;}.leader-risk-line.risk-overdue b{color:var(--danger);}.leader-risk-line.risk-blocked b{color:var(--warning);}
+.leader-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:20px;overflow:hidden;}
+.leader-section-header{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;}.leader-section-header h3{font-size:14px;margin:0;font-weight:600;}.leader-section-header span{font-size:11px;color:var(--text-sec);}
+.board-phase-track{display:flex;gap:3px;height:9px;overflow:hidden;background:#edf1f7;border-radius:6px;margin-top:14px;}.board-phase-segment{height:100%;min-width:0;background:#e1e8f3;}.board-phase-sent{background:#bfd2f7;}.board-phase-running{background:#85aaf1;}.board-phase-returned{background:#567fc8;}.board-phase-done{background:var(--primary);}
+.board-phase-legend{display:flex;gap:18px;align-items:center;flex-wrap:wrap;font-size:12px;line-height:1.7;color:var(--text-sec);}.board-phase-legend b{font-weight:600;color:var(--text);margin-left:6px;}.board-phase-dot{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:5px;background:#e1e8f3;}.board-phase-dot.board-phase-sent{background:#bfd2f7;}.board-phase-dot.board-phase-running{background:#85aaf1;}.board-phase-dot.board-phase-returned{background:#567fc8;}.board-phase-dot.board-phase-done{background:var(--primary);}
+.board-phase-body{padding:18px 20px 20px;}.board-phase-body .board-phase-track{margin-top:15px;}
+.leader-table-wrap{overflow-x:auto;}.leader-table{width:100%;border-collapse:collapse;text-align:left;}.leader-table th{font-size:11px;font-weight:500;color:var(--text-sec);padding:12px 16px;}.leader-table td{padding:17px 16px;vertical-align:middle;white-space:normal;font-size:12px;line-height:1.7;}.leader-theme-name{font-size:13px;font-weight:600;color:var(--text);overflow-wrap:anywhere;}.leader-theme-state{display:block;font-size:11px;font-weight:400;color:var(--text-sec);margin-top:5px;}
+.leader-completion{min-width:120px;}.leader-completion strong{font-weight:600;color:var(--primary);font-size:14px;}.leader-completion small{font-size:11px;color:var(--text-sec);margin-left:7px;}.leader-progress-track{height:5px;background:#eaf0f9;border-radius:4px;margin-top:8px;overflow:hidden;}.leader-progress-fill{height:100%;background:var(--primary);}
+.leader-state-line{display:flex;gap:10px;flex-wrap:wrap;color:var(--text-sec);font-size:11px;}.leader-state-line b{font-weight:500;color:var(--text);}.leader-risk-tags{display:flex;gap:5px;flex-wrap:wrap;}.leader-risk-tags .badge{white-space:nowrap;}
+.leader-empty{padding:36px 22px;text-align:center;color:var(--text-sec);line-height:1.9;}.leader-empty h3{color:var(--text);font-size:16px;margin:0 0 8px;}.leader-empty button{margin-top:15px;}
+.leader-data-note{padding:12px 15px;margin:0 0 18px;background:var(--warning-bg);border:1px solid #f2dfbc;border-radius:7px;font-size:12px;color:#91671e;line-height:1.7;}
+.theme-detail-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:22px;}.theme-detail-title{min-width:0;flex:1;}.theme-detail-title h2{font-size:25px;line-height:1.5;margin:9px 0 0;overflow-wrap:anywhere;}.theme-detail-label{display:block;font-size:11px;color:var(--text-sec);margin-top:17px;}.theme-detail-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding-top:4px;}.theme-detail-menu{position:relative;}.theme-detail-menu summary{font:inherit;font-size:12px;cursor:pointer;background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 11px;list-style:none;}.theme-detail-menu summary::after{content:' ▾';}.theme-detail-menu .data-popover{width:160px;top:39px;}.theme-detail-menu .data-popover button{width:100%;font:inherit;font-size:12px;cursor:pointer;}.theme-detail-menu .data-popover button.theme-delete{color:var(--danger);}
+.theme-progress-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px;margin-bottom:22px;}.theme-progress-top{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;}.theme-progress-top h3{font-size:14px;margin:0 0 9px;}.theme-completion-value{font-size:35px;color:var(--primary);font-weight:600;letter-spacing:-.8px;}.theme-completion-value small{font-size:12px;font-weight:400;color:var(--text-sec);letter-spacing:0;margin-left:10px;}.theme-progress-context{font-size:11px;color:var(--text-sec);line-height:1.9;}.theme-progress-panel .board-phase-legend{padding-top:18px;border-top:1px solid #edf0f5;margin-top:20px;}.theme-progress-stats{display:flex;gap:18px;flex-wrap:wrap;margin-top:15px;font-size:12px;color:var(--text-sec);}.theme-progress-stats b{font-weight:600;color:var(--text);margin-left:5px;}.theme-progress-stats .risk b{color:var(--danger);}
+.theme-work-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px;}.theme-work-toolbar .toolbar-left,.theme-work-toolbar .toolbar-right{gap:8px;}.theme-work-toolbar .filter-select{font-size:12px;}.theme-card-caption{font-size:13px;font-weight:600;margin:24px 0 17px;}
+#boardOverview[hidden],#boardThemeDetails[hidden]{display:none!important;}
+@media(max-width:1150px){#page-board aside.board-aside{width:180px;}.leader-metrics{grid-template-columns:repeat(2,minmax(0,1fr));}.leader-metric{padding:18px;}.leader-table th,.leader-table td{padding-left:12px;padding-right:12px;}}
+@media(max-width:850px){#page-board .experiment-workspace{display:block;overflow:visible;height:auto;}#page-board{overflow-y:auto;}#page-board aside.board-aside{width:100%;max-height:205px;margin-bottom:22px;}.board-main{overflow:visible;}.theme-nav-actions{display:flex;align-items:center;gap:8px;}.theme-nav-actions>*{flex:1;}.theme-nav-title{display:none;}.theme-nav-item{padding:10px;}.theme-nav-item .batch-name{display:inline;}.theme-nav-item .batch-meta{display:inline;margin-left:10px;}.theme-detail-header{gap:14px;}.theme-progress-panel{padding:18px;}}
+@media(max-width:520px){.leader-metrics{gap:9px;}.leader-metric{padding:15px;}.leader-metric-value{font-size:26px;}.leader-metric-main .leader-metric-value{font-size:32px;}.board-overview-header h2,.theme-detail-title h2{font-size:22px;}.board-phase-legend{gap:10px 14px;}.leader-section-header,.board-phase-body{padding:15px;}.theme-detail-actions{width:100%;}.theme-detail-actions>.primary{flex:1;}.theme-completion-value{font-size:30px;}.theme-work-toolbar .toolbar-left,.theme-work-toolbar .toolbar-right{width:100%;}.theme-work-toolbar .toolbar-right button{flex:1;}.theme-nav-actions{flex-wrap:wrap;}}
+
+.followup-note{padding:10px 12px;background:#f7f9fc;border-radius:6px;color:var(--text-sec);font-size:12px;line-height:1.7;margin:12px 0;}
+
+.preparation-panel{background:var(--surface);border:1px solid #cbdcf8;border-top:3px solid var(--primary);border-radius:10px;margin-bottom:24px;overflow:hidden;}
+.preparation-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:20px 22px 14px;}
+.preparation-heading h3{font-size:20px;margin:5px 0 0;display:flex;align-items:center;gap:10px;}.prep-eyebrow{font-size:11px;color:var(--text-sec);}.prep-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.preparation-summary{display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding:0 22px 16px;font-size:12px;color:var(--text-sec);}.preparation-summary b{font-size:17px;color:var(--primary);}.prep-explanation{font-size:11px;margin-left:auto;}
+.prep-progress-track{height:5px;background:#eaf0fb;}.prep-progress-track>div{height:100%;background:var(--primary);}.prep-table-wrap{overflow-x:auto;}.prep-table-wrap td{white-space:normal;font-size:12px;}.prep-table-wrap th{white-space:nowrap;}.prep-table-wrap input[type=number]{height:31px;}.prep-empty{padding:22px;color:var(--text-sec);font-size:13px;}.prep-completed{border-top:1px solid var(--border);}.prep-completed>summary{padding:13px 22px;font-size:12px;color:var(--text-sec);cursor:pointer;}
+.prep-overview-summary{display:flex;gap:24px;align-items:center;flex-wrap:wrap;padding:18px 20px;font-size:12px;color:var(--text-sec);}.prep-overview-summary strong{color:var(--primary);font-size:16px;}
+@media(max-width:680px){.preparation-heading{padding:16px;}.preparation-summary{padding:0 16px 15px;gap:12px;}.prep-actions{width:100%;}.prep-actions>.primary{flex:1;}.prep-explanation{margin-left:0;}.preparation-heading h3{font-size:18px;}.prep-overview-summary{gap:12px;}}
+
 </style>
 </head>
 <body>
 
+<aside class="app-sidebar">
+  <div class="app-brand"><span class="brand-mark">◈</span><div>可靠性管理<span class="brand-sub">综合管理中心 · V2.4</span></div></div>
+  <nav class="nav-tabs" aria-label="工作模块">
+    <button type="button" class="nav-tab active" onclick="switchPage('components')"><span class="nav-number">01</span>元器件台账</button>
+    <button type="button" class="nav-tab" onclick="switchPage('chips')"><span class="nav-number">02</span>芯片 / BOM</button>
+    <button type="button" class="nav-tab" onclick="switchPage('shortage')"><span class="nav-number">03</span>缺货预警</button>
+    <button type="button" class="nav-tab" onclick="switchPage('calc')"><span class="nav-number">04</span>需求核算</button>
+    <button type="button" class="nav-tab" onclick="switchPage('board')"><span class="nav-number">05</span>实验看板</button>
+    <button type="button" class="nav-tab" onclick="switchPage('equipment')"><span class="nav-number">06</span>资产设备</button>
+  </nav>
+  <div class="sidebar-foot">本地工作空间<br>物料 · 实验 · 设备</div>
+</aside>
 <header>
-  <div class="logo">
-    <span>可靠性综合管理中心 <span style="font-size:12px; font-weight:normal; color:#64748b;">V1.7</span></span>
-    <div class="nav-tabs">
-      <div class="nav-tab active" onclick="switchPage('components')">元器件台账</div>
-      <div class="nav-tab" onclick="switchPage('chips')">芯片 / BOM</div>
-      <div class="nav-tab" onclick="switchPage('shortage')">缺货预警</div>
-      <div class="nav-tab" onclick="switchPage('calc')">需求核算</div>
-      <div class="nav-tab" onclick="switchPage('board')">实验看板</div>
-      <div class="nav-tab" onclick="switchPage('equipment')">资产设备</div>
-    </div>
-  </div>
+  <div class="header-caption">工作空间 / <b>可靠性综合管理</b></div>
   <div class="hd-actions">
-    <span id="saveStatus">初始化…</span>
-    <button class="hl" onclick="autoLoadFromSameDir()">⟳ 自动加载</button>
-    <button onclick="document.getElementById('serverJsonFile').click()">📂 选择 data.json</button>
+    <span id="saveStatus" role="status" aria-live="polite">初始化…</span>
+    <details class="data-menu"><summary>数据管理</summary><div class="data-popover">
+      <button class="hl" onclick="autoLoadFromSameDir()">自动加载 data.json</button>
+      <button onclick="document.getElementById('serverJsonFile').click()">选择 data.json</button>
+      <button onclick="copySharePath()">复制数据路径</button><hr>
+      <button onclick="exportServerJson()">导出为 data.json</button>
+      <button onclick="exportJSON()">导出备份</button>
+      <button onclick="document.getElementById('importFile').click()">导入备份</button>
+    </div></details>
+    <button class="primary" id="btnGlobalAdd" onclick="globalAdd()">＋ 新增物料</button>
     <input type="file" id="serverJsonFile" accept=".json,application/json" hidden onchange="loadFromLocalFile(this)">
-    <button onclick="copySharePath()">📋 复制路径</button>
-    <button onclick="exportServerJson()">导出为 data.json</button>
-    <button onclick="exportJSON()">导出备份</button>
-    <button onclick="document.getElementById('importFile').click()">导入备份</button>
-    <button class="primary" id="btnGlobalAdd" onclick="globalAdd()">+ 新增</button>
     <input type="file" id="importFile" accept=".json" hidden onchange="importJSON(this)">
   </div>
 </header>
-
-<div class="hint-bar"><span>💡 加载 data.json 三选一：<b>⟳ 自动加载</b> · <b>📂 选择文件</b> · <b>直接拖到页面任意位置</b></span></div>
+<div class="hint-bar">数据文件可从右上角<b>数据管理</b>加载，也可直接拖入页面。操作后请定期导出备份。</div>
 
 <div class="page-container">
   <div class="page active" id="page-components">
+    <div class="module-heading"><h1>元器件台账</h1><p>库存、规格与物料状态，统一查看和维护。</p></div>
     <div class="toolbar">
       <div class="toolbar-left">
-        <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="searchComp" placeholder="搜索..." oninput="renderComponents()"></div>
+        <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="searchComp" placeholder="搜索物料、规格、封装…" aria-label="搜索物料" oninput="renderComponents()"></div>
         <select id="filterType" class="filter-select" onchange="renderComponents()"><option value="">全部类型</option></select>
         <button id="filterWarning" class="chip-btn" onclick="toggleWarnFilter(this)">仅看预警</button>
       </div>
       <div class="toolbar-right">
-        <button class="ghost" onclick="openMatImportModal()">导入 Excel</button>
+        <button class="ghost" onclick="downloadMaterialTemplate()">下载导入模板</button><button class="ghost" onclick="openMatImportModal()">导入 Excel</button>
         <button class="ghost" onclick="exportXlsx()">导出 Excel</button>
         <button class="ghost" id="btnSortMode" onclick="toggleSortMode()">拖拽排序</button>
+        <label class="advanced-toggle"><input type="checkbox" id="showCompAdvanced">展开全部参数</label>
       </div>
     </div>
     <div class="table-container"><table><thead><tr><th>物料名</th><th>规格值</th><th>封装</th><th>耐压/功率</th><th>是否车规</th><th>精度</th><th>工作温度</th><th>备注</th><th class="num">实时量</th><th class="num">安全库存</th><th>位置</th><th>状态</th><th>操作</th></tr></thead><tbody id="compBody"></tbody></table></div>
   </div>
   <div class="page" id="page-chips">
+    <div class="module-heading"><h1>芯片 / BOM</h1><p>维护板卡用料与计划，按实际出货扣减库存。</p></div>
     <div class="split">
       <aside><div style="padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background:#fff; border-radius: 8px 8px 0 0;"><span style="font-weight: 600;">芯片列表</span><button class="primary" style="padding:4px 10px; font-size:12px;" onclick="editChip()">新增</button></div><div id="chipList" class="chip-list"></div></aside>
       <div id="chipDetail" style="background:#fff; border:1px solid var(--border); border-radius:8px; overflow:hidden;"></div>
     </div>
   </div>
   <div class="page" id="page-shortage">
+    <div class="module-heading"><h1>缺货预警</h1><p>优先关注缺货及低于安全库存的物料。</p></div>
     <h2 style="margin-top:0;">缺货物料</h2>
     <div class="table-container" style="margin-bottom: 24px;"><table><thead><tr><th>物料名</th><th>规格值</th><th>封装</th><th class="num">实时量</th><th>备注</th><th>操作</th></tr></thead><tbody id="shortageBody"></tbody></table></div>
     <h2>低库存物料</h2>
     <div class="table-container"><table><thead><tr><th>物料名</th><th>规格值</th><th>封装</th><th class="num">实时量</th><th class="num">安全库存</th><th class="num">缺口</th><th>操作</th></tr></thead><tbody id="lowBody"></tbody></table></div>
   </div>
   <div class="page" id="page-calc">
+    <div class="module-heading"><h1>需求核算</h1><p>按剩余板卡计划核算待备物料。</p></div>
     <div class="calc-chips" id="calcChips"></div>
     <div style="display:flex; justify-content:space-between; margin-bottom:12px;"><h2 style="margin:0; font-size:18px;">物料需求汇总</h2><button class="ghost" onclick="exportShortageXlsx()">导出采购清单</button></div>
     <div id="calcSummary" class="calc-summary"></div>
     <div class="table-container"><table><thead><tr><th>物料名</th><th>规格值</th><th class="num">总需求</th><th class="num">实时量</th><th class="num">缺口</th><th>状态</th><th>需求来源</th></tr></thead><tbody id="calcBody"></tbody></table></div>
   </div>
   <div class="page flex-layout" id="page-board">
-    <div class="layout-board">
-      <aside class="board-aside" id="batchList"></aside>
+    <div class="layout-board experiment-workspace">
+      <aside class="board-aside" id="batchList" aria-label="试验主题"></aside>
       <div class="board-main">
-        <div class="board-header">
-          <div>
-            <h2 id="currentBatchTitle">请先新增试验主题</h2>
-            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-              <select id="filterPerson" onchange="renderBoard()" class="filter-select" style="height:30px; font-size:13px;"><option value="">全部责任人</option></select>
-              <button class="ghost" style="padding:4px 12px; font-size:12px;" onclick="openPrepModal()">实验准备清单</button>
+        <section id="boardOverview" aria-label="整体试验进度"></section>
+        <section id="boardThemeDetails" aria-label="试验主题详情" hidden>
+          <div class="theme-detail-header">
+            <div class="theme-detail-title">
+              <button class="link" onclick="showBoardOverview()">← 整体进度</button>
+              <span class="theme-detail-label">当前试验主题</span>
+              <h2 id="currentBatchTitle">请选择试验主题</h2>
+            </div>
+            <div class="theme-detail-actions">
+              <button class="primary" id="btnThemeAddCard" onclick="openBoardModal()">＋ 新增试验项</button>
+              <details class="theme-detail-menu"><summary>主题管理</summary><div class="data-popover">
+                <button onclick="this.closest('details').removeAttribute('open'); editBatchName()">编辑主题信息</button>
+                <button onclick="this.closest('details').removeAttribute('open'); copyBatch(currentBatchId)">复制主题</button>
+                <button class="theme-delete" onclick="this.closest('details').removeAttribute('open'); delBatch(currentBatchId)">删除主题</button>
+              </div></details>
             </div>
           </div>
+          <div id="preparationPanel"></div>
           <div id="batchProgress"></div>
-        </div>
-        <div class="grid-cards" id="cardGrid"></div>
+          <div class="theme-work-toolbar">
+            <div class="toolbar-left"><select id="filterPerson" onchange="renderBoard()" class="filter-select" aria-label="筛选当前主题责任人"><option value="">全部责任人</option></select></div>
+            <div class="toolbar-right"><button class="ghost" onclick="exportExperimentSchedule()" title="导出当前主题全部安排，不受责任人筛选影响">导出实验安排</button></div>
+          </div>
+          <div id="executionAgenda"></div>
+          <h3 class="theme-card-caption">试验项与执行进展</h3>
+          <div class="board-state-groups" id="cardGrid"></div>
+        </section>
       </div>
     </div>
   </div>
   <div class="page flex-layout" id="page-equipment">
+    <div class="module-heading"><h1>资产设备</h1><p>按设备编号管理品牌、负责人、更新时间与设备状态。</p></div>
     <div class="toolbar">
       <div class="toolbar-left">
         <input type="text" id="eqSearch" class="search-box" placeholder="搜索..." oninput="renderEquipments()">
         <select id="eqFilter" class="filter-select" onchange="renderEquipments()"><option value="">全部分类</option><option value="电源">电源</option><option value="通讯工具">通讯工具</option><option value="电脑">电脑</option><option value="治具/耗材">治具/耗材</option><option value="其他">其他</option></select>
       </div>
-      <button class="primary" onclick="openEqModal()">新增设备</button>
+      <div class="toolbar-right"><button class="ghost" onclick="downloadEquipmentTemplate()">下载导入模板</button><button class="ghost" onclick="openEquipmentImport()">导入设备 Excel</button><button class="primary" onclick="openEqModal()">新增设备</button></div>
     </div>
-    <div class="table-container" style="flex:1; overflow-y:auto;"><table><thead><tr><th>设备名称</th><th>资产号</th><th>分类</th><th>状态</th><th>位置</th><th>备注</th><th style="text-align:right">操作</th></tr></thead><tbody id="eqBody"></tbody></table></div>
+    <div class="table-container" style="flex:1; overflow-y:auto;"><table><thead><tr><th>序号</th><th>设备</th><th>品牌</th><th>编号</th><th>负责人</th><th>更新时间</th><th>设备状态</th><th>分类</th><th>位置</th><th style="text-align:right">操作</th></tr></thead><tbody id="eqBody"></tbody></table></div>
   </div>
 </div>
 
@@ -267,6 +447,8 @@ aside.board-aside { width: 270px; background: #fff; border: 1px solid var(--bord
 <div id="modalMat" class="modal hidden"><div class="modal-box"><div class="modal-head" id="modalMatTitle"></div><div class="modal-body" id="modalMatBody"></div><div class="modal-foot"><button class="ghost" onclick="closeMatModal()">取消</button><button class="primary" id="modalMatOk">确定</button></div></div></div>
 <div id="modalBoard" class="modal hidden"><div class="modal-box"><div class="modal-head">新增/编辑实验项</div><div class="modal-body" id="boardFormBody"></div><div class="modal-foot"><button class="ghost" onclick="document.getElementById('modalBoard').classList.add('hidden')">取消</button><button class="primary" onclick="saveCard()">保存</button></div></div></div>
 <div id="modalEq" class="modal hidden"><div class="modal-box"><div class="modal-head">设备</div><div class="modal-body" id="eqFormBody"></div><div class="modal-foot"><button class="ghost" onclick="document.getElementById('modalEq').classList.add('hidden')">取消</button><button class="primary" onclick="saveEq()">保存</button></div></div></div>
+<div id="modalMaterialImport" class="modal hidden"><div class="modal-box" style="width:min(1100px,98vw);"><div class="modal-head">导入元器件台账</div><div class="modal-body" id="materialImportBody"></div><div class="modal-foot"><button class="ghost" onclick="document.getElementById('modalMaterialImport').classList.add('hidden')">取消</button><button class="primary" id="materialImportConfirm" onclick="saveMaterialImport()" disabled>确认导入</button></div></div></div>
+<div id="modalEqImport" class="modal hidden"><div class="modal-box" style="width:min(1100px,98vw);"><div class="modal-head">导入资产设备</div><div class="modal-body" id="eqImportBody"></div><div class="modal-foot"><button class="ghost" onclick="document.getElementById('modalEqImport').classList.add('hidden')">取消</button><button class="primary" id="eqImportConfirm" onclick="saveEquipmentImport()" disabled>确认导入</button></div></div></div>
 <div id="modalLog" class="modal hidden"><div class="modal-box"><div class="modal-head" id="logModalTitle"></div><div class="modal-body" id="logFormBody"></div><div class="modal-foot"><button class="ghost" onclick="document.getElementById('modalLog').classList.add('hidden')">关闭</button></div></div></div>
 <div id="modalElfr" class="modal hidden"><div class="modal-box" style="width: min(1000px, 98vw);"><div class="modal-head">早期失效 (ELFR) 人员分工与 FT</div><div class="modal-body" id="elfrFormBody"></div><div class="modal-foot"><button class="ghost" onclick="document.getElementById('modalElfr').classList.add('hidden')">关闭</button></div></div></div>
 <div id="modalCopyBom" class="modal hidden"><div class="modal-box"><div class="modal-head">复制 BOM</div><div class="modal-body" id="copyBomFormBody"></div><div class="modal-foot"><button class="ghost" onclick="document.getElementById('modalCopyBom').classList.add('hidden')">取消</button><button class="primary" onclick="saveCopyBom()">确定复制</button></div></div></div>
@@ -352,73 +534,229 @@ function closeInputModal() {
 }
 
 function normalizeElfrBatch(b) {
-  if (!b.qty) b.qty = 120;
-  if (!b.injCount) {
-    if (Array.isArray(b.injectors) && b.injectors.length >= 2) b.injCount = b.injectors.length;
-    else b.injCount = Number(b.qty) >= 120 ? 3 : 2;
-  }
-  if (!b.ftCount) b.ftCount = 2;
-  if (!Array.isArray(b.injectors)) b.injectors = [b.person || ''];
+  // Only fill absent optional fields. Never truncate historical people or FT records.
+  if (b.id != null) b.id = String(b.id);
+  if (b.qty == null || b.qty === '') b.qty = 120;
+  if (!Array.isArray(b.injectors)) b.injectors = b.person ? [String(b.person)] : [];
+  const requested = Number(b.injCount);
+  b.injCount = Math.max(Number.isSafeInteger(requested) && requested > 0 ? requested : Number(b.qty) >= 120 ? 3 : 2, b.injectors.length);
   while (b.injectors.length < b.injCount) b.injectors.push('');
-  while (b.injectors.length > b.injCount) b.injectors.pop();
-  if (typeof b.injectDate !== 'string') b.injectDate = '';
+  if (b.ftCount == null || b.ftCount === '') b.ftCount = 2;
+  if (b.injectDate == null) b.injectDate = '';
   if (!Array.isArray(b.ftTests)) b.ftTests = [];
   b.ftTests.forEach(t => {
-    if (!Array.isArray(t.actualTesters)) t.actualTesters = Array.isArray(t.testers) ? t.testers.slice(0, 2) : ['', ''];
+    const hadPlannedPeople = Array.isArray(t.plannedTesters);
+    const originalPeople = Array.isArray(t.actualTesters) ? t.actualTesters : Array.isArray(t.testers) ? t.testers : [];
+    // Old versions allowed confirming a completed FT without two person names.
+    // Retain that recorded fact instead of inventing people or resetting completion.
+    if (!hadPlannedPeople && t.done === true && uniqueElfrPeople(originalPeople).length !== 2) t.legacyCompleted = true;
+    if (!Array.isArray(t.actualTesters)) t.actualTesters = originalPeople.slice();
     while (t.actualTesters.length < 2) t.actualTesters.push('');
-    if (t.testers !== undefined) delete t.testers;
-    if (!t.id) t.id = 'ft_' + uid();
+    if (t.id == null || t.id === '') t.id = 'ft_' + uid();
+    else t.id = String(t.id);
     if (t.qty == null) t.qty = b.qty;
-    if (typeof t.swapNote !== 'string') t.swapNote = '';
-    if (typeof t.date !== 'string') t.date = '';
-    if (typeof t.done !== 'boolean') t.done = false;
+    if (t.swapNote == null) t.swapNote = '';
+    if (t.date == null) t.date = '';
+    if (t.done == null) t.done = false;
+    if (!Array.isArray(t.plannedTesters)) t.plannedTesters = t.actualTesters.slice();
   });
-  if (typeof b.remark !== 'string') b.remark = '';
+  if (b.remark == null) b.remark = '';
   if (!b.status) b.status = '待准备';
   return b;
 }
 
+function stockInteger(value, label, positive = false) {
+  const n = typeof value === 'string' && value.trim() === '' ? NaN : Number(value);
+  if (!Number.isSafeInteger(n) || n < (positive ? 1 : 0)) throw new Error(label + (positive ? '必须是正整数' : '必须是非负整数'));
+  return n;
+}
+function materialClone() { return JSON.parse(JSON.stringify(materialDb)); }
+function aggregateBoardBom(board) {
+  const result = new Map();
+  (board.bom || []).forEach(item => {
+    const qty = stockInteger(item.qty, 'BOM 单板用量', true);
+    const cid = String(item.cid || '');
+    if (!cid || !materialDb.components.some(c => c.id === cid)) throw new Error('BOM 引用了不存在的物料，请先修正 BOM');
+    result.set(cid, stockInteger((result.get(cid) || 0) + qty, 'BOM 汇总用量', true));
+  });
+  return result;
+}
+let storageSnapshot = null, memorySnapshot = null, storageReadBlocked = false, storageStale = false, staleWarned = false;
+function statePayload(mat = materialDb, tests = testDb) { return JSON.stringify({ material: mat, test: tests }); }
+function assertStorageCurrent() {
+  if (storageReadBlocked) throw new Error('本地数据读取失败，已停止写入以保护原文件。请先导入有效备份。');
+  if (storageStale || localStorage.getItem(STORE_KEY) !== storageSnapshot) {
+    storageStale = true;
+    throw new Error('其他页面已更新数据，本页已停止保存。请先导出本页备份，再刷新或重新加载最新数据，避免覆盖库存。');
+  }
+}
+function commitMaterialChange(nextMaterial) {
+  try {
+    assertStorageCurrent();
+    const payload = statePayload(nextMaterial);
+    localStorage.setItem(STORE_KEY, payload);
+    storageSnapshot = payload; memorySnapshot = payload; materialDb = nextMaterial;
+    setStatus('已保存 ' + new Date().toLocaleTimeString('zh-CN', {hour12:false}), 'var(--success)');
+    return true;
+  } catch (err) {
+    setStatus('库存未变更：' + err.message, 'var(--danger)');
+    alert('操作未保存，库存没有变更。\n' + err.message);
+    return false;
+  }
+}
+
+function normalizePreparationIds(items) {
+  const seen=new Set();
+  items.forEach(item=>{
+    if(!item || typeof item!=='object' || Array.isArray(item))throw new Error('实验准备记录格式错误');
+    const original=item.id==null?'':String(item.id);
+    let id=original.trim()?original:'';
+    if(!id || seen.has(id)){
+      if(id && item.legacyPreparationId===undefined)item.legacyPreparationId=item.id;
+      do{id='p_'+uid();}while(seen.has(id));
+    }
+    item.id=id;seen.add(id);
+  });
+  return items;
+}
+
+function normalizeImportedState(d, currentMaterial = materialDb, currentTest = testDb) {
+  if (!d || typeof d !== 'object' || Array.isArray(d)) throw new Error('数据不是有效对象');
+  const has = key => Object.prototype.hasOwnProperty.call(d, key);
+  let mat = currentMaterial, tests = currentTest, recognized = false;
+  if (has('material')) {
+    if (!d.material || typeof d.material !== 'object' || Array.isArray(d.material) || !['components','chips'].some(k => Object.prototype.hasOwnProperty.call(d.material,k))) throw new Error('物料数据格式错误');
+    mat = {...currentMaterial,...d.material}; recognized = true;
+  }
+  else if (has('components') || has('chips')) { mat = {...currentMaterial, ...d}; recognized = true; }
+  if (has('test')) {
+    if (!d.test || typeof d.test !== 'object' || Array.isArray(d.test) || !['batches','cards','equipments'].some(k => Object.prototype.hasOwnProperty.call(d.test,k))) throw new Error('实验数据格式错误');
+    tests = {...currentTest,...d.test}; recognized = true;
+  }
+  else if (has('batches') || has('cards') || has('equipments')) { tests = {...currentTest, ...d}; recognized = true; }
+  if (!recognized) throw new Error('无法识别的数据格式');
+  mat = JSON.parse(JSON.stringify(mat)); tests = JSON.parse(JSON.stringify(tests));
+  if (!mat || typeof mat !== 'object' || Array.isArray(mat) || !tests || typeof tests !== 'object' || Array.isArray(tests)) throw new Error('物料或实验数据格式错误');
+  [['components',mat],['chips',mat],['batches',tests],['cards',tests],['equipments',tests]].forEach(([key,obj]) => {
+    if (obj[key] === undefined) obj[key] = [];
+    if (!Array.isArray(obj[key])) throw new Error(key + ' 必须是数组，已取消加载');
+  });
+  function uniqueIds(list, label) {
+    const ids = new Set();
+    list.forEach(item => {
+      if (!item || typeof item !== 'object' || item.id == null || String(item.id).trim() === '') throw new Error(label + '存在缺失 ID 的记录');
+      item.id = String(item.id);
+      if (ids.has(item.id)) throw new Error(label + '存在重复 ID：' + item.id);
+      ids.add(item.id);
+    });
+    return ids;
+  }
+  const componentIds = uniqueIds(mat.components, '物料'); uniqueIds(mat.chips, '芯片');
+  mat.components.forEach(c => {
+    c.qty = stockInteger(c.qty == null ? 0 : c.qty, '物料库存');
+    c.safety = stockInteger(c.safety == null ? 0 : c.safety, '安全库存');
+    if (c.logs == null) c.logs = [];
+    else if (!Array.isArray(c.logs)) throw new Error('物料流水必须是数组，已取消加载以保护历史记录');
+  });
+  mat.chips.forEach(ch => {
+    if (!ch.boards || typeof ch.boards !== 'object') ch.boards = {};
+    BOARD_KEYS.forEach(key => {
+      const b = ch.boards[key] || (ch.boards[key] = {qty:0,bom:[],shipped:0});
+      b.qty = stockInteger(b.qty == null ? 0 : b.qty, '计划板数');
+      b.shipped = stockInteger(b.shipped == null ? 0 : b.shipped, '已出板数');
+      if (b.bom == null) b.bom = [];
+      if (!Array.isArray(b.bom)) throw new Error('BOM 必须是数组');
+      b.bom.forEach(item => {
+        if (!item || typeof item !== 'object') throw new Error('BOM 记录格式错误');
+        item.cid = String(item.cid ?? '');
+        if (!componentIds.has(item.cid)) throw new Error('BOM 引用了不存在的物料：' + item.cid);
+        item.qty = stockInteger(item.qty == null ? 1 : item.qty, 'BOM 单板用量', true);
+      });
+    });
+  });
+
+  // Theme, experiment and nested IDs must migrate together; numeric IDs are valid legacy data.
+  uniqueIds(tests.batches, '试验主题'); uniqueIds(tests.cards, '试验项'); uniqueIds(tests.equipments, '设备');
+  tests.batches.forEach(batch => {
+    if (batch.preparations == null) batch.preparations = [];
+    else if (!Array.isArray(batch.preparations)) throw new Error('实验准备记录必须是数组，已取消加载');
+    normalizePreparationIds(batch.preparations);
+  });
+  tests.cards.forEach(card => {
+    if (card.batchId != null) card.batchId = String(card.batchId);
+    if (card.elfrBatches == null) card.elfrBatches = [];
+    else if (!Array.isArray(card.elfrBatches)) throw new Error('ELFR 分批记录必须是数组，已取消加载');
+    card.elfrBatches.forEach(batch => {
+      if (!batch || typeof batch !== 'object' || Array.isArray(batch)) throw new Error('ELFR 批次格式错误');
+      if (batch.id == null || batch.id === '') batch.id = 'eb_' + uid();
+      else batch.id = String(batch.id);
+      if (batch.injectors != null && !Array.isArray(batch.injectors)) throw new Error('投实验人员必须是数组，已取消加载以保护记录');
+      if (batch.ftTests == null) batch.ftTests = [];
+      else if (!Array.isArray(batch.ftTests)) throw new Error('FT 记录必须是数组，已取消加载');
+      batch.ftTests.forEach(record => {
+        if (!record || typeof record !== 'object' || Array.isArray(record)) throw new Error('FT 记录格式错误');
+        if (record.actualTesters != null && !Array.isArray(record.actualTesters)) throw new Error('实际 FT 执行人必须是数组，已取消加载');
+        if (record.testers != null && !Array.isArray(record.testers)) throw new Error('历史 FT 执行人必须是数组，已取消加载');
+        if (record.plannedTesters != null && !Array.isArray(record.plannedTesters)) throw new Error('FT 计划人员必须是数组，已取消加载');
+      });
+      normalizeElfrBatch(batch);
+    });
+  });
+  tests.equipments.forEach(equipment => {
+    if (equipment.logs == null) equipment.logs = [];
+    else if (!Array.isArray(equipment.logs)) throw new Error('设备流转记录必须是数组，已取消加载以保护历史记录');
+  });
+
+  return {material:mat, test:tests};
+}
+window.addEventListener('storage', e => {
+  if ((e.key === STORE_KEY || e.key === null) && localStorage.getItem(STORE_KEY) !== storageSnapshot) {
+    storageStale = true;
+    setStatus('其他页面已更新，本页暂停保存', 'var(--danger)');
+    if (!staleWarned) { staleWarned = true; alert('其他页面已更新数据。本页已暂停保存，请刷新或重新加载最新数据后再操作库存。'); }
+  }
+});
+
 function loadAll() {
   try {
-    const s = localStorage.getItem(STORE_KEY);
-    if (s) {
-      const d = JSON.parse(s);
-      if (d.material) materialDb = d.material;
-      if (d.test) testDb = d.test;
-      if (!testDb.equipments) testDb.equipments = [];
+    const raw = localStorage.getItem(STORE_KEY);
+    storageSnapshot = raw;
+    if (raw) {
+      const data = normalizeImportedState(JSON.parse(raw));
+      materialDb = data.material; testDb = data.test;
     }
-  } catch(e){ console.error(e); }
-
-  if (!materialDb || typeof materialDb !== 'object') materialDb = { components: [], chips: [] };
-  if (!Array.isArray(materialDb.components)) materialDb.components = [];
-  if (!Array.isArray(materialDb.chips)) materialDb.chips = [];
-  if (!testDb || typeof testDb !== 'object') testDb = { batches: [], cards: [], equipments: [] };
-  if (!Array.isArray(testDb.batches)) testDb.batches = [];
-  if (!Array.isArray(testDb.cards)) testDb.cards = [];
-  if (!Array.isArray(testDb.equipments)) testDb.equipments = [];
-
-  (testDb.cards || []).forEach(c => {
+    storageReadBlocked = false; storageStale = false; staleWarned = false;
+  } catch (err) {
+    storageReadBlocked = true;
+    console.error(err);
+    setStatus('本地数据读取失败，已停止写入', 'var(--danger)');
+    alert('本地数据读取失败，原始数据已保留。请先导入有效备份。\n' + err.message);
+    return;
+  }
+  testDb.cards.forEach(c => {
     c.status = migrateStatus(c.status);
     if (Array.isArray(c.elfrBatches)) c.elfrBatches.forEach(b => { b.status = migrateStatus(b.status); normalizeElfrBatch(b); });
   });
-  (testDb.equipments || []).forEach(e => {
-    if (!e.logs) e.logs = [];
-    e.status = migrateEqStatus(e.status);
-    if (!EQ_STATUSES.includes(e.status)) e.status = '正常';
+  testDb.equipments.forEach(e => {
+    if (!Array.isArray(e.logs)) e.logs = [];
+    e.status = String(e.status || '正常');
   });
-
-  if (testDb.batches) {
-    testDb.batches = testDb.batches.filter(b => b.id !== 'b1' && b.name !== '第一轮实验');
-    testDb.batches.forEach(b => { if (!Array.isArray(b.preparations)) b.preparations = []; });
-  }
-  if (testDb.batches.length === 0) currentBatchId = null;
-  else if (!testDb.batches.find(b => b.id === currentBatchId)) currentBatchId = testDb.batches[0].id;
-
+  testDb.batches.forEach(b => { if (!Array.isArray(b.preparations)) b.preparations = []; });
+  if (!testDb.batches.length) currentBatchId = null;
+  else if (!testDb.batches.some(b => b.id === currentBatchId)) currentBatchId = testDb.batches[0].id;
+  memorySnapshot = statePayload();
   renderComponents(); renderChips(); renderShortage(); renderCalc();
   renderBatches(); renderBoard(); renderEquipments();
-  setStatus('数据已就绪', '#4ade80');
+  setStatus('数据已就绪', 'var(--success)');
 }
-function forceSave() { clearTimeout(saveTimer); localStorage.setItem(STORE_KEY, JSON.stringify({ material: materialDb, test: testDb })); }
+function forceSave() {
+  clearTimeout(saveTimer);
+  assertStorageCurrent();
+  const payload = statePayload();
+  if (payload === memorySnapshot) return;
+  localStorage.setItem(STORE_KEY, payload);
+  storageSnapshot = payload; memorySnapshot = payload;
+}
 function save() {
   setStatus('保存中…');
   clearTimeout(saveTimer);
@@ -428,7 +766,11 @@ function save() {
   }, 300);
 }
 function setStatus(t, color) { const el = $('#saveStatus'); el.textContent = t; el.style.color = color || 'var(--text-sec)'; }
-window.addEventListener('beforeunload', forceSave);
+window.addEventListener('beforeunload', e => {
+  if (statePayload() === memorySnapshot || storageReadBlocked) return;
+  try { forceSave(); }
+  catch (err) { e.preventDefault(); e.returnValue = ''; }
+});
 
 function switchPage(page) {
   currentPage = page;
@@ -440,7 +782,7 @@ function switchPage(page) {
   const btnAdd = $('#btnGlobalAdd');
   if(page === 'components') { btnAdd.style.display = 'inline-block'; btnAdd.textContent = '+ 新增物料'; btnAdd.onclick = () => editComp(); }
   else if(page === 'chips') { btnAdd.style.display = 'inline-block'; btnAdd.textContent = '+ 新增芯片'; btnAdd.onclick = () => editChip(); }
-  else if(page === 'board') { btnAdd.style.display = 'inline-block'; btnAdd.textContent = '+ 新增实验项'; btnAdd.onclick = () => { if(!currentBatchId) return alert('请先新增试验主题！'); openBoardModal(); }; }
+  else if(page === 'board') { btnAdd.style.display = 'none'; btnAdd.onclick = null; boardViewMode = 'overview'; }
   else if(page === 'equipment') { btnAdd.style.display = 'inline-block'; btnAdd.textContent = '+ 新增设备'; btnAdd.onclick = () => openEqModal(); }
   else { btnAdd.style.display = 'none'; }
   if(page === 'components') renderComponents();
@@ -453,7 +795,7 @@ function switchPage(page) {
 function globalAdd() {
   if(currentPage === 'components') editComp();
   else if(currentPage === 'chips') editChip();
-  else if(currentPage === 'board') { if(!currentBatchId) return alert('请先新增试验主题！'); openBoardModal(); }
+  else if(currentPage === 'board') return;
   else if(currentPage === 'equipment') openEqModal();
 }
 function openMatModal(title, body, onOk) {
@@ -485,25 +827,17 @@ function openInputModal(title, fields, onOk) {
 }
 
 function applyImportedData(d) {
-  if (!d || typeof d !== 'object') throw new Error('数据不是对象');
-  if (d.material || d.test) {
-    if (d.material) {
-      if (!Array.isArray(d.material.components)) d.material.components = [];
-      if (!Array.isArray(d.material.chips)) d.material.chips = [];
-      materialDb = d.material;
-    }
-    if (d.test) {
-      if (!Array.isArray(d.test.batches)) d.test.batches = [];
-      if (!Array.isArray(d.test.cards)) d.test.cards = [];
-      if (!Array.isArray(d.test.equipments)) d.test.equipments = [];
-      testDb = d.test;
-    }
-  } else if (d.components || d.chips) {
-    materialDb = { components: d.components || [], chips: d.chips || [] };
-  } else if (d.batches || d.cards) {
-    testDb = { batches: d.batches || [], cards: d.cards || [], equipments: d.equipments || [] };
-  } else throw new Error('无法识别的数据格式');
-  forceSave(); loadAll();
+  const candidate = normalizeImportedState(d);
+  // 成功校验后再落盘；写入失败时内存和原库存均不变。
+  const before = localStorage.getItem(STORE_KEY);
+  const payload = statePayload(candidate.material, candidate.test);
+  if (before) localStorage.setItem(STORE_KEY + '_before_import', before);
+  localStorage.setItem(STORE_KEY, payload);
+  clearTimeout(saveTimer);
+  materialDb = candidate.material; testDb = candidate.test;
+  storageSnapshot = payload; memorySnapshot = payload;
+  storageReadBlocked = false; storageStale = false; staleWarned = false;
+  loadAll();
 }
 function copyText(text) {
   if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
@@ -562,7 +896,7 @@ window.addEventListener('dragover', e => { e.preventDefault(); });
 window.addEventListener('drop', e => { e.preventDefault(); dragCounter = 0; document.getElementById('dropOverlay')?.classList.remove('on'); const f = e.dataTransfer && e.dataTransfer.files[0]; if (f) handleJsonFile(f); });
 function exportServerJson() {
   forceSave();
-  const allData = { version: '1.7', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
+  const allData = { version: '2.4', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
   const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = DATA_FILE_NAME; a.click();
   setTimeout(() => alert('已导出 ' + DATA_FILE_NAME + '。\n\n请覆盖到共享目录：\n' + SHARE_UNC), 100);
@@ -634,18 +968,32 @@ function editComp(id) {
   openMatModal(isNew ? '新增物料' : '编辑物料', html, () => {
     const name = $('#f_name').value.trim();
     if (!name) { alert('请填写物料名'); return false; }
-    const newQty = Math.max(0, Number($('#f_qty').value) || 0);
-    Object.assign(c, { name, spec: $('#f_spec').value.trim(), pkg: $('#f_pkg').value.trim(), rating: $('#f_rating').value.trim(), auto: $('#f_auto').value, tol: $('#f_tol').value.trim(), temp: $('#f_temp').value.trim(), note: $('#f_note').value.trim(), qty: newQty, safety: Number($('#f_safety').value)||0, location: $('#f_location').value.trim() });
-    let logs = (c.logs || []).slice();
-    if (editLogs.length) logs = logs.concat(editLogs);
-    else if (newQty !== oldQty) logs.push({t: Date.now(), type: 'fix', qty: newQty - oldQty, after: newQty});
-    c.logs = logs.slice(-100);
-    if (isNew) materialDb.components.push(c);
+    let newQty, safety;
+    try { newQty = stockInteger($('#f_qty').value, '实时量'); safety = stockInteger($('#f_safety').value, '安全库存'); }
+    catch (err) { alert(err.message); return false; }
+    const next = materialClone();
+    const record = isNew ? {...c} : next.components.find(x => x.id === id);
+    if (!record || (!isNew && Number(record.qty) !== oldQty)) { alert('该物料库存已变化，请关闭后重新编辑。'); return false; }
+    Object.assign(record, { name, spec: $('#f_spec').value.trim(), pkg: $('#f_pkg').value.trim(), rating: $('#f_rating').value.trim(), auto: $('#f_auto').value, tol: $('#f_tol').value.trim(), temp: $('#f_temp').value.trim(), note: $('#f_note').value.trim(), qty: newQty, safety, location: $('#f_location').value.trim() });
+    record.logs = (record.logs || []).concat(reconcileStockLogs(oldQty, newQty, editLogs));
+    if (isNew) next.components.push(record);
+    if (!commitMaterialChange(next)) return false;
     editingComp = null; editLogs = [];
-    save(); renderComponents();
+    renderComponents(); renderChips(); renderShortage(); renderCalc();
     return true;
   });
   renderEditLogPreview();
+}
+function reconcileStockLogs(oldQty, newQty, pending) {
+  const logs = []; let cursor = oldQty;
+  pending.forEach(log => {
+    const delta = log.type === 'out' ? -log.qty : log.qty;
+    const before = log.after - delta;
+    if (before !== cursor) logs.push({t:log.t, type:'fix', qty:before-cursor, after:before});
+    logs.push({...log}); cursor = log.after;
+  });
+  if (cursor !== newQty) logs.push({t:Date.now(),type:'fix',qty:newQty-cursor,after:newQty});
+  return logs;
 }
 function renderEditLogPreview() {
   const box = $('#edit_log_preview'); if (!box) return;
@@ -655,19 +1003,22 @@ function renderEditLogPreview() {
 }
 function adjustQty(sign) {
   const qtyEl = $('#f_qty'), adjEl = $('#f_adj');
-  const n = Math.max(1, Math.floor(Number(adjEl.value) || 1));
-  let cur = Math.max(0, Number(qtyEl.value) || 0);
-  let after;
-  if (sign > 0) { after = cur + n; editLogs.push({t: Date.now(), type: 'in', qty: n, after}); }
-  else { const actual = Math.min(cur, n); if (actual === 0) { alert('已为0'); return; } after = Math.max(0, cur - actual); editLogs.push({t: Date.now(), type: 'out', qty: actual, after}); }
+  let n, cur;
+  try { n = stockInteger(adjEl.value, '出入库数量', true); cur = stockInteger(qtyEl.value, '实时量'); }
+  catch (err) { alert(err.message); return; }
+  if (sign < 0 && n > cur) { alert('库存不足，不能出库 ' + n + '；当前只有 ' + cur + '。'); return; }
+  const after = sign > 0 ? cur + n : cur - n;
+  if (!Number.isSafeInteger(after)) { alert('数量超出安全范围'); return; }
+  editLogs.push({t:Date.now(),type:sign > 0 ? 'in' : 'out',qty:n,after});
   qtyEl.value = after;
   renderEditLogPreview();
 }
 function delComp(id) {
+  const used = materialDb.chips.flatMap(ch => BOARD_KEYS.filter(k => ch.boards[k].bom.some(b => b.cid === id)).map(k => `${ch.name}·${BOARD_NAMES[k]}`));
+  if (used.length) return alert('该物料仍被 BOM 引用，不能直接删除：\n' + used.join('\n') + '\n请先核对并修改对应 BOM，避免少扣物料。');
   if (!confirm('确定删除该物料？')) return;
-  materialDb.components = materialDb.components.filter(x => x.id !== id);
-  materialDb.chips.forEach(ch => { BOARD_KEYS.forEach(k => { ch.boards[k].bom = ch.boards[k].bom.filter(b => b.cid !== id); }); });
-  save(); renderComponents(); renderChips();
+  const next = materialClone(); next.components = next.components.filter(x => x.id !== id);
+  if (commitMaterialChange(next)) { renderComponents(); renderChips(); renderShortage(); renderCalc(); }
 }
 function showLogs(id) {
   const c = materialDb.components.find(x => x.id === id);
@@ -710,7 +1061,7 @@ function renderChipDetail(chipId) {
       const c = materialDb.components.find(x => x.id === item.cid); if (!c) return '';
       return `<tr><td><strong>${esc(c.name)}</strong></td><td class="mono">${esc(c.spec)}</td><td class="num">${c.qty}</td><td class="num">${item.qty}</td><td><button class="link danger" onclick="delBom('${k}','${item.cid}')">移除</button></td></tr>`;
     }).join('');
-    return `<div class="board-block"><div class="board-head"><div style="font-weight:600;">${BOARD_NAMES[k]} (计划 ${b.qty}, 已出 ${b.shipped})</div><div style="display:flex; gap:8px; align-items:center;"><input type="number" min="0" value="${b.qty}" oninput="setBoardQty('${ch.id}','${k}',this.value)"><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="shipBoard('${k}')">一键出货</button><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="openBomImport('${ch.id}','${k}')">导入</button><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="openCopyBom('${ch.id}','${k}')">复制</button><button class="primary" style="padding:4px 8px; font-size:12px;" onclick="addBom('${k}')">+ 添加</button></div></div><table><thead><tr style="background:#f8fafc; font-size:12px;"><th>物料名</th><th>规格</th><th class="num">库存</th><th class="num">用量</th><th>操作</th></tr></thead><tbody>${rows || '<tr><td colspan="5" class="empty">暂无 BOM</td></tr>'}</tbody></table></div>`;
+    return `<div class="board-block"><div class="board-head"><div style="font-weight:600;">${BOARD_NAMES[k]} (计划 ${b.qty}, 已出 ${b.shipped})</div><div style="display:flex; gap:8px; align-items:center;"><input type="number" min="0" value="${b.qty}" onchange="setBoardQty('${ch.id}','${k}',this.value)"><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="shipBoard('${k}')">一键出货</button><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="openBomImport('${ch.id}','${k}')">导入</button><button class="ghost" style="padding:4px 8px;font-size:12px;" onclick="downloadBomTemplate()">模板</button><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="openCopyBom('${ch.id}','${k}')">复制</button><button class="primary" style="padding:4px 8px; font-size:12px;" onclick="addBom('${k}')">+ 添加</button></div></div><table><thead><tr style="background:#f8fafc; font-size:12px;"><th>物料名</th><th>规格</th><th class="num">库存</th><th class="num">用量</th><th>操作</th></tr></thead><tbody>${rows || '<tr><td colspan="5" class="empty">暂无 BOM</td></tr>'}</tbody></table></div>`;
   }).join('');
   box.innerHTML = `<div style="padding:16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between;"><div><h3 style="margin:0;">${esc(ch.name)}</h3></div><div><button class="ghost" onclick="editChip('${ch.id}')">编辑</button><button class="ghost" style="color:var(--danger);" onclick="delChip('${ch.id}')">删除</button></div></div>${sections}`;
 }
@@ -727,32 +1078,68 @@ function editChip(id) {
   });
 }
 function delChip(id) { if (confirm('删除芯片及BOM？')) { materialDb.chips = materialDb.chips.filter(x=>x.id!==id); save(); renderChips(); } }
-function setBoardQty(chipId, key, v) { const ch = materialDb.chips.find(c=>c.id===chipId); if (ch) { ch.boards[key].qty = Math.max(0, Number(v)||0); save(); renderCalc(); } }
+function setBoardQty(chipId, key, v) {
+  const ch = materialDb.chips.find(c => c.id === chipId); if (!ch || !ch.boards[key]) return;
+  let qty;
+  try { qty = stockInteger(v, '计划板数'); }
+  catch (err) { alert(err.message); return; }
+  if (qty < Number(ch.boards[key].shipped || 0)) { alert('计划板数不能小于已出板数。已出库数量请通过物料台账核对。'); return; }
+  const next = materialClone(); next.chips.find(c => c.id === chipId).boards[key].qty = qty;
+  if (commitMaterialChange(next)) { renderChips(); renderCalc(); }
+}
 function addBom(boardKey) {
-  const ch = materialDb.chips.find(c=>c.id===$('#chipList').dataset.activeId); if (!ch) return;
+  const ch = materialDb.chips.find(c => c.id === $('#chipList').dataset.activeId); if (!ch) return;
   const opts = materialDb.components.map(c => `<option value="${c.id}">${esc(c.name)} ${esc(c.spec)}</option>`).join('');
-  openMatModal('添加 BOM', `<div class="form-group"><label>选择物料</label><select id="b_cid">${opts}</select></div><div class="form-group"><label>单板用量</label><input id="b_qty" type="number" value="1"></div>`, () => {
-    const cid = $('#b_cid').value, qty = Number($('#b_qty').value)||1;
-    const exist = ch.boards[boardKey].bom.find(b=>b.cid===cid);
-    if (exist) exist.qty = qty; else ch.boards[boardKey].bom.push({cid, qty});
-    save(); renderChips(); renderCalc();
-    return true;
+  openMatModal('添加 BOM', `<div class="form-group"><label>选择物料</label><select id="b_cid">${opts}</select></div><div class="form-group"><label>单板用量</label><input id="b_qty" type="number" min="1" step="1" value="1"></div>`, () => {
+    const cid = $('#b_cid').value; let qty;
+    try { qty = stockInteger($('#b_qty').value, '单板用量', true); }
+    catch (err) { alert(err.message); return false; }
+    if (!materialDb.components.some(c => c.id === cid)) { alert('请选择有效物料'); return false; }
+    const next = materialClone(), bom = next.chips.find(c => c.id === ch.id).boards[boardKey].bom;
+    const first = bom.findIndex(item => item.cid === cid);
+    const rest = bom.filter(item => item.cid !== cid);
+    rest.splice(first < 0 ? rest.length : Math.min(first, rest.length), 0, {cid, qty});
+    next.chips.find(c => c.id === ch.id).boards[boardKey].bom = rest;
+    if (!commitMaterialChange(next)) return false;
+    renderChips(); renderCalc(); return true;
   });
 }
 function delBom(k, cid) { const ch = materialDb.chips.find(c=>c.id===$('#chipList').dataset.activeId); if (ch) { ch.boards[k].bom = ch.boards[k].bom.filter(b=>b.cid!==cid); save(); renderChips(); renderCalc(); } }
 function shipBoard(boardKey) {
-  const ch = materialDb.chips.find(c=>c.id===$('#chipList').dataset.activeId);
-  if (!ch || !ch.boards[boardKey].bom.length) return alert('无 BOM');
-  const b = ch.boards[boardKey];
-  openInputModal('一键出货', [{ id: 'n', label: `出货板数（计划 ${b.qty}，已出 ${b.shipped}）`, type: 'number', value: Math.max(1, b.qty - b.shipped) }], ({ n }) => {
-    const num = Number(n);
-    if (!num || num <= 0) { alert('请输入有效数'); return false; }
-    let ok = 0;
-    b.bom.forEach(item => { const c = materialDb.components.find(x=>x.id===item.cid); if (c) { const need = item.qty * num; const actual = Math.min(need, c.qty); if (actual > 0) { c.qty -= actual; c.logs.push({t: Date.now(), type: 'out', qty: actual, after: c.qty}); ok++; } } });
-    if (ok === 0) { alert('库存不足'); return false; }
-    b.shipped = (b.shipped||0) + num;
-    save(); renderChips(); renderComponents(); renderShortage(); renderCalc();
-    setTimeout(() => alert('出货成功'), 50);
+  const ch = materialDb.chips.find(c => c.id === $('#chipList').dataset.activeId);
+  if (!ch || !ch.boards[boardKey] || !ch.boards[boardKey].bom.length) return alert('无 BOM');
+  const b = ch.boards[boardKey], boardSnapshot = JSON.stringify(ch.boards[boardKey]);
+  const remaining = Math.max(0, Number(b.qty) - Number(b.shipped || 0));
+  if (!remaining) return alert('计划板数已全部出货。如需追加，请先增加计划板数。');
+  openInputModal('一键出货', [{id:'n',label:`出货板数（计划 ${b.qty}，已出 ${b.shipped || 0}，待出 ${remaining}）`,type:'number',value:remaining}], ({n}) => {
+    let num, bom;
+    try { num = stockInteger(n, '出货板数', true); bom = aggregateBoardBom(b); }
+    catch (err) { alert(err.message); return false; }
+    const live = materialDb.chips.find(c => c.id === ch.id)?.boards[boardKey];
+    if (!live || JSON.stringify(live) !== boardSnapshot) { alert('计划或 BOM 已变化，请重新打开出货窗口'); return false; }
+    if (num > Math.max(0, Number(b.qty) - Number(b.shipped || 0))) { alert('出货板数超过待出数量，请先调整计划。'); return false; }
+    const changes = [];
+    try {
+      bom.forEach((perBoard, cid) => {
+        const c = materialDb.components.find(x => x.id === cid);
+        const need = stockInteger(perBoard * num, '出库用量', true);
+        const have = stockInteger(c.qty, '库存');
+        if (have < need) throw new Error(`${c.name} ${c.spec || ''}：需要 ${need}，库存 ${have}，缺 ${need-have}`);
+        changes.push({cid,need});
+      });
+    } catch (err) { alert('本次未扣任何库存。\n' + err.message); return false; }
+    const next = materialClone(), txId = 'ship_' + uid(), now = Date.now();
+    changes.forEach(({cid,need}) => {
+      const c = next.components.find(x => x.id === cid);
+      c.qty -= need;
+      if (!Array.isArray(c.logs)) c.logs = [];
+      c.logs.push({t:now,type:'out',qty:need,after:c.qty,txId,source:`${ch.name}·${BOARD_NAMES[boardKey]} ${num} 板`});
+    });
+    const target = next.chips.find(c => c.id === ch.id).boards[boardKey];
+    target.shipped = stockInteger(Number(target.shipped || 0) + num, '已出板数');
+    if (!commitMaterialChange(next)) return false;
+    renderChips(); renderComponents(); renderShortage(); renderCalc();
+    setTimeout(() => alert('出货成功，全部物料已按 BOM 扣减并保存。'), 50);
     return true;
   });
 }
@@ -777,7 +1164,7 @@ function saveCopyBom() {
 }
 function openBomImport(chipId, boardKey) {
   bomImportState = { chipId, boardKey, parsedRows: [] };
-  $('#bomImpFormBody').innerHTML = `<div class="imp-box" id="bomImpDrop"><div style="font-size:30px;">Excel</div><div><strong>点击选择或拖拽 BOM Excel</strong></div><input type="file" id="bomImpFile" accept=".xlsx" hidden></div><div id="bomImpStatus" style="margin-top:12px;"></div><div id="bomImpPreview" style="margin-top:16px; display:none;"></div>`;
+  $('#bomImpFormBody').innerHTML = `<div style="margin-bottom:12px;"><button class="ghost" onclick="downloadBomTemplate()">下载 BOM 导入模板</button><span style="font-size:12px;color:var(--text-sec);margin-left:8px;">填写单板用量，导入后检查物料匹配。</span></div><div class="imp-box" id="bomImpDrop"><div style="font-size:30px;">Excel</div><div><strong>点击选择或拖拽 BOM Excel</strong></div><input type="file" id="bomImpFile" accept=".xlsx" hidden></div><div id="bomImpStatus" style="margin-top:12px;"></div><div id="bomImpPreview" style="margin-top:16px; display:none;"></div>`;
   $('#modalBomImp').classList.remove('hidden');
   const drop = $('#bomImpDrop'); const fileInput = $('#bomImpFile');
   drop.onclick = () => fileInput.click();
@@ -849,34 +1236,40 @@ function renderBomImportPreview() {
   box.innerHTML = html + '</tbody></table></div>';
 }
 function saveBomImport() {
-  const { chipId, boardKey, parsedRows } = bomImportState;
-  const ch = materialDb.chips.find(c => c.id === chipId); if (!ch) return;
-  const b = ch.boards[boardKey]; let count = 0;
-  parsedRows.forEach((r, idx) => {
-    const sel = document.getElementById(`bom_sel_${idx}`); if (!sel || !sel.value) return;
-    const cid = sel.value; const qty = Math.max(1, Number(r.qty) || 1);
-    const exist = b.bom.find(x => x.cid === cid);
-    if (exist) exist.qty = qty; else b.bom.push({ cid, qty });
-    count++;
-  });
-  if (count === 0) { alert('未选中有效物料'); return; }
-  save(); renderChips(); renderCalc();
-  $('#modalBomImp').classList.add('hidden');
-  setTimeout(() => alert(`成功导入 ${count} 项`), 50);
+  const {chipId,boardKey,parsedRows} = bomImportState;
+  const ch = materialDb.chips.find(c => c.id === chipId); if (!ch || !ch.boards[boardKey]) return;
+  const totals = new Map(); let count = 0;
+  try {
+    parsedRows.forEach((r,idx) => {
+      const sel = document.getElementById(`bom_sel_${idx}`); if (!sel || !sel.value) return;
+      const cid = sel.value;
+      if (!materialDb.components.some(c => c.id === cid)) throw new Error('所选物料不存在');
+      const qty = stockInteger(r.qty, '第 ' + (idx+1) + ' 行用量', true);
+      totals.set(cid,stockInteger((totals.get(cid) || 0) + qty,'汇总用量',true)); count++;
+    });
+  } catch (err) { alert('未导入：' + err.message); return; }
+  if (!count) { alert('未选中有效物料'); return; }
+  const next = materialClone(), b = next.chips.find(c => c.id === chipId).boards[boardKey];
+  // 同文件中映射到同一物料的多行相加；已存在物料的单板用量以本次汇总覆盖。
+  b.bom = b.bom.filter(item => !totals.has(item.cid)).concat(Array.from(totals,([cid,qty]) => ({cid,qty})));
+  if (!commitMaterialChange(next)) return;
+  renderChips(); renderCalc(); $('#modalBomImp').classList.add('hidden');
+  setTimeout(() => alert(`成功导入 ${count} 行，合并为 ${totals.size} 种物料。未修改库存。`),50);
 }
-
 /* ========== 需求核算 ========== */
 function computeDemand() {
-  const demand = {};
-  materialDb.chips.forEach(ch => { BOARD_KEYS.forEach(k => {
-    const b = ch.boards[k]; if (!b.qty) return;
-    b.bom.forEach(item => {
-      if (!demand[item.cid]) demand[item.cid] = {total: 0, sources: []};
-      const need = item.qty * b.qty;
-      demand[item.cid].total += need;
-      demand[item.cid].sources.push(`${ch.name}·${BOARD_SHORT[k]} ${b.qty}×${item.qty}`);
+  const demand = Object.create(null);
+  materialDb.chips.forEach(ch => BOARD_KEYS.forEach(key => {
+    const b = ch.boards[key];
+    const remaining = Math.max(0, Number(b.qty || 0) - Number(b.shipped || 0));
+    if (!remaining) return;
+    aggregateBoardBom(b).forEach((qty,cid) => {
+      if (!demand[cid]) demand[cid] = {total:0,sources:[]};
+      const need = stockInteger(qty * remaining,'需求数量',true);
+      demand[cid].total = stockInteger(demand[cid].total + need,'需求汇总');
+      demand[cid].sources.push(`${ch.name}·${BOARD_SHORT[key]} 待出 ${remaining}×${qty}`);
     });
-  }); });
+  }));
   return demand;
 }
 function renderShortage() {
@@ -888,7 +1281,7 @@ function renderShortage() {
 function renderCalc() {
   const wrap = $('#calcChips');
   if (!materialDb.chips.length) { wrap.innerHTML = '<div class="empty">请先添加芯片</div>'; return; }
-  wrap.innerHTML = materialDb.chips.map(ch => `<div class="calc-chip-block"><div style="font-weight:600; margin-bottom:8px;">${esc(ch.name)}</div><div style="display:flex; gap:16px;">${BOARD_KEYS.map(k => `<div style="display:flex; align-items:center; gap:8px; font-size:13px;"><span style="color:var(--text-sec);">${BOARD_NAMES[k]}</span><input type="number" min="0" value="${ch.boards[k].qty}" oninput="setBoardQty('${ch.id}','${k}',this.value)"></div>`).join('')}</div></div>`).join('');
+  wrap.innerHTML = materialDb.chips.map(ch => `<div class="calc-chip-block"><div style="font-weight:600; margin-bottom:8px;">${esc(ch.name)}</div><div style="display:flex; gap:16px;">${BOARD_KEYS.map(k => `<div style="display:flex; align-items:center; gap:8px; font-size:13px;"><span style="color:var(--text-sec);">${BOARD_NAMES[k]}</span><input type="number" min="0" value="${ch.boards[k].qty}" onchange="setBoardQty('${ch.id}','${k}',this.value)"></div>`).join('')}</div></div>`).join('');
   renderCalcResult();
 }
 function renderCalcResult() {
@@ -907,21 +1300,70 @@ function renderCalcResult() {
 }
 
 /* ========== 实验看板 ========== */
+let boardViewMode = 'overview';
 function renderBatches() {
-  let html = `<div style="padding: 0 16px 12px 16px; border-bottom: 1px solid var(--border); margin-bottom: 12px;"><button class="primary" style="width: 100%; padding: 6px; font-size: 13px;" onclick="addNewBatch()">+ 新增试验主题</button></div>`;
-  if (!testDb.batches || testDb.batches.length === 0) {
-    html += '<div style="text-align:center; padding:20px; color:var(--text-sec); font-size:12px;">暂无试验</div>';
-    $('#batchList').innerHTML = html;
-    $('#currentBatchTitle').textContent = '请先新增试验主题';
-    $('#cardGrid').innerHTML = ''; $('#batchProgress').innerHTML = '';
-    return;
-  }
-  html += testDb.batches.map(b => {
-    const pr = calcBatchProgress(b.id);
-    return `<div class="batch-item ${b.id === currentBatchId ? 'active' : ''}" onclick="switchBatch('${b.id}')"><div style="flex:1; min-width:0; margin-right:8px;"><div class="batch-name">${esc(b.name)}</div><div class="batch-meta">总进度 ${pr.pct}% · 完成 ${pr.done}/${pr.total} 项</div></div><div style="display:flex; gap:2px; flex-shrink:0;"><button class="btn-copy-batch" onclick="event.stopPropagation(); copyBatch('${b.id}')">复制</button><button class="btn-copy-batch del" onclick="event.stopPropagation(); delBatch('${b.id}')">删除</button></div></div>`;
-  }).join('');
-  $('#batchList').innerHTML = html;
+  const list = testDb.batches || [];
+  let html = `<div class="theme-nav-title">实验管理</div><div class="theme-nav-actions"><button class="theme-overview-button ${boardViewMode==='overview'?'active':''}" onclick="showBoardOverview()">整体进度</button><button class="ghost" onclick="addNewBatch()">＋ 新增试验主题</button></div>`;
+  html += list.length ? list.map(b => {
+    const p=calcBatchProgress(b.id),id=esc(JSON.stringify(String(b.id)));
+    return `<button class="theme-nav-item ${boardViewMode==='theme'&&b.id===currentBatchId?'active':''}" onclick="openBoardTheme(${id})"><span class="batch-name">${esc(b.name)}</span><span class="batch-meta">已完成 ${p.done} / ${p.total} 项</span></button>`;
+  }).join('') : '<div class="empty" style="font-size:12px;padding:20px 10px;">暂无试验主题</div>';
+  $('#batchList').innerHTML=html;
 }
+function showBoardOverview() {
+  boardViewMode='overview';
+  const filter=$('#filterPerson');if(filter)filter.value='';
+  renderBatches();renderBoard();
+}
+function openBoardTheme(id) {
+  if (!testDb.batches.some(b=>b.id===id)) return alert('试验主题已不存在，请重新选择');
+  currentBatchId=id;boardViewMode='theme';
+  const filter=$('#filterPerson');if(filter)filter.value='';
+  renderBatches();renderBoard();
+}
+function boardPhaseMarkup(data) {
+  const counts=[['待准备',data.waitingCount,''],['已送样',data.sentCount,'board-phase-sent'],['实验中',data.runningCount,'board-phase-running'],['待结项',data.returnedCount,'board-phase-returned'],['已完成实验',data.done,'board-phase-done']];
+  if(data.unknownCount)counts.push(['待核对状态',data.unknownCount,'']);
+  const total=Number(data.total)||0;
+  return `<div class="board-phase-legend">${counts.map(([label,count,cls])=>`<span><i class="board-phase-dot ${cls}" aria-hidden="true"></i>${label}<b>${Number(count)||0}</b></span>`).join('')}</div><div class="board-phase-track" role="img" aria-label="实验进度分布">${counts.filter(([,count])=>Number(count)>0).map(([,count,cls])=>`<span class="board-phase-segment ${cls}" style="width:${total?Number(count)/total*100:0}%"></span>`).join('')}</div>`;
+}
+
+function renderBoardOverview(data) {
+  const value=n=>Number(n)||0,themes=data.themes || [];
+  const risks=t=>[t.overdueCount?`<span class="badge st-danger">标记逾期 ${value(t.overdueCount)}</span>`:'',t.blockedCount?`<span class="badge st-warn">标记需协调 ${value(t.blockedCount)}</span>`:'',t.normalCount?`<span class="badge st-ok">正常 ${value(t.normalCount)}</span>`:'',t.unsetAttentionCount?`<span class="badge st-muted">未设置 ${value(t.unsetAttentionCount)}</span>`:''].filter(Boolean).join('') || '<span style="color:var(--text-sec)">—</span>';
+  const forecast=t=>`${esc(t.expectedLabel || '待排期')}${t.expectedMissing?`<div style="font-size:11px;color:var(--text-sec)">另有 ${value(t.expectedMissing)} 项未排期，日期待确认</div>`:''}`;
+  const active=value(data.sentCount)+value(data.runningCount)+value(data.returnedCount);
+  return `<div class="board-overview-header"><div><h2>整体实验进度</h2><p>${themes.length} 个实验主题 · 查看已完成实验、当前进展和预计完成时间</p></div><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span class="board-date">${esc(getLocalToday())}</span><button class="ghost" onclick="exportBoardOverview()">导出总览</button></div></div>
+  <div class="leader-metrics">
+    <div class="leader-metric leader-metric-main"><div class="leader-metric-label">已完成实验</div><div class="leader-metric-value">${value(data.done)}<small>/ ${value(data.total)} 项</small></div><div class="leader-metric-note">实验完成率 <b>${value(data.completionRate)}%</b></div><div class="leader-progress-track"><div class="leader-progress-fill" style="width:${value(data.completionRate)}%"></div></div></div>
+    <div class="leader-metric"><div class="leader-metric-label">进行中实验</div><div class="leader-metric-value">${active}<small>项</small></div><div class="leader-metric-note">实验中 ${value(data.runningCount)} · 待结项 ${value(data.returnedCount)}<br>已送样 ${value(data.sentCount)} · 待准备 ${value(data.waitingCount)}</div></div>
+    <div class="leader-metric"><div class="leader-metric-label">预计完成时间</div><div class="leader-metric-value" style="font-size:19px;letter-spacing:0;line-height:1.6">${esc(data.expectedLabel || '待排期')}</div><div class="leader-metric-note">${data.expectedComplete?'全部实验已完成':data.expectedMissing?`另有 ${value(data.expectedMissing)} 项未排期，日期待确认`:'以主题计划及未完成实验的最晚预计日期为准'}</div></div>
+    <div class="leader-metric"><div class="leader-metric-label">手动提醒</div><div class="leader-risk-line risk-overdue"><span>标记逾期</span><b>${value(data.overdueCount)}</b></div><div class="leader-risk-line risk-blocked"><span>标记需协调</span><b>${value(data.blockedCount)}</b></div><div class="leader-metric-note">正常 ${value(data.normalCount)} 项 · 未设置 ${value(data.unsetAttentionCount)} 项</div></div>
+  </div>
+  ${data.orphanCount?`<div class="leader-data-note">${value(data.orphanCount)} 项实验暂未关联到有效主题，请核对所属关系。</div>`:''}
+  <section class="leader-section"><div class="leader-section-header"><h3>实验准备概况</h3><span>准备与验收单独统计，不计入实验完成率</span></div><div class="prep-overview-summary"><strong>就绪 ${value(data.prepReady)} / ${value(data.prepTotal)} 项</strong><span>未备齐 ${value(data.prepQuantityPending)} 项</span><span>待验收 ${value(data.prepVerificationPending)} 项</span><span>准备待办 ${value(data.prepPending)} 项</span></div></section>
+  <section class="leader-section"><div class="leader-section-header"><h3>实验进度分布</h3><span>待准备 → 实验进行 → 结项完成</span></div><div class="board-phase-body">${boardPhaseMarkup(data)}</div></section>
+  <section class="leader-section"><div class="leader-section-header"><h3>全部实验主题</h3><span>完成实验与预计完成时间集中展示</span></div>${themes.length?`<div class="leader-table-wrap"><table class="leader-table"><thead><tr><th>实验主题</th><th>已完成实验</th><th>当前进度</th><th>预计完成时间</th><th>手动提醒</th><th></th></tr></thead><tbody>${themes.map(t=>`<tr><td><div class="leader-theme-name">${esc(t.name)}</div><span class="leader-theme-state">${esc(t.state)}</span><span class="leader-theme-state" style="color:var(--primary)">实验准备：${value(t.prepReady)} / ${value(t.prepTotal)} 项就绪</span></td><td><div class="leader-completion"><strong>${value(t.done)} / ${value(t.total)} 项</strong><small>${value(t.completionRate)}%</small><div class="leader-progress-track"><div class="leader-progress-fill" style="width:${value(t.completionRate)}%"></div></div></div></td><td><div class="leader-state-line"><span>待准备 <b>${value(t.waitingCount)}</b></span><span>实验中 <b>${value(t.runningCount)}</b></span><span>待结项 <b>${value(t.returnedCount)}</b></span></div></td><td style="color:var(--text-sec)">${forecast(t)}</td><td><div class="leader-risk-tags">${risks(t)}</div></td><td><button class="link" onclick="openBoardTheme(${esc(JSON.stringify(String(t.id)))})">查看主题 →</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="leader-empty"><h3>尚无实验主题</h3>先建立实验主题，再在主题内新增实验项。<br><button class="primary" onclick="addNewBatch()">＋ 新增试验主题</button></div>'}</section>`;
+}
+
+function editBatchName(batchId=currentBatchId) {
+  const batch=testDb.batches.find(b=>b.id===batchId);
+  if(!batch)return alert('请先选择试验主题');
+  openInputModal('编辑主题信息',[
+    {id:'name',label:'实验主题名称',value:batch.name},
+    {id:'expectedCompletionDate',label:'主题预计完成日期（选填；留空按各实验估算）',type:'date',value:batch.expectedCompletionDate || ''}
+  ],values=>{
+    const name=String(values.name || '').trim();
+    const date=values.expectedCompletionDate===undefined?String(batch.expectedCompletionDate || ''):String(values.expectedCompletionDate || '').trim();
+    if(!name){alert('主题名称不能为空');return false;}
+    if(date && !isValidDateOnly(date)){alert('请填写有效的主题预计完成日期');return false;}
+    const live=testDb.batches.find(b=>b.id===batchId);
+    if(!live){alert('该主题已不存在，请刷新后重试');return false;}
+    live.name=name;live.expectedCompletionDate=date;
+    save();renderBatches();renderBoard();return true;
+  });
+}
+
 function addNewBatch() {
   openInputModal('新增试验主题', [{ id: 'name', label: '试验主题名称', placeholder: '例如：GL002 第三轮' }], ({ name }) => {
     name = (name || '').trim();
@@ -929,7 +1371,7 @@ function addNewBatch() {
     const newId = 'b_' + Date.now();
     if (!testDb.batches) testDb.batches = [];
     testDb.batches.push({ id: newId, name, preparations: [] });
-    currentBatchId = newId;
+    currentBatchId = newId; boardViewMode = 'theme';
     save(); renderBatches(); renderBoard();
     return true;
   });
@@ -948,7 +1390,7 @@ function copyBatch(sourceBatchId) {
       if (newCard.elfrBatches) newCard.elfrBatches.forEach(b => { b.id = 'eb_' + uid(); (b.ftTests||[]).forEach(t => { t.id = 'ft_' + uid(); }); });
       testDb.cards.push(newCard);
     });
-    currentBatchId = newBatchId;
+    currentBatchId = newBatchId; boardViewMode = 'theme';
     save(); renderBatches(); renderBoard();
     setTimeout(() => alert(`成功复制 ${sourceCards.length} 个实验项`), 50);
     return true;
@@ -962,173 +1404,398 @@ function delBatch(batchId) {
   if (currentBatchId === batchId) currentBatchId = testDb.batches.length > 0 ? testDb.batches[0].id : null;
   save(); renderBatches(); renderBoard();
 }
-function switchBatch(id) { currentBatchId = id; renderBatches(); renderBoard(); }
+function switchBatch(id) { openBoardTheme(id); }
+
 function calcBatchProgress(batchId) {
   const cards = testDb.cards.filter(c => c.batchId === batchId);
-  let sum = 0, done = 0, sentCount = 0, runningCount = 0, waitingCount = 0;
+  let sum = 0, done = 0, sentCount = 0, runningCount = 0, waitingCount = 0, returnedCount = 0;
   cards.forEach(c => {
-    if (c.status === '已FT' || c.status === '已取回') { sum += 100; done++; }
-    else if (c.status === '实验中') { sum += calcTime(c.startDate, c.durationDays).progress; runningCount++; }
-    else if (c.status === '已送样') { sentCount++; }
-    else { waitingCount++; }
+    sum += getCardProgress(c);
+    const status = getCardDisplayStatus(c);
+    if (isCardFinished(c)) done++;
+    else if (status === '已取回') returnedCount++;
+    else if (status === '实验中') runningCount++;
+    else if (status === '已送样') sentCount++;
+    else waitingCount++;
   });
-  return { pct: cards.length ? Math.round(sum / cards.length) : 0, total: cards.length, done, sentCount, runningCount, waitingCount };
+  return {pct:cards.length ? Math.round(sum/cards.length) : 0,total:cards.length,done,sentCount,runningCount,waitingCount,returnedCount};
 }
+
+
+
+function getExperimentExpectedDate(card) {
+  const manual=String(card.expectedCompletionDate || '').trim();
+  if(manual) return isValidDateOnly(manual)?manual:'';
+  return calcTime(card.startDate,card.durationDays).endDate;
+}
+function getExpectedCompletion(cards,theme={}) {
+  const pending=cards.filter(c=>!isCardFinished(c));
+  const manual=String(theme.expectedCompletionDate || '').trim();
+  if(cards.length && !pending.length) return {date:isValidDateOnly(manual)?manual:'',label:'已完成',missing:0,complete:true,source:'completed'};
+  if(isValidDateOnly(manual)) return {date:manual,label:manual,missing:0,complete:false,source:'manual'};
+  const dates=pending.map(getExperimentExpectedDate),valid=dates.filter(isValidDateOnly).sort();
+  const missing=dates.length-valid.length,date=valid[valid.length-1] || '';
+  return {date,label:date || '待排期',missing,complete:false,source:date?'estimate':'unset'};
+}
+function getManualExperimentAttention(card) {
+  const status=['none','normal','overdue','coordination','both'].includes(card.attentionStatus)?card.attentionStatus:'none';
+  const active=!isCardFinished(card);
+  return {status,overdue:active && ['overdue','both'].includes(status),coordination:active && ['coordination','both'].includes(status)};
+}
+function experimentAttentionLabel(card) {
+  const flags=getManualExperimentAttention(card);
+  return flags.overdue && flags.coordination?'标记逾期、需协调':flags.overdue?'标记逾期':flags.coordination?'标记需协调':flags.status==='normal'?'正常':'未设置';
+}
+function experimentStatusLabel(status) {
+  return status==='已FT'?'已完成':status==='已取回'?'待结项':status;
+}
+
+function getBoardOverviewData(today=getLocalToday()) {
+  const summarize=(cards,theme={})=>{
+    const tasks=getExecutionTasks(cards,today,'',theme.id?theme:null),pending=cards.filter(c=>!isCardFinished(c));
+    const byStatus=s=>pending.filter(c=>getCardDisplayStatus(c)===s).length;
+    const done=cards.length-pending.length;
+    const forecast=getExpectedCompletion(cards,theme);
+    const flags=pending.map(getManualExperimentAttention),preparation=prepStats(theme);
+    return {total:cards.length,done,completionRate:cards.length?Math.round(done/cards.length*100):0,
+      progress:cards.length?Math.round(cards.reduce((n,c)=>n+getCardProgress(c),0)/cards.length):0,
+      waitingCount:byStatus('待准备'),sentCount:byStatus('已送样'),runningCount:byStatus('实验中'),returnedCount:byStatus('已取回'),
+      unknownCount:pending.filter(c=>!['待准备','已送样','实验中','已取回'].includes(getCardDisplayStatus(c))).length,
+      overdueCount:flags.filter(f=>f.overdue).length,blockedCount:flags.filter(f=>f.coordination).length,normalCount:flags.filter(f=>f.status==='normal').length,unsetAttentionCount:flags.filter(f=>f.status==='none').length,
+      prepTotal:preparation.total,prepReady:preparation.ready,prepPending:preparation.pending,prepQuantityPending:preparation.pendingQuantity,prepVerificationPending:preparation.pendingVerification,
+      unassignedCount:tasks.filter(t=>!t.shared&&!String(t.owner || '').trim()).length,
+      pendingFtCount:pending.reduce((s,c)=>s+(c.elfrBatches || []).reduce((n,b)=>n+(b.ftTests || []).filter(t=>!t.done).length,0),0),
+      nextDate:tasks.map(t=>t.date).filter(isValidDateOnly).sort()[0] || '',
+      expectedDate:forecast.date,expectedLabel:forecast.label,expectedMissing:forecast.missing,expectedSource:forecast.source,expectedComplete:forecast.complete};
+  };
+  const cards=Array.isArray(testDb.cards)?testDb.cards:[];
+  const themes=(testDb.batches || []).map(theme=>{
+    const detail=summarize(cards.filter(c=>c.batchId===theme.id),theme);
+    const state=!detail.total?'待添加试验':detail.done===detail.total?'已完成':detail.overdueCount?'手动标记逾期':detail.blockedCount?'手动标记需协调':'推进中';
+    return {id:theme.id,name:theme.name,...detail,state};
+  });
+  const overall=summarize(cards),ids=new Set((testDb.batches || []).map(t=>t.id));
+  const pendingThemes=themes.filter(t=>t.total>t.done);
+  const known=pendingThemes.map(t=>t.expectedDate).filter(isValidDateOnly).sort();
+  const orphanCards=cards.filter(c=>!ids.has(c.batchId));
+  const orphanPending=orphanCards.filter(c=>!isCardFinished(c));
+  const orphanDates=orphanPending.map(getExperimentExpectedDate).filter(isValidDateOnly);
+  const allDates=known.concat(orphanDates).sort();
+  const expectedDate=allDates[allDates.length-1] || '';
+  const expectedMissing=pendingThemes.reduce((n,t)=>n+(t.expectedSource==='manual'?0:t.expectedMissing),0)+orphanPending.length-orphanDates.length;
+  const preparationTotals=themes.reduce((s,t)=>{for(const key of ['prepTotal','prepReady','prepPending','prepQuantityPending','prepVerificationPending'])s[key]=(s[key]||0)+(t[key]||0);return s;},{prepTotal:0,prepReady:0,prepPending:0,prepQuantityPending:0,prepVerificationPending:0});
+  return {...overall,...preparationTotals,themes,orphanCount:orphanCards.length,expectedDate:overall.expectedComplete?overall.expectedDate:expectedDate,
+    expectedLabel:overall.expectedComplete?'已完成':expectedDate || '待排期',expectedMissing:overall.expectedComplete?0:expectedMissing};
+}
+
+function exportBoardOverview() {
+  const data=getBoardOverviewData();if(!data.themes.length)return alert('暂无试验主题可导出');
+  const header=['实验主题','状态','实验总数','已完成实验','实验完成率','预计完成时间','未排期实验数','待准备','已送样','实验中','待结项','手动标记逾期','手动标记需协调','准备项总数','准备已就绪','准备待执行'];
+  const row=t=>[t.name,t.state,t.total,t.done,`${t.completionRate}%`,t.expectedLabel,t.expectedMissing,t.waitingCount,t.sentCount,t.runningCount,t.returnedCount,t.overdueCount,t.blockedCount,t.prepTotal,t.prepReady,t.prepPending];
+  const rows=data.themes.map(row);rows.push(row({...data,name:'合计',state:data.orphanCount?`另有${data.orphanCount}项未归属实验`:'全部主题'}));
+  const url=URL.createObjectURL(buildXlsx(header,rows,'实验整体进度')),link=document.createElement('a');
+  link.href=url;link.download=`实验整体进度_${dateStr()}.xlsx`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
 function renderBatchProgress() {
-  const box = $('#batchProgress'); if (!box) return;
-  const batch = testDb.batches.find(b => b.id === currentBatchId); if (!batch) { box.innerHTML = ''; return; }
-  const p = calcBatchProgress(batch.id);
-  const st = prepStats(batch);
-  const sub = st.total ? ` · 准备清单 ${st.done}/${st.total}` : '';
-  box.innerHTML = `<div class="bp-wrap"><div class="bp-top"><span class="bp-pct">${p.pct}%</span><span class="bp-meta">完成 ${p.done} / 共 ${p.total}</span></div><div class="bp-bar"><div class="bp-fill" style="width:${p.pct}%"></div></div><div class="bp-sub">已送样 ${p.sentCount} · 实验中 ${p.runningCount} · 待准备 ${p.waitingCount}${sub}</div></div>`;
+  const box=$('#batchProgress');if(!box)return;
+  const batch=testDb.batches.find(b=>b.id===currentBatchId);if(!batch){box.innerHTML='';return;}
+  const data=getBoardOverviewData().themes.find(t=>t.id===batch.id);if(!data){box.innerHTML='';return;}
+  const st=prepStats(batch),title=String(batch.name || '')+' · 整体进度';
+  box.innerHTML=`<section class="theme-progress-panel" aria-label="${esc(title)}"><div class="theme-progress-top"><div><h3>${esc(title)}</h3><div class="theme-completion-value">${data.completionRate}%<small>已完成 ${data.done} / 共 ${data.total} 项实验</small></div></div><div class="theme-progress-context"><strong style="font-size:14px;color:var(--text)">预计完成：${esc(data.expectedLabel)}</strong><br>${data.expectedMissing?`另有 ${data.expectedMissing} 项未排期，请补充确认<br>`:''}${st.total?`准备清单 ${st.done}/${st.total} 项完成`:'尚未建立准备清单'}</div></div><div class="leader-progress-track"><div class="leader-progress-fill" style="width:${data.completionRate}%"></div></div><div class="theme-progress-stats"><span>手动标记逾期<b>${data.overdueCount}</b></span><span>手动标记需协调<b>${data.blockedCount}</b></span><span>待确认分工<b>${data.unassignedCount}</b></span><button class="link" onclick="editBatchName()">维护预计完成时间</button></div>${boardPhaseMarkup(data)}</section>`;
 }
+
+function prepQuantityReady(item) {
+  const need=Number(item.qty),prepared=Number(item.done);
+  return Number.isFinite(need) && need>0 && Number.isFinite(prepared) && prepared>=need;
+}
+function prepVerified(item) { return item.verified===true || item.verified===1 || item.verified==='是' || item.verified==='true'; }
+function prepReady(item) { return prepQuantityReady(item) && prepVerified(item); }
+function prepStage(item) { return prepReady(item)?'已就绪':prepQuantityReady(item)?'待验收':Number(item.done)>0?'准备中':'待准备'; }
 function prepStats(batch) {
-  const list = (batch && batch.preparations) || [];
-  return { total: list.length, done: list.filter(p => p.status === '已完成').length, itemsDone: list.reduce((s, p) => s + Number(p.done || 0), 0), itemsNeed: list.reduce((s, p) => s + Number(p.qty || 0), 0) };
+  const list=Array.isArray(batch?.preparations)?batch.preparations:[];
+  const prepared=list.filter(prepQuantityReady).length,ready=list.filter(prepReady).length;
+  return {total:list.length,done:prepared,ready,pending:list.length-ready,pendingQuantity:list.length-prepared,pendingVerification:prepared-ready,
+    percent:list.length?Math.round(ready/list.length*100):0,
+    itemsDone:list.reduce((n,p)=>n+(Number(p.done)||0),0),itemsNeed:list.reduce((n,p)=>n+(Number(p.qty)||0),0)};
 }
+function preparationTaskRows(batch,person='') {
+  if(!batch)return [];
+  return (batch.preparations || []).filter(p=>!prepReady(p)).filter(p=>!person || !String(p.person || '').trim() || p.person===person).map(p=>({
+    kind:'prep',batchId:batch.id,prepId:p.id,cardId:'prep:'+batch.id+':'+p.id,title:p.name || '未命名准备项',
+    action:prepQuantityReady(p)?'已备齐，等待验收':`准备 ${p.done ?? 0} / ${p.qty ?? 0}`,
+    owner:p.person || '',shared:!String(p.person || '').trim(),date:p.dueDate || '',blocker:p.remark || '',
+    overdue:false,coordination:false,attentionStatus:'none',stage:prepStage(p)
+  }));
+}
+function preparationTableRows(items) {
+  return items.map(p=>{
+    const id=esc(JSON.stringify(String(p.id))),ready=prepReady(p),stage=prepStage(p);
+    const mismatch=p.status==='已完成'&&!prepQuantityReady(p)?'<div style="font-size:11px;color:var(--text-sec)">原记录为已完成，请核对数量</div>':'';
+    return `<tr><td><strong>${esc(p.name)}</strong><div><span class="badge ${ready?'st-ok':prepQuantityReady(p)?'st-info':'st-warn'}">${stage}</span></div>${mismatch}</td><td><input type="number" min="0" step="1" aria-label="${esc(p.name)}已备数量" value="${esc(p.done ?? 0)}" style="width:74px" onchange="updatePrepDone(${id},this.value)"> / ${esc(p.qty ?? 0)}</td><td><label style="display:flex;align-items:center;gap:5px;white-space:nowrap"><input type="checkbox" ${prepVerified(p)?'checked':''} onchange="togglePrepVerified(${id},this.checked)">已验收</label></td><td>${esc(p.person || '共同准备')}</td><td>${esc(p.dueDate || '待排期')}</td><td style="white-space:normal;max-width:230px">${esc(p.remark || '—')}</td><td><button class="link" onclick="openPrepItemEditor(${id})">编辑</button><button class="link danger" onclick="delPrepItem(${id})">删除</button></td></tr>`;
+  }).join('');
+}
+function preparationTable(items) {
+  return `<div class="prep-table-wrap"><table><thead><tr><th>准备事项</th><th>已备 / 需要</th><th>验收</th><th>责任人</th><th>计划日期</th><th>跟进说明</th><th></th></tr></thead><tbody>${preparationTableRows(items)}</tbody></table></div>`;
+}
+function renderPreparationPanel() {
+  const host=$('#preparationPanel');if(!host)return;
+  const batch=testDb.batches.find(b=>b.id===currentBatchId);if(!batch){host.innerHTML='';return;}
+  const items=batch.preparations || [],st=prepStats(batch),pending=items.filter(p=>!prepReady(p)),ready=items.filter(prepReady);
+  host.innerHTML=`<section class="preparation-panel" aria-label="${esc(batch.name)}实验准备"><div class="preparation-heading"><div><span class="prep-eyebrow">实验开始前的准备与验收</span><h3>实验准备 <span class="badge ${st.total&&st.pending===0?'st-ok':'st-info'}">${st.total?st.pending?'进行中':'已就绪':'尚未建立'}</span></h3></div><div class="prep-actions"><button class="primary" onclick="openPrepItemEditor()">＋ 新增准备事项</button><button class="ghost" onclick="openPrepModal()">管理完整清单</button></div></div><div class="preparation-summary"><span><b>${st.ready}</b> / ${st.total} 项就绪</span><span>未备齐 <b>${st.pendingQuantity}</b> 项</span><span>待验收 <b>${st.pendingVerification}</b> 项</span><span class="prep-explanation">准备待办同步显示在下方待执行清单</span></div><div class="prep-progress-track"><div style="width:${st.percent}%"></div></div>${pending.length?preparationTable(pending):`<div class="prep-empty">${st.total?'所有准备事项已备齐并验收。':'请列出样品、板卡、治具、设备或实验室安排等准备事项。'}</div>`}${ready.length?`<details class="prep-completed"><summary>已就绪 ${ready.length} 项</summary>${preparationTable(ready)}</details>`:''}</section>`;
+}
+function commitPreparationChange(batchId,change) {
+  try{
+    assertStorageCurrent();
+    const next=JSON.parse(JSON.stringify(testDb)),batch=next.batches.find(b=>b.id===batchId);
+    if(!batch)throw new Error('试验主题已不存在');
+    if(change(batch)===false)return false;
+    const payload=statePayload(materialDb,next);
+    localStorage.setItem(STORE_KEY,payload);
+    clearTimeout(saveTimer);testDb=next;storageSnapshot=payload;memorySnapshot=payload;
+    setStatus('实验准备已保存','var(--success)');
+    renderPrepModal();renderBatches();renderBoard();return true;
+  }catch(err){alert('实验准备未保存：'+err.message);renderPrepModal();renderPreparationPanel();return false;}
+}
+function openPrepItemEditor(prepId=null,batchId=currentBatchId) {
+  const batch=testDb.batches.find(b=>b.id===batchId);if(!batch)return alert('请先选择试验主题');
+  const item=prepId==null?null:(batch.preparations || []).find(p=>p.id===prepId);
+  if(prepId!=null&&!item)return alert('准备事项已不存在，请刷新后重试');
+  const before=item?JSON.stringify(item):null;
+  openInputModal(item?'编辑实验准备':'新增实验准备',[
+    {id:'name',label:'准备事项名称',value:item?.name || ''},
+    {id:'qty',label:'需要数量',type:'number',value:item?.qty ?? 1},
+    {id:'done',label:'已备数量',type:'number',value:item?.done ?? 0},
+    {id:'verified',label:'验收确认',type:'select',options:['未验收','已验收'],value:prepVerified(item || {})?'已验收':'未验收'},
+    {id:'person',label:'责任人（可留空作为共同准备）',value:item?.person || ''},
+    {id:'dueDate',label:'计划日期（选填）',type:'date',value:item?.dueDate || ''},
+    {id:'remark',label:'跟进说明',value:item?.remark || ''}
+  ],values=>{
+    const name=String(values.name || '').trim();if(!name){alert('请填写准备事项名称');return false;}
+    let qty,done;try{qty=stockInteger(values.qty,'需要数量');done=stockInteger(values.done,'已备数量');}catch(err){alert(err.message);return false;}
+    const dueDate=String(values.dueDate || '');if(dueDate&&!isValidDateOnly(dueDate)){alert('请填写有效日期');return false;}
+    return commitPreparationChange(batchId,next=>{
+      const list=next.preparations || (next.preparations=[]),record=item?list.find(p=>p.id===prepId):{id:'p_'+uid()};
+      if(item&&(!record||JSON.stringify(record)!==before))throw new Error('准备事项已变化，请重新打开后编辑');
+      const quantityChanged=!item || Number(item.qty)!==qty || Number(item.done)!==done;
+      Object.assign(record,{name,qty,done,verified:values.verified==='已验收',person:String(values.person || '').trim(),dueDate,remark:String(values.remark || '').trim()});
+      if(quantityChanged)autoPrepStatus(record);if(!item)list.push(record);
+    });
+  });
+}
+
 function autoPrepStatus(p) {
   if (Number(p.qty) > 0 && Number(p.done) >= Number(p.qty)) p.status = '已完成';
   else if (Number(p.done) > 0) p.status = '准备中';
   else p.status = '待准备';
 }
 function openPrepModal() {
-  if (!currentBatchId) return alert('请先新增试验主题！');
-  const batch = testDb.batches.find(b => b.id === currentBatchId); if (!batch) return;
-  if (!Array.isArray(batch.preparations)) batch.preparations = [];
-  renderPrepModal();
-  $('#modalPrep').classList.remove('hidden');
+  if(!currentBatchId)return alert('请先新增试验主题');
+  renderPrepModal();showModalOnTop('modalPrep');
 }
+
 function renderPrepModal() {
-  const batch = testDb.batches.find(b => b.id === currentBatchId); if (!batch) return;
-  const list = batch.preparations || []; const st = prepStats(batch);
-  const rows = list.map(p => {
-    const cls = p.status === '已完成' ? 'st-ok' : (p.status === '准备中' ? 'st-warn' : 'st-muted');
-    return `<tr><td><strong>${esc(p.name)}</strong></td><td class="num">${p.qty}</td><td class="num"><input type="number" min="0" value="${p.done}" style="width:74px;height:28px;" onchange="updatePrepDone('${p.id}', this.value)"></td><td><span class="badge ${cls}">${esc(p.status)}</span></td><td style="text-align:center;"><input type="checkbox" ${p.verified ? 'checked' : ''} onchange="togglePrepVerified('${p.id}', this.checked)"></td><td style="max-width:200px; white-space:normal; font-size:12px; color:var(--text-sec);">${esc(p.remark) || '-'}</td><td style="text-align:right;"><button class="link danger" onclick="delPrepItem('${p.id}')">删除</button></td></tr>`;
-  }).join('');
-  $('#prepFormBody').innerHTML = `<div style="font-size:13px; color:var(--text-sec); margin-bottom:14px;">${esc(batch.name)} · 共 ${st.total} 项，已完成 ${st.done} · 已备 ${st.itemsDone}/${st.itemsNeed}</div><div class="table-container" style="margin-bottom:18px; max-height:300px; overflow-y:auto;"><table><thead><tr><th>准备项目</th><th class="num">需要</th><th class="num">已备</th><th>状态</th><th style="text-align:center;">验过</th><th>备注</th><th style="text-align:right;">操作</th></tr></thead><tbody>${rows || '<tr><td colspan="7" class="empty">暂无</td></tr>'}</tbody></table></div><div style="border-top:1px dashed var(--border); padding-top:16px;"><div style="font-weight:600; margin-bottom:12px;">新增准备项</div><div class="form-grid"><div class="form-group full"><label>名称 *</label><input id="prep_name" placeholder="如：可靠性底板"></div><div class="form-group"><label>需要数量</label><input id="prep_qty" type="number" value="1"></div><div class="form-group"><label>已备数量</label><input id="prep_done" type="number" value="0"></div><div class="form-group"><label>状态</label><select id="prep_status"><option>待准备</option><option>准备中</option><option>已完成</option></select></div><div class="form-group"><label>是否验过</label><select id="prep_verified"><option value="否">未验过</option><option value="是">已验过</option></select></div><div class="form-group full"><label>备注</label><input id="prep_remark"></div></div><button class="primary" style="margin-top:14px;" onclick="addPrepItem()">添加准备项</button></div>`;
+  const batch=testDb.batches.find(b=>b.id===currentBatchId);if(!batch)return;
+  const st=prepStats(batch);
+  $('#prepFormBody').innerHTML=`<div style="margin-bottom:16px"><strong>${esc(batch.name)}</strong><p style="color:var(--text-sec);font-size:12px">就绪 ${st.ready}/${st.total} 项 · 未备齐 ${st.pendingQuantity} 项 · 待验收 ${st.pendingVerification} 项</p><button class="primary" onclick="openPrepItemEditor()">＋ 新增准备事项</button></div>${(batch.preparations || []).length?preparationTable(batch.preparations):'<div class="empty">暂无准备事项</div>'}<div style="margin-top:14px;color:var(--text-sec);font-size:12px">数量齐备与验收分别记录；已备齐且验收后，准备待办才会移出待执行清单。</div>`;
 }
-function addPrepItem() {
-  const batch = testDb.batches.find(b => b.id === currentBatchId); if (!batch) return;
-  const name = ($('#prep_name').value || '').trim(); if (!name) return alert('请填写名称');
-  if (!Array.isArray(batch.preparations)) batch.preparations = [];
-  const item = { id: 'p_' + uid(), name, qty: Math.max(0, Number($('#prep_qty').value) || 0), done: Math.max(0, Number($('#prep_done').value) || 0), status: $('#prep_status').value, verified: $('#prep_verified').value === '是', remark: ($('#prep_remark').value || '').trim() };
-  autoPrepStatus(item); batch.preparations.push(item);
-  save(); renderPrepModal(); renderBoard(); renderBatches();
-}
+
+function addPrepItem() { openPrepItemEditor(); }
+
 function delPrepItem(id) {
-  const batch = testDb.batches.find(b => b.id === currentBatchId);
-  if (!batch || !batch.preparations) return;
-  if (!confirm('确定删除？')) return;
-  batch.preparations = batch.preparations.filter(p => p.id !== id);
-  save(); renderPrepModal(); renderBoard(); renderBatches();
+  if(!confirm('确定删除该准备事项？'))return;
+  commitPreparationChange(currentBatchId,b=>{b.preparations=(b.preparations || []).filter(p=>p.id!==id);});
 }
-function updatePrepDone(id, val) {
-  const batch = testDb.batches.find(b => b.id === currentBatchId);
-  const p = batch && batch.preparations ? batch.preparations.find(x => x.id === id) : null;
-  if (!p) return;
-  p.done = Math.max(0, Number(val) || 0); autoPrepStatus(p);
-  save(); renderPrepModal(); renderBoard(); renderBatches();
+
+function updatePrepDone(id,value) {
+  let done;try{done=stockInteger(value,'已备数量');}catch(err){alert(err.message);renderPreparationPanel();renderPrepModal();return;}
+  commitPreparationChange(currentBatchId,b=>{const item=(b.preparations || []).find(p=>p.id===id);if(!item)throw new Error('准备事项已不存在');const changed=Number(item.done)!==done;item.done=done;if(changed)autoPrepStatus(item);});
 }
-function togglePrepVerified(id, checked) {
-  const batch = testDb.batches.find(b => b.id === currentBatchId);
-  const p = batch && batch.preparations ? batch.preparations.find(x => x.id === id) : null;
-  if (!p) return;
-  p.verified = !!checked; save();
+
+function togglePrepVerified(id,checked) {
+  commitPreparationChange(currentBatchId,b=>{const item=(b.preparations || []).find(p=>p.id===id);if(!item)throw new Error('准备事项已不存在');item.verified=!!checked;});
+}
+
+function getLocalToday() {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+}
+function isValidDateOnly(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ''))) return false;
+  const [y,m,d] = value.split('-').map(Number);
+  const date = new Date(y,m-1,d);
+  return date.getFullYear() === y && date.getMonth() === m-1 && date.getDate() === d;
 }
 function calcTime(startDate, durationDays) {
-  if (!startDate || !durationDays || durationDays <= 0) return { progress: 0, endDate: '' };
-  const start = new Date(startDate); start.setHours(0,0,0,0);
-  const now = new Date(); now.setHours(0,0,0,0);
-  const days = Math.floor((now - start) / 86400000);
-  const progress = days <= 0 ? 0 : (days >= durationDays ? 100 : Math.floor((days/durationDays)*100));
-  const end = new Date(start); end.setDate(end.getDate() + Number(durationDays));
-  return { progress, endDate: `${end.getFullYear()}-${pad2(end.getMonth()+1)}-${pad2(end.getDate())}` };
+  const duration = Number(durationDays);
+  if (!isValidDateOnly(startDate) || !Number.isFinite(duration) || duration <= 0) return { progress: 0, endDate: '' };
+  const [y,m,d] = startDate.split('-').map(Number);
+  const start = new Date(y,m-1,d), now = new Date();
+  const elapsed = (Date.UTC(now.getFullYear(),now.getMonth(),now.getDate()) - Date.UTC(y,m-1,d)) / 86400000;
+  const end = new Date(start); end.setDate(end.getDate() + Math.ceil(duration));
+  return { progress: Math.max(0,Math.min(100,Math.floor(elapsed/duration*100))), endDate: `${end.getFullYear()}-${pad2(end.getMonth()+1)}-${pad2(end.getDate())}` };
+}
+function hasElfrBatches(c) { return Array.isArray(c.elfrBatches) && c.elfrBatches.length > 0; }
+function isCardFinished(c) {
+  if (hasElfrBatches(c)) return c.elfrBatches.every(b => isElfrBatchFtComplete(b));
+  return c.status === '已FT';
+}
+function getCardDisplayStatus(c) {
+  if (!hasElfrBatches(c)) return c.status || '待准备';
+  if (isCardFinished(c)) return '已FT';
+  if (c.elfrBatches.every(b => ['已取回','已FT'].includes(b.status))) return '已取回';
+  if (c.elfrBatches.some(b => ['实验中','已取回','已FT'].includes(b.status) || (b.ftTests || []).some(t => t.done))) return '实验中';
+  if (c.elfrBatches.some(b => b.status === '已送样')) return '已送样';
+  return '待准备';
+}
+function getCardProgress(c) {
+  if (isCardFinished(c)) return 100;
+  const stage = s => ({'待准备':0,'已送样':10,'实验中':40,'已取回':80,'已FT':80})[s] || 0;
+  if (hasElfrBatches(c)) {
+    const total = c.elfrBatches.reduce((sum,b) => sum + Math.max(0,Number(b.qty)||0),0);
+    return total ? Math.round(c.elfrBatches.reduce((sum,b) => sum + Math.max(0,Number(b.qty)||0) * (isElfrBatchFtComplete(b) ? 100 : stage(b.status)),0)/total) : 0;
+  }
+  if (c.status === '实验中') return Math.min(70,20 + Math.round(calcTime(c.startDate,c.durationDays).progress * 0.5));
+  return stage(c.status);
+}
+function getExecutionTasks(cards,today=getLocalToday(),person='',preparationBatch=null) {
+  const tasks=[];
+  cards.forEach(c=>{
+    if(isCardFinished(c))return;
+    const status=getCardDisplayStatus(c),flags=getManualExperimentAttention(c);
+    const common={cardId:c.id,overdue:flags.overdue,coordination:flags.coordination,attentionStatus:flags.status,blocker:c.blocker || ''};
+    const fallback={'待准备':'确认物料、治具与送样安排','已送样':'确认实验室接收与开测时间','实验中':'确认实验进展与取回安排','已取回':'安排结项测试并记录实际执行人'};
+    tasks.push({...common,title:c.name,action:c.nextAction || fallback[status] || '核对实验进展',date:c.nextDate || '',owner:c.person || '',kind:'card'});
+    (c.elfrBatches || []).forEach(b=>{
+      const pending=(b.ftTests || []).filter(t=>!t.done);
+      pending.forEach(t=>{const owners=[...new Set((t.actualTesters || []).map(p=>String(p || '').trim()).filter(Boolean))];tasks.push({...common,title:`${c.name} · ${b.name || '未命名批次'}`,action:`FT ${Number(t.qty)||0} 颗`,date:t.date || '',owner:owners.join(' / '),owners,kind:'ft'});});
+      if(!pending.length && !isElfrBatchFtComplete(b) && ['已取回','已FT'].includes(b.status))tasks.push({...common,title:`${c.name} · ${b.name || '未命名批次'}`,action:'核对结项测试数量并补齐记录',date:'',owner:c.person || '',note:'测试记录不足，请核对',kind:'ft'});
+    });
+  });
+  tasks.push(...preparationTaskRows(preparationBatch,person));
+  return tasks.filter(t=>!person || t.shared || t.owner===person || (t.owners || []).includes(person)).map(t=>({...t,today:!!t.date && t.date===today})).sort((a,b)=>Number(b.overdue)-Number(a.overdue)||Number(b.coordination)-Number(a.coordination)||(a.date || '9999').localeCompare(b.date || '9999'));
+}
+
+function renderExecutionAgenda() {
+  const grid=$('#cardGrid');if(!grid)return;
+  let host=$('#executionAgenda');if(!host){host=document.createElement('div');host.id='executionAgenda';grid.parentNode.insertBefore(host,grid);}
+  const batch=testDb.batches.find(b=>b.id===currentBatchId);
+  const tasks=getExecutionTasks(testDb.cards.filter(c=>c.batchId===currentBatchId),getLocalToday(),$('#filterPerson')?.value || '',batch);
+  const preparations=tasks.filter(t=>t.kind==='prep'),overdue=new Set(tasks.filter(t=>t.overdue).map(t=>t.cardId)).size,coordination=new Set(tasks.filter(t=>t.coordination).map(t=>t.cardId)).size;
+  const styles='padding:10px 12px;border-bottom:1px solid var(--border);white-space:normal;';
+  const attention=t=>t.kind==='prep'?`<span class="badge st-info">${esc(t.stage)}</span>`:(t.overdue?'<span class="badge st-danger">标记逾期</span>':'')+(t.coordination?'<span class="badge st-warn">标记需协调</span>':'')+(!t.overdue&&!t.coordination?(t.attentionStatus==='normal'?'<span class="badge st-ok">正常</span>':'未设置'):'');
+  const sorted=tasks.slice().sort((a,b)=>Number(b.kind==='prep')-Number(a.kind==='prep'));
+  host.innerHTML=`<details ${preparations.length || overdue || coordination?'open':''} style="margin-bottom:18px;background:var(--surface);border:1px solid var(--border);border-radius:9px"><summary style="padding:13px 15px;cursor:pointer;font-weight:600">待执行事项 · ${tasks.length} 项（实验准备 ${preparations.length} 项）${overdue?` · 手动标记逾期 ${overdue} 项实验`:''}${coordination?` · 手动标记需协调 ${coordination} 项实验`:''}</summary>${tasks.length?`<div style="overflow-x:auto"><table><thead><tr><th>类别 / 事项</th><th>责任人</th><th>计划日期</th><th>状态 / 提醒</th><th>跟进说明</th><th></th></tr></thead><tbody>${sorted.map(t=>{
+    const action=t.kind==='prep'?`openPrepItemEditor(${JSON.stringify(String(t.prepId))},${JSON.stringify(String(t.batchId))})`:`${t.kind==='ft'?'openElfrModal':'openBoardModal'}(${JSON.stringify(String(t.cardId))})`;
+    return `<tr><td style="${styles}"><span class="badge ${t.kind==='prep'?'st-info':'st-muted'}">${t.kind==='prep'?'实验准备':t.kind==='ft'?'测试安排':'实验推进'}</span><strong style="display:block;margin-top:4px">${esc(t.title)}</strong><div style="font-size:12px;color:var(--text-sec)">${esc(t.action)}</div></td><td style="${styles}">${esc(t.owner || (t.shared?'共同准备':'待确认'))}</td><td style="${styles}">${esc(t.date || '待排期')}${t.today?' · 今天':''}</td><td style="${styles}">${attention(t)}</td><td style="${styles}">${esc([t.blocker,t.note].filter(Boolean).join('；') || '—')}</td><td style="${styles}"><button class="link" onclick="${esc(action)}">处理</button></td></tr>`;
+  }).join('')}</tbody></table></div>`:'<div style="padding:0 15px 15px;color:var(--text-sec)">当前没有待执行事项。</div>'}</details>`;
 }
 
 function calcElfrOverview(elfrB) {
-  const sentQty = elfrB.filter(b => b.status !== '待准备').reduce((s, b) => s + Number(b.qty || 0), 0);
-  const ftQty = elfrB.filter(b => b.status === '已FT').reduce((s, b) => s + Number(b.qty || 0), 0);
-  return { sentQty, ftQty };
+  const sentQty = elfrB.filter(b => b.status !== '待准备').reduce((s,b)=>s+(Number(b.qty)||0),0);
+  const ftQty = elfrB.filter(isElfrBatchFtComplete).reduce((s,b)=>s+(Number(b.qty)||0),0);
+  return {sentQty,ftQty};
 }
 
 function renderBoard() {
+  const overview=$('#boardOverview'),details=$('#boardThemeDetails');
+  const data=getBoardOverviewData();
+  overview.innerHTML=renderBoardOverview(data);
   const batch = testDb.batches.find(b => b.id === currentBatchId);
-  if (batch) $('#currentBatchTitle').textContent = batch.name;
-  else { $('#batchProgress').innerHTML = ''; return; }
+  const grid = $('#cardGrid');
+  const showDetails=boardViewMode==='theme' && !!batch;
+  overview.hidden=showDetails;details.hidden=!showDetails;
+  if (!showDetails) {
+    boardViewMode='overview';
+    $('#currentBatchTitle').textContent=batch ? batch.name : '请选择试验主题';
+    $('#batchProgress').innerHTML='';
+    $('#preparationPanel').innerHTML='';
+    $('#executionAgenda').innerHTML='';
+    grid.innerHTML='';
+    renderBatches();
+    return;
+  }
+  $('#currentBatchTitle').textContent = batch.name;
+  renderPreparationPanel();
   renderBatchProgress();
-
   const allPersons = new Set();
   testDb.cards.filter(c => c.batchId === currentBatchId).forEach(c => {
     if (c.person) allPersons.add(c.person);
-    if (Array.isArray(c.elfrBatches)) {
-      c.elfrBatches.forEach(b => {
-        (b.injectors || []).forEach(p => { if (p) allPersons.add(p); });
-        (b.ftTests || []).forEach(t => { (t.actualTesters || []).forEach(p => { if (p) allPersons.add(p); }); });
-      });
-    }
-  });
-  const persons = [...allPersons];
-  const filter = $('#filterPerson');
-  const cur = filter.value;
-  filter.innerHTML = '<option value="">全部责任人</option>' + persons.map(p => `<option value="${p}" ${p===cur?'selected':''}>${p}</option>`).join('');
-
-  let cards = testDb.cards.filter(c => c.batchId === currentBatchId);
-  if (cur) {
-    cards = cards.filter(c => {
-      if (c.person === cur) return true;
-      if (Array.isArray(c.elfrBatches)) {
-        if (c.elfrBatches.some(b => (b.injectors || []).includes(cur))) return true;
-        if (c.elfrBatches.some(b => (b.ftTests || []).some(t => (t.actualTesters || []).includes(cur)))) return true;
-      }
-      return false;
+    (c.elfrBatches || []).forEach(b => {
+      (b.injectors || []).forEach(p => { if (p) allPersons.add(p); });
+      (b.ftTests || []).forEach(t => (t.actualTesters || []).forEach(p => { if (p) allPersons.add(p); }));
     });
+  });
+  (batch.preparations || []).forEach(p=>{if(p.person)allPersons.add(p.person);});
+  const filter = $('#filterPerson');
+  const cur = allPersons.has(filter.value) ? filter.value : '';
+  filter.innerHTML = '<option value="">全部责任人</option>' + [...allPersons].map(p => `<option value="${esc(p)}" ${p===cur?'selected':''}>${esc(p)}</option>`).join('');
+  let cards = testDb.cards.filter(c => c.batchId === currentBatchId);
+  if (cur) cards = cards.filter(c => c.person === cur || (c.elfrBatches || []).some(b => (b.injectors || []).includes(cur) || (b.ftTests || []).some(t => (t.actualTesters || []).includes(cur))));
+  if (!cards.length) {
+    grid.innerHTML = '<div class="empty">暂无符合条件的实验项</div>';
+    if (typeof renderExecutionAgenda === 'function') renderExecutionAgenda();
+    return;
   }
-
-  const grid = $('#cardGrid');
-  if (cards.length === 0) { grid.innerHTML = '<div class="empty">暂无实验项</div>'; return; }
-
-  grid.innerHTML = cards.map(c => {
-    const badgeCls = statusClass(c.status);
-    const timeData = calcTime(c.startDate, c.durationDays);
-    const progress = c.status === '已FT' ? 100 : timeData.progress;
+  const now = new Date();
+  const today = typeof getLocalToday === 'function' ? getLocalToday() : `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
+  const displayStatus = c => typeof getCardDisplayStatus === 'function' ? getCardDisplayStatus(c) : c.status;
+  const renderCard = c => {
+    const timeData = {...calcTime(c.startDate,c.durationDays),endDate:getExperimentExpectedDate(c)};
+    const status = displayStatus(c);
+    const finished = typeof isCardFinished === 'function' ? isCardFinished(c) : status === '已FT';
+    const progress = Math.max(0, Math.min(100, Number(typeof getCardProgress === 'function' ? getCardProgress(c) : finished ? 100 : timeData.progress) || 0));
+    const attention=getManualExperimentAttention(c);
+    const idArg = esc(JSON.stringify(String(c.id || '')));
     let elfrHtml = '';
-    if (c.name.includes('ELFR') || c.name.includes('早期失效')) {
-      const elfrB = c.elfrBatches || [];
-      const { sentQty, ftQty } = calcElfrOverview(elfrB);
-      elfrHtml = `
-        <div class="elfr-box">
-          <div class="elfr-box-title">分批管理 <button class="link" onclick="openElfrModal('${c.id}')">管理</button></div>
-          <div class="elfr-stat">已送样 <b>${sentQty}</b> 颗 · 已FT <b>${ftQty}</b> 颗</div>
-          <div style="display:flex; gap:4px; flex-wrap:wrap; margin-top:6px;">
-            ${elfrB.map(b => {
-              const injArr = (b.injectors || []).filter(Boolean);
-              const injTxt = injArr.length ? ' · ' + injArr.join('/') : '';
-              const ftDoneCnt = (b.ftTests || []).filter(t => t.done).length;
-              const ftPendingCnt = (b.ftTests || []).length - ftDoneCnt;
-              let ftTxt = '';
-              if (ftDoneCnt > 0) ftTxt = ` · FT完成${ftDoneCnt}次`;
-              else if (ftPendingCnt > 0) ftTxt = ` · FT计划`;
-              return `<span class="badge ${statusClass(b.status)}" title="投实验：${esc(injArr.join('/')||'未分配')}">${esc(b.name)}: ${b.qty}颗·${esc(b.status)}${injTxt}${ftTxt}</span>`;
-            }).join('')}
-          </div>
-        </div>
-      `;
+    if (hasElfrBatches(c) || /ELFR|早期失效/i.test(c.name || '')) {
+      const batches = c.elfrBatches || [];
+      const { sentQty, ftQty } = calcElfrOverview(batches);
+      elfrHtml = `<div class="elfr-box"><div class="elfr-box-title">分批管理 <button class="link" onclick="openElfrModal(${idArg})">管理安排</button></div><div class="elfr-stat">已送样 <b>${sentQty}</b> 颗 · 已 FT <b>${ftQty}</b> 颗 · ${batches.length} 批</div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:9px">${batches.map(b => {
+        const done = (b.ftTests || []).filter(t => t.done).length;
+        const pending = (b.ftTests || []).filter(t => !t.done).length;
+        return `<span class="badge ${statusClass(b.status)}">${esc(b.name)} · ${esc(b.qty)}颗 · ${esc(b.status)}${pending ? ` · 待FT ${pending}项` : done ? ' · FT已记录' : ''}</span>`;
+      }).join('')}</div></div>`;
     }
-    return `<div class="tc-card"><div class="tc-header"><div><h3 class="tc-title">${esc(c.name)}</h3><div class="tc-sub">数量: ${c.qty} pcs</div></div><span class="badge ${badgeCls}">${esc(c.status)}</span></div><div class="tc-body">${c.remark ? `<div class="remark-box">${esc(c.remark)}</div>` : `<div class="remark-box empty">暂无进展</div>`}${elfrHtml}<div class="info-row"><div class="info-label">试验条件:</div><div class="info-val">${esc(c.note) || '未设置'}</div></div><div class="info-row"><div class="info-label">预计结束:</div><div class="info-val" style="color:${timeData.endDate ? 'var(--danger)' : 'var(--text-sec)'}; font-weight:600;">${timeData.endDate || '未设置'}</div></div><div class="progress-wrap"><div class="progress-bar" style="width: ${progress}%; ${progress===100?'background:var(--success)':''}"></div></div><div style="display:flex; justify-content:space-between; font-size:12px; margin-top:4px; color:var(--text-sec)"><span>进度: ${progress}%</span><span>更新: ${c.updatedAt || '未记录'}</span></div></div><div class="tc-footer"><div class="person"><div class="person-avatar">${c.person?c.person.slice(-1):'?'}</div>${esc(c.person||'未分配')}</div><div style="display:flex; gap:6px;"><button class="link" onclick="openBoardModal('${c.id}')">编辑</button><button class="link danger" onclick="delCard('${c.id}')">删除</button></div></div></div>`;
+    const actionHtml=c.nextAction || c.nextDate?`<div class="next-action"><b>下一步</b> ${esc(c.nextAction) || '待确认'}${c.nextDate?`<br><span>下一步日期 ${esc(c.nextDate)}</span>`:''}</div>`:'';
+    const alertBadges=(attention.status==='normal'?'<span class="badge st-ok">正常</span>':'')+(attention.overdue?'<span class="badge st-danger">手动标记逾期</span>':'')+(attention.coordination?'<span class="badge st-warn">手动标记需协调</span>':'');
+    const blockerHtml=!finished && (alertBadges || c.blocker)?`<div class="${attention.overdue||attention.coordination?'blocker-note':'followup-note'}">${alertBadges}${c.blocker?`<div>跟进说明：${esc(c.blocker)}</div>`:''}</div>`:'';
+    return `<article class="tc-card"><div class="tc-header"><div><h3 class="tc-title">${esc(c.name)}</h3><div class="tc-sub">样品 ${esc(c.qty)} pcs</div></div><span class="badge ${statusClass(status)}">${esc(experimentStatusLabel(status))}</span></div><div class="tc-body">${c.remark ? `<div class="remark-box">${esc(c.remark)}</div>` : '<div class="remark-box empty">当前进展待更新</div>'}${elfrHtml}<div class="info-row"><div class="info-label">试验条件</div><div class="info-val">${esc(c.note) || '未设置'}</div></div><div class="info-row"><div class="info-label">预计完成</div><div class="info-val" style="color:var(--text-sec)">${timeData.endDate || '未设置'}</div></div>${actionHtml}${blockerHtml}<div class="progress-wrap"><div class="progress-bar" style="width:${progress}%"></div></div><div style="display:flex;justify-content:space-between;gap:8px;font-size:10px;margin-top:6px;color:var(--text-sec)"><span>${finished?'实验已完成':`${typeof getCardProgress === 'function'?'执行':'时间'}进度 ${progress}%`}</span><span>更新 ${esc(c.updatedAt) || '未记录'}</span></div></div><div class="tc-footer"><div class="person"><div class="person-avatar">${esc(c.person ? c.person.slice(-1) : '?')}</div>${esc(c.person || '未分配')}</div><div><button class="link" onclick="openBoardModal(${idArg})">更新进展</button><button class="link danger" onclick="delCard(${idArg})">删除</button></div></div></article>`;
+  };
+  const order = ['待准备','已送样','实验中','已取回','已FT'];
+  const otherStatuses = [...new Set(cards.map(displayStatus).filter(s => !order.includes(s)))];
+  grid.innerHTML = [...order,...otherStatuses].map(status => {
+    const items = cards.filter(c => displayStatus(c) === status);
+    return items.length ? `<section class="board-state-group"><h3 class="board-group-title">${esc(experimentStatusLabel(status))}<span>${items.length} 项</span></h3><div class="grid-cards">${items.map(renderCard).join('')}</div></section>` : '';
   }).join('');
+  if (typeof renderExecutionAgenda === 'function') renderExecutionAgenda();
 }
+
+function getSavedAecProject(card) {
+  const projects = ['HTOL','ELFR','HAST','AC','HTSL','TC','PTC','LTOL','PC','SD'];
+  if (projects.includes(card.aecProject)) return card.aecProject;
+  const name = String(card.name || '').toUpperCase();
+  for (const project of projects) if (new RegExp('(^|[^A-Z])' + project + '([^A-Z]|$)').test(name)) return project;
+  if (name.includes('早期失效')) return 'ELFR';
+  if (name.includes('高温存储')) return 'HTSL';
+  if (name.includes('高温工作')) return 'HTOL';
+  return '';
+}
+
 function openBoardModal(id) {
   if (!currentBatchId) return alert('请先新增试验主题！');
   const c = id ? testDb.cards.find(x => x.id === id) : { name:'', qty:'', person:'', status:'待准备', startDate:'', durationDays:'', remark:'', note:'' };
   const aecProjects = ['HTOL', 'ELFR', 'HAST', 'AC', 'HTSL', 'TC', 'PTC', 'LTOL', 'PC', 'SD'];
-  const projectOptions = aecProjects.map(p => `<option value="${p}">${p}</option>`).join('');
+  const selectedGrade = String(c.aecGrade ?? c.grade ?? '');
+  const selectedProject = getSavedAecProject(c);
+  const projectOptions = aecProjects.map(p => `<option value="${p}" ${p===selectedProject?'selected':''}>${p}</option>`).join('');
   const statusOpts = CARD_STATUSES.map(s => `<option value="${s}" ${c.status===s?'selected':''}>${s}</option>`).join('');
-  $('#boardFormBody').innerHTML = `<div class="form-group"><label>实验项目名称</label><input id="f_name" value="${esc(c.name)}"></div><div style="background: #eff6ff; border: 1px dashed #bfdbfe; padding: 12px; border-radius: 6px;"><div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--primary);">快捷填充 AEC-Q100</div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;"><div class="form-group" style="margin: 0;"><select id="aec_grade" class="filter-select" style="width: 100%;" onchange="fillAecCondition()"><option value="">选择 Grade...</option><option value="0">Grade 0</option><option value="1">Grade 1</option><option value="2">Grade 2</option><option value="3">Grade 3</option></select></div><div class="form-group" style="margin: 0;"><select id="aec_project" class="filter-select" style="width: 100%;" onchange="fillAecCondition()"><option value="">选择试验项目...</option>${projectOptions}</select></div></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;"><div class="form-group"><label>样品数量</label><input id="f_qty" type="number" value="${esc(c.qty)}"></div><div class="form-group"><label>责任人</label><input id="f_person" value="${esc(c.person)}"></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;"><div class="form-group"><label>状态</label><select id="f_status">${statusOpts}</select></div><div class="form-group"><label>送样时间</label><input id="f_startDate" type="date" value="${esc(c.startDate)}"></div></div><div class="form-group"><label>预计总时长(天)</label><input id="f_duration" type="number" value="${esc(c.durationDays)}"></div><div class="form-group"><label>当前进展</label><textarea id="f_remark" rows="2">${esc(c.remark)}</textarea></div><div class="form-group"><label>其他备注</label><textarea id="f_note" rows="3">${esc(c.note)}</textarea></div><input type="hidden" id="f_id" value="${id || ''}">`;
-  $('#modalBoard').classList.remove('hidden');
+  $('#boardFormBody').innerHTML = `<div class="form-group"><label>实验项目名称</label><input id="bf_name" value="${esc(c.name)}"></div><div style="background: #eff6ff; border: 1px dashed #bfdbfe; padding: 12px; border-radius: 6px;"><div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--primary);">快捷填充 AEC-Q100</div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;"><div class="form-group" style="margin: 0;"><select id="aec_grade" class="filter-select" style="width: 100%;" onchange="fillAecCondition()"><option value="">Grade 未设置（可不选）</option><option value="0" ${selectedGrade==='0'?'selected':''}>Grade 0</option><option value="1" ${selectedGrade==='1'?'selected':''}>Grade 1</option><option value="2" ${selectedGrade==='2'?'selected':''}>Grade 2</option><option value="3" ${selectedGrade==='3'?'selected':''}>Grade 3</option></select></div><div class="form-group" style="margin: 0;"><select id="aec_project" class="filter-select" style="width: 100%;" onchange="fillAecCondition()"><option value="">试验项目未设置（可不选）</option>${projectOptions}</select></div></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;"><div class="form-group"><label>样品数量</label><input id="bf_qty" type="number" value="${esc(c.qty)}"></div><div class="form-group"><label>责任人</label><input id="bf_person" value="${esc(c.person)}"></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;"><div class="form-group"><label>状态</label><select id="bf_status">${statusOpts}</select></div><div class="form-group"><label>送样时间</label><input id="bf_startDate" type="date" value="${esc(c.startDate)}"></div></div><div class="form-group"><label>预计完成日期（选填）</label><input id="bf_expectedCompletionDate" type="date" value="${esc(c.expectedCompletionDate || '')}"><small style="color:var(--text-sec)">留空时按送样日期和预计总时长估算，可随实验室安排调整。</small></div><div class="form-group"><label>进度提醒（手动标记）</label><select id="bf_attentionStatus">${[['normal','正常'],['overdue','标记逾期'],['coordination','标记需协调'],['both','标记逾期且需协调'],['none','未设置']].map(([value,label])=>`<option value="${value}" ${(c.attentionStatus || (id?'none':'normal'))===value?'selected':''}>${label}</option>`).join('')}</select></div><div class="form-group"><label>预计总时长(天)</label><input id="bf_duration" type="number" value="${esc(c.durationDays)}"></div><div class="form-group"><label>当前进展</label><textarea id="bf_remark" rows="2">${esc(c.remark)}</textarea></div><div class="form-group"><label>其他备注</label><textarea id="bf_note" rows="3">${esc(c.note)}</textarea></div><div style="border-top:1px solid var(--border);padding-top:16px;"><div class="form-group"><label>下一步（只写当前最近的一件事）</label><input id="bf_nextAction" value="${esc(c.nextAction || '')}" placeholder="例如：确认实验室档期 / 取回样品 / 完成 FT"></div><div class="form-group"><label>下一步到期日</label><input id="bf_nextDate" type="date" value="${esc(c.nextDate || '')}"></div><div class="form-group"><label>跟进说明</label><textarea id="bf_blocker" rows="2" placeholder="填写需要说明的情况；是否逾期或需协调由上方手动标记">${esc(c.blocker || '')}</textarea></div></div><input type="hidden" id="bf_id" value="${id || ''}">`;
+  showModalOnTop('modalBoard');
 }
 function fillAecCondition() {
   const grade = $('#aec_grade').value; const project = $('#aec_project').value;
-  const noteInput = $('#f_note'); const durationInput = $('#f_duration'); const nameInput = $('#f_name');
+  const noteInput = $('#bf_note'); const durationInput = $('#bf_duration'); const nameInput = $('#bf_name');
   if (!grade || !project) return;
   let condition = ''; let duration = 0; let fullName = '';
   if (project === 'HTOL') { fullName = '高温工作试验 (HTOL)'; duration = 50; if (grade === '0') condition = 'Ta=+150℃, 1000h, 带电'; if (grade === '1') condition = 'Ta=+125℃, 1000h, 带电'; if (grade === '2') condition = 'Ta=+105℃, 1000h, 带电'; if (grade === '3') condition = 'Ta=+85℃, 1000h, 带电'; }
@@ -1145,15 +1812,27 @@ function fillAecCondition() {
   noteInput.value = condition; durationInput.value = duration;
 }
 function saveCard() {
-  const id = $('#f_id').value; const name = $('#f_name').value;
-  if (!name) { alert('请填写实验项目名称'); return; }
+  const id = $('#bf_id').value, name = $('#bf_name').value.trim();
+  if (!name) return alert('请填写实验项目名称');
+  const card = id ? testDb.cards.find(c=>c.id===id) : null;
+  if (id && !card) return alert('实验项已不存在，请重新打开');
+  const qty = Number($('#bf_qty').value), duration = Number($('#bf_duration').value || 0);
+  if (!Number.isSafeInteger(qty) || qty < 0 || !Number.isFinite(duration) || duration < 0) return alert('样品数量必须是非负整数，时长不能为负数');
+  const status = $('#bf_status').value;
+  if (status === '已FT' && card && hasElfrBatches(card) && !card.elfrBatches.every(isElfrBatchFtComplete)) return alert('仍有 ELFR 批次未完成 FT，请先核对各批实际记录');
+  const expectedCompletionDate=$('#bf_expectedCompletionDate').value || '';
+  if(expectedCompletionDate && !isValidDateOnly(expectedCompletionDate))return alert('请填写有效的预计完成日期');
+  const requestedAttention=$('#bf_attentionStatus').value || card?.attentionStatus || (id?'none':'normal');
+  const attentionStatus=['none','normal','overdue','coordination','both'].includes(requestedAttention)?requestedAttention:'none';
+  const nextDate = $('#bf_nextDate').value;
+  if (nextDate && !isValidDateOnly(nextDate)) return alert('请填写有效的下一步到期日');
   const now = new Date();
-  const timeStr = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
-  const payload = { name, qty: $('#f_qty').value, person: $('#f_person').value, status: $('#f_status').value, startDate: $('#f_startDate').value, durationDays: Number($('#f_duration').value) || 0, remark: $('#f_remark').value, note: $('#f_note').value, updatedAt: timeStr };
-  if (id) { Object.assign(testDb.cards.find(x => x.id === id), payload); }
-  else { testDb.cards.push({ id: 'c_'+Date.now(), batchId: currentBatchId, elfrBatches: [], ...payload }); }
+  const payload = {name,qty,expectedCompletionDate,attentionStatus,aecGrade:$('#aec_grade').value,aecProject:$('#aec_project').value,person:$('#bf_person').value.trim(),status,startDate:$('#bf_startDate').value,durationDays:duration,remark:$('#bf_remark').value,note:$('#bf_note').value,nextAction:$('#bf_nextAction').value.trim(),nextDate,blocker:$('#bf_blocker').value.trim(),updatedAt:`${getLocalToday()} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`};
+  if (card) Object.assign(card,payload);
+  else testDb.cards.push({id:'c_'+uid(),batchId:currentBatchId,elfrBatches:[],...payload});
   save(); $('#modalBoard').classList.add('hidden'); renderBoard(); renderBatches();
 }
+
 function delCard(id) {
   const c = testDb.cards.find(x => x.id === id); if (!c) return;
   if (!confirm(`确定删除「${c.name}」？`)) return;
@@ -1180,15 +1859,15 @@ function renderElfrModal() {
       ⚠️ 检测到 <b>${oldStatusBatches.length}</b> 个批次状态不在标准 5 种之内，下方这些批次的下拉框会标红显示。
       可以用「🔄 批量设置状态」一次性修正，也可以逐个改。
     </div>` : '';
-  const cardsHtml = batches.map(b => renderElfrBatchCard(b)).join('') || '<div class="empty" style="padding:20px 0;">暂无批次，点下方「+ 新增批次」或「🎲 自动分配」</div>';
+  const cardsHtml = batches.map(b => renderElfrBatchCard(b)).join('') || '<div class="empty" style="padding:20px 0;">暂无批次，点下方「+ 新增批次」或「生成建议安排」</div>';
   $('#elfrFormBody').innerHTML = `
     <div class="elfr-toolbar">
-      <button class="primary" onclick="autoAssignElfr()">🎲 自动分配</button>
+      <button class="primary" onclick="autoAssignElfr()">生成建议安排</button>
       <button class="ghost" onclick="addElfrBatch()">+ 新增批次</button>
-      <button class="ghost" onclick="showScorePreview()" title="查看当前每人工作量评分（实时反映当前分配）">📊 工作量评分</button>
       <button class="ghost" onclick="batchSetElfrStatus()" title="一次性把所有批次设成统一状态">🔄 批量设置状态</button>
     </div>
     ${oldWarn}
+    <div style="font-size:12px;color:var(--text-sec);margin:0 0 12px;">建议安排可随时调整；临时换人只修改对应记录，完成后再勾选“完成”，无需重排全部批次。</div>
     <div id="elfrSummary" class="elfr-summary-bar"></div>
     <div id="elfrBatchCards">${cardsHtml}</div>
   `;
@@ -1207,7 +1886,7 @@ function renderElfrBatchCard(b) {
   const ftPendingCount = ftTests.length - ftDoneCount;
   const ftDoneQty = ftTests.filter(t => t.done).reduce((s, t) => s + Number(t.qty || 0), 0);
   const ftAllDone = ftTests.length > 0 && ftTests.every(t => t.done);
-  const ftDone = ftAllDone && ftDoneQty >= Number(b.qty || 0) && b.qty > 0;
+  const ftDone = isElfrBatchFtComplete(b);
 
   const injInputs = [];
   for (let i = 0; i < b.injCount; i++) {
@@ -1217,15 +1896,16 @@ function renderElfrBatchCard(b) {
 
   const ftRowsHtml = ftTests.map(t => {
     const actual = t.actualTesters || ['', ''];
-    const swapped = actual.some(name => name && !inj.includes(name));
+    const planned = t.plannedTesters || actual;
+    const swapped = actual.some((name, index) => name !== (planned[index] || ''));
     const isDone = !!t.done;
     return `<div class="elfr-ft-row ${swapped ? 'swapped' : ''} ${isDone ? 'done' : ''}" id="ft_row_${t.id}">
       <label class="done-check"><input type="checkbox" ${isDone ? 'checked' : ''} onchange="toggleFtDone('${b.id}','${t.id}',this.checked)">完成</label>
       <input type="date" value="${esc(t.date || '')}" oninput="setFtValue('${b.id}','${t.id}','date',this.value)">
-      <input placeholder="实际执行人 1" value="${esc(actual[0] || '')}" oninput="setFtValue('${b.id}','${t.id}','t0',this.value)">
-      <input placeholder="实际执行人 2" value="${esc(actual[1] || '')}" oninput="setFtValue('${b.id}','${t.id}','t1',this.value)">
+      <input placeholder="${isDone ? '实际执行人 1' : '拟执行人 1'}" value="${esc(actual[0] || '')}" oninput="setFtValue('${b.id}','${t.id}','t0',this.value)">
+      <input placeholder="${isDone ? '实际执行人 2' : '拟执行人 2'}" value="${esc(actual[1] || '')}" oninput="setFtValue('${b.id}','${t.id}','t1',this.value)">
       <input type="number" placeholder="数量" value="${t.qty ?? ''}" oninput="setFtValue('${b.id}','${t.id}','qty',this.value)">
-      <input class="swap-input" placeholder="${swapped ? '换人原因' : '备注'}" value="${esc(t.swapNote || '')}" oninput="setFtValue('${b.id}','${t.id}','swapNote',this.value)">
+      <input class="swap-input" title="原计划：${esc(planned.filter(Boolean).join('/') || '未指定')}" placeholder="${swapped ? '换人原因' : '备注'}" value="${esc(t.swapNote || '')}" oninput="setFtValue('${b.id}','${t.id}','swapNote',this.value)">
       <button class="del" onclick="delElfrFt('${b.id}','${t.id}')">删除</button>
     </div>`;
   }).join('') || '<div style="font-size:12px;color:#94a3b8;padding:4px 0;">暂无 FT 记录</div>';
@@ -1251,6 +1931,7 @@ function renderElfrBatchCard(b) {
       <span class="badge st-muted">${b.qty} 颗</span>
       <select class="${isOldStatus ? 'old-status' : ''}" onchange="updateElfrStatus('${b.id}', this.value)">${statusOptions}</select>
       ${ftBadge}
+      ${b.status === '已FT' && !ftDone ? '<span class="badge st-warn">完成记录待核对</span>' : ''}
       <div style="margin-left:auto; display:flex; gap:4px;">
         <button class="link" onclick="editElfrBatch('${b.id}')">编辑</button>
         <button class="link danger" onclick="delElfrBatch('${b.id}')">删除</button>
@@ -1290,100 +1971,50 @@ function refreshElfrSummary() {
   const injFilled = batches.reduce((s, b) => s + (b.injectors||[]).filter(Boolean).length, 0);
   const injNeeded = batches.reduce((s, b) => s + Number(b.injCount||0), 0);
   const ftDoneBatches = batches.filter(b => {
-    const tests = b.ftTests || [];
-    if (!tests.length) return false;
-    if (!tests.every(t => t.done)) return false;
-    const doneQty = tests.reduce((s, t) => s + Number(t.qty || 0), 0);
-    return doneQty >= Number(b.qty || 0) && b.qty > 0;
+    return isElfrBatchFtComplete(b);
   }).length;
   el.innerHTML = `共 <b>${batches.length}</b> 批 · <b>${totalQty}</b> 颗 · 投实验已填 <b>${injFilled}/${injNeeded}</b> · FT完成 <b>${ftDoneBatches}/${batches.length}</b> 批`;
 }
 
-/* ===== 📊 工作量评分（当前分配，实时反映分配工作量，不区分完成与否） ===== */
-function showScorePreview() {
-  const c = testDb.cards.find(x => x.id === currentElfrCardId);
-  if (!c || !c.elfrBatches || !c.elfrBatches.length) { alert('暂无批次，无法计算'); return; }
 
-  const personSet = new Set();
-  c.elfrBatches.forEach(b => {
-    (b.injectors || []).forEach(p => { if (p) personSet.add(p); });
-    (b.ftTests || []).forEach(t => {
-      (t.actualTesters || []).forEach(p => { if (p) personSet.add(p); });
-    });
-  });
-  const personList = [...personSet];
-  if (!personList.length) { alert('还没有填任何投实验人或 FT 执行人'); return; }
-
-  const scores = {}; personList.forEach(p => scores[p] = 0);
-  const injTimes = {}; personList.forEach(p => injTimes[p] = 0);
-  const ftTimes = {}; personList.forEach(p => ftTimes[p] = 0);
-  const ftDoneTimes = {}; personList.forEach(p => ftDoneTimes[p] = 0);
-  const injQty = {}; personList.forEach(p => injQty[p] = 0);
-  const ftQty = {}; personList.forEach(p => ftQty[p] = 0);
-
-  c.elfrBatches.forEach(b => {
-    const bQty = Number(b.qty) || 0;
-    const injCount = Number(b.injCount) || 3;
-    const injPer = bQty * SCORE_INJ_PER_PILL / injCount;
-    (b.injectors || []).forEach(p => {
-      if (!p) return;
-      scores[p] += injPer;
+/* 内部安排计算。只生成任务建议，界面不展示分值或人员排名。 */
+function uniqueElfrPeople(value) {
+  const list = Array.isArray(value) ? value : String(value || '').split(/[,，、;；\n\r\s]+/);
+  return [...new Set(list.map(p => String(p || '').trim()).filter(Boolean))];
+}
+function isElfrBatchFtComplete(b) {
+  const qty = Number(b.qty);
+  const tests = Array.isArray(b.ftTests) ? b.ftTests : [];
+  return Number.isSafeInteger(qty) && qty > 0 && tests.length > 0 &&
+    tests.every(t => t.done && Number.isSafeInteger(Number(t.qty)) && Number(t.qty) > 0 && Number(t.qty) <= qty && (uniqueElfrPeople(t.actualTesters || []).length === 2 || t.legacyCompleted === true)) &&
+    tests.reduce((sum, t) => sum + Number(t.qty), 0) >= qty;
+}
+function reconcileElfrFtStatus(b) {
+  if (b.status === '已FT' && !isElfrBatchFtComplete(b)) b.status = '已取回';
+}
+function collectElfrWorkload(batches, personList) {
+  const scores = Object.fromEntries(personList.map(p => [p, 0]));
+  const injTimes = Object.fromEntries(personList.map(p => [p, 0]));
+  const ftTimes = Object.fromEntries(personList.map(p => [p, 0]));
+  for (const b of batches || []) {
+    const injectors = uniqueElfrPeople(b.injectors || []);
+    const qty = Math.max(0, Number(b.qty) || 0);
+    const injSlots = Math.max(injectors.length, Number(b.injCount) || injectors.length || 1);
+    for (const p of injectors) if (Object.hasOwn(scores, p)) {
+      scores[p] += qty * SCORE_INJ_PER_PILL / injSlots;
       injTimes[p]++;
-      injQty[p] += bQty / injCount;
-    });
-    (b.ftTests || []).forEach(t => {
-      // 不检查 done：所有 FT 记录（计划 + 已完成）都算入分配工作量
-      const tQty = Number(t.qty) || bQty;
-      const ftPer = tQty * SCORE_FT_PER_PILL / 2;
-      (t.actualTesters || []).forEach(p => {
-        if (!p) return;
-        scores[p] += ftPer;
+    }
+    for (const t of b.ftTests || []) {
+      const testers = uniqueElfrPeople(t.actualTesters || t.plannedTesters || []);
+      const testQty = Math.max(0, Number(t.qty ?? qty) || 0);
+      const ftSlots = Math.max(2, testers.length);
+      for (const p of testers) if (Object.hasOwn(scores, p)) {
+        scores[p] += testQty * SCORE_FT_PER_PILL / ftSlots;
         ftTimes[p]++;
-        ftQty[p] += tQty / 2;
-        if (t.done) ftDoneTimes[p]++;
-      });
-    });
-  });
-
-  const sorted = personList.sort((a,b) => scores[b] - scores[a]);
-  const maxScore = scores[sorted[0]];
-  const minScore = scores[sorted[sorted.length-1]];
-  const avg = sorted.reduce((s,p)=>s+scores[p],0)/sorted.length;
-  const gap = maxScore - minScore;
-
-  const rows = sorted.map(p => {
-    const cls = (Math.abs(scores[p]-maxScore)<0.01 && maxScore!==minScore) ? 'highest' : (Math.abs(scores[p]-minScore)<0.01 && maxScore!==minScore ? 'lowest' : '');
-    const ftDoneTxt = ftDoneTimes[p] > 0 ? `<br><span style="font-size:10.5px;color:#065f46;">已完成 ${ftDoneTimes[p]}</span>` : '';
-    return `<tr class="${cls}">
-      <td>${esc(p)}</td>
-      <td class="num">${injTimes[p]} 次<br><span style="font-size:11px;color:#94a3b8;">${injQty[p].toFixed(0)}颗</span></td>
-      <td class="num">${ftTimes[p]} 次<br><span style="font-size:11px;color:#94a3b8;">${ftQty[p].toFixed(0)}颗</span>${ftDoneTxt}</td>
-      <td class="num"><b>${scores[p].toFixed(2)}</b></td>
-    </tr>`;
-  }).join('');
-
-  const totalBatchesQty = c.elfrBatches.reduce((s,b)=>s+Number(b.qty||0),0);
-  const html = `
-    <div style="margin-bottom:14px; font-size:13px;">
-      当前共 <b>${c.elfrBatches.length}</b> 批 · <b>${totalBatchesQty}</b> 颗 · <b>${personList.length}</b> 人参与
-    </div>
-    <table class="score-preview-table">
-      <thead><tr><th>姓名</th><th class="num">投实验</th><th class="num">FT（分配量）</th><th class="num">总分</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <div style="margin-top:12px; font-size:12.5px; color:#64748b;">
-      平均 <b>${avg.toFixed(2)}</b> · 最高 ${maxScore.toFixed(2)} · 最低 ${minScore.toFixed(2)} · 分差 <b style="color:${gap > 10 ? '#dc2626' : (gap > 5 ? '#f59e0b' : '#10b981')};">${gap.toFixed(2)}</b>
-    </div>
-    <div style="margin-top:12px; font-size:11.5px; color:#94a3b8; line-height:1.6;">
-      💡 评分反映"分配的工作量"（含未完成的 FT 计划）。改动任何批次的人数、执行人、FT 数量后，重新点此按钮即可看到最新分数。FT 列下方小字显示该人已完成的次数，仅供参考。
-    </div>
-  `;
-
-  $('#modalMatTitle').textContent = '📊 工作量评分（当前分配）';
-  $('#modalMatBody').innerHTML = html;
-  showModalOnTop('modalMat');
-  $('#modalMatOk').textContent = '关闭';
-  $('#modalMatOk').onclick = () => closeMatModal();
+      }
+    }
+  }
+  return { scores, injTimes, ftTimes };
 }
 
 /* ===== 🔄 批量设置状态 ===== */
@@ -1395,6 +2026,7 @@ function batchSetElfrStatus() {
     { id: 'confirm', label: '确认操作（输入 yes 才会执行）', placeholder: '输入 yes' }
   ], ({ status, confirm }) => {
     if (String(confirm).trim().toLowerCase() !== 'yes') { alert('未输入 yes，操作取消'); return false; }
+    if (status === '已FT' && c.elfrBatches.some(b => !isElfrBatchFtComplete(b))) { alert('仍有批次没有完成全部 FT 记录或完成数量不足，请先核对实际记录。'); return false; }
     c.elfrBatches.forEach(b => { b.status = status; });
     save(); renderElfrModal(); renderBoard();
     setTimeout(() => alert(`已将 ${c.elfrBatches.length} 个批次的状态全部设为「${status}」`), 50);
@@ -1428,7 +2060,7 @@ function setElfrInjector(batchId, idx, val) {
 function setElfrInjectDate(batchId, val) {
   const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
   const b = c.elfrBatches.find(x => x.id === batchId); if (!b) return;
-  b.injectDate = val || ''; save();
+  b.injectDate = val || ''; save(); renderBoard();
 }
 
 function addElfrFt(batchId) {
@@ -1436,7 +2068,9 @@ function addElfrFt(batchId) {
   const b = c.elfrBatches.find(x => x.id === batchId); if (!b) return;
   if (!Array.isArray(b.ftTests)) b.ftTests = [];
   const inj = (b.injectors || []).filter(Boolean);
-  b.ftTests.push({ id: 'ft_' + uid(), date: '', qty: Number(b.qty) || 120, actualTesters: [inj[0] || '', inj[1] || ''], swapNote: '', remark: '', done: false });
+  const people = [inj[0] || '', inj[1] || ''];
+  b.ftTests.push({ id: 'ft_' + uid(), date: '', qty: Number(b.qty) || 120, plannedTesters: people.slice(), actualTesters: people.slice(), swapNote: '', remark: '', done: false });
+  reconcileElfrFtStatus(b);
   save(); renderElfrModal(); renderBoard();
 }
 
@@ -1449,6 +2083,7 @@ function setFtValue(batchId, ftId, field, val) {
   else if (field === 't1') t.actualTesters[1] = (val || '').trim();
   else if (field === 'qty') t.qty = Math.max(0, Number(val) || 0);
   else if (field === 'swapNote') t.swapNote = (val || '').trim();
+  reconcileElfrFtStatus(b);
   save();
   clearTimeout(window._ftUITimer);
   window._ftUITimer = setTimeout(() => {
@@ -1463,7 +2098,10 @@ function toggleFtDone(batchId, ftId, checked) {
   const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
   const b = c.elfrBatches.find(x => x.id === batchId); if (!b) return;
   const t = (b.ftTests || []).find(x => x.id === ftId); if (!t) return;
+  if (checked && (!Number.isSafeInteger(Number(t.qty)) || Number(t.qty) <= 0 || Number(t.qty) > Number(b.qty))) { alert('完成数量必须是正整数，且不能超过本批投料数量。'); renderElfrModal(); return; }
+  if (checked && uniqueElfrPeople(t.actualTesters || []).length !== 2) { alert('请填写两名不同的实际 FT 执行人，再确认完成。'); renderElfrModal(); return; }
   t.done = !!checked;
+  reconcileElfrFtStatus(b);
   save();
   renderElfrModal();
   renderBoard();
@@ -1475,7 +2113,8 @@ function updateFtRowState(batchId, ftId) {
   const t = (b.ftTests || []).find(x => x.id === ftId); if (!t) return;
   const row = document.getElementById('ft_row_' + ftId); if (!row) return;
   const inj = (b.injectors || []).filter(Boolean);
-  const swapped = (t.actualTesters || []).some(name => name && !inj.includes(name));
+  const planned = t.plannedTesters || t.actualTesters || [];
+  const swapped = (t.actualTesters || []).some((name, index) => name !== (planned[index] || ''));
   row.classList.toggle('swapped', swapped);
   row.classList.toggle('done', !!t.done);
   const swapInput = row.querySelector('.swap-input');
@@ -1487,7 +2126,7 @@ function updateFtRowState(batchId, ftId) {
     const pendingCount = ftTests.length - doneCount;
     const doneQty = ftTests.filter(x => x.done).reduce((s,x) => s + Number(x.qty||0), 0);
     const allDone = ftTests.length > 0 && ftTests.every(x => x.done);
-    const isDone = allDone && doneQty >= Number(b.qty||0) && b.qty > 0;
+    const isDone = isElfrBatchFtComplete(b);
     ftStatEl.textContent = `${doneCount} 次完成 / ${pendingCount} 次待执行 · 已完成 ${doneQty} 颗`;
     ftStatEl.style.color = isDone ? '#065f46' : (doneCount > 0 ? '#92400e' : '#64748b');
   }
@@ -1498,6 +2137,7 @@ function delElfrFt(batchId, ftId) {
   const b = c.elfrBatches.find(x => x.id === batchId); if (!b) return;
   if (!confirm('确定删除这条 FT 记录？')) return;
   b.ftTests = (b.ftTests || []).filter(x => x.id !== ftId);
+  reconcileElfrFtStatus(b);
   save(); renderElfrModal(); renderBoard();
 }
 
@@ -1510,7 +2150,7 @@ function addElfrBatch() {
   ], ({ name, qty, status }) => {
     name = (name || '').trim(); const n = Number(qty);
     if (!name) { alert('请输入批次名'); return false; }
-    if (!n || n <= 0) { alert('请输入有效数量'); return false; }
+    if (!Number.isSafeInteger(n) || n <= 0) { alert('数量必须是有效正整数'); return false; }
     if (!c.elfrBatches) c.elfrBatches = [];
     const injCount = n >= 120 ? 3 : 2;
     c.elfrBatches.push({
@@ -1533,8 +2173,9 @@ function editElfrBatch(batchId) {
   ], ({ name, qty }) => {
     name = (name || '').trim(); const n = Number(qty);
     if (!name) { alert('请输入批次名'); return false; }
-    if (!n || n <= 0) { alert('请输入有效数量'); return false; }
+    if (!Number.isSafeInteger(n) || n <= 0) { alert('数量必须是有效正整数'); return false; }
     b.name = name; b.qty = n;
+    reconcileElfrFtStatus(b);
     save(); renderElfrModal(); renderBoard();
     return true;
   });
@@ -1551,171 +2192,408 @@ function updateElfrStatus(batchId, newStatus) {
   const c = testDb.cards.find(x => x.id === currentElfrCardId);
   const b = c && c.elfrBatches.find(x => x.id === batchId); if (!b) return;
   if (!CARD_STATUSES.includes(newStatus)) return;
+  if (newStatus === '已FT' && !isElfrBatchFtComplete(b)) { alert('请先完成全部 FT 记录，并核对完成数量，再设为已 FT。'); renderElfrModal(); return; }
   b.status = newStatus;
   save(); renderBoard(); renderElfrModal();
 }
 
-/* ===== 🎲 自动分配 ===== */
+
+/* ===== 建议安排：较重任务优先 + 多起点均衡 + 有限局部调整 ===== */
 function planBatchCombination(total) {
+  if (!Number.isSafeInteger(total) || total <= 0) return null;
   for (let n120 = Math.floor(total / 120); n120 >= 0; n120--) {
     const rest = total - n120 * 120;
-    if (rest === 0) return { n120, n80: 0, batches: n120 };
     if (rest % 80 === 0) return { n120, n80: rest / 80, batches: n120 + rest / 80 };
   }
   return null;
 }
 
-function computeAssignment(totalQty, personList) {
+function computeAssignment(totalQty, personList, options = {}) {
+  const people = uniqueElfrPeople(personList).sort((a, b) => a.localeCompare(b, 'zh-CN'));
   const plan = planBatchCombination(totalQty);
-  if (!plan) return null;
-  const batchQtys = [];
-  for (let i = 0; i < plan.n120; i++) batchQtys.push(120);
-  for (let i = 0; i < plan.n80; i++) batchQtys.push(80);
-  batchQtys.sort((a, b) => b - a);
-
-  const scores = {}; personList.forEach(p => scores[p] = 0);
-  const injTimes = {}; personList.forEach(p => injTimes[p] = 0);
-  const ftTimes = {}; personList.forEach(p => ftTimes[p] = 0);
-
-  const batches = batchQtys.map(qty => {
-    const bInjCount = qty >= 120 ? 3 : 2;
-    const bFtCount = 2;
-    const injPer = qty * SCORE_INJ_PER_PILL / bInjCount;
-    const ftPer = qty * SCORE_FT_PER_PILL / bFtCount;
-
-    const sortFn = (a, b) => scores[a] - scores[b] || injTimes[a] - injTimes[b] || a.localeCompare(b);
-    const injectors = [...personList].sort(sortFn).slice(0, bInjCount);
-    injectors.forEach(p => { scores[p] += injPer; injTimes[p]++; });
-
-    const remaining = personList.filter(p => !injectors.includes(p));
-    let fters;
-    if (remaining.length >= bFtCount) {
-      fters = [...remaining].sort((a, b) => scores[a] - scores[b] || ftTimes[a] - ftTimes[b] || a.localeCompare(b)).slice(0, bFtCount);
-    } else {
-      const pool = [...personList].sort((a, b) => {
-        const aInj = injectors.includes(a) ? 1 : 0;
-        const bInj = injectors.includes(b) ? 1 : 0;
-        if (aInj !== bInj) return aInj - bInj;
-        return scores[a] - scores[b] || ftTimes[a] - ftTimes[b] || a.localeCompare(b);
-      });
-      fters = pool.slice(0, bFtCount);
-    }
-    fters.forEach(p => { scores[p] += ftPer; ftTimes[p]++; });
-
-    return {
-      id: 'eb_' + uid(), name: '', qty,
-      injCount: bInjCount, ftCount: bFtCount, status: '待准备',
-      injectors: injectors.slice(), injectDate: '',
-      ftTests: [{ id: 'ft_' + uid(), date: '', qty, actualTesters: fters.slice(), swapNote: '', remark: '', done: false }],
-      remark: ''
-    };
+  if (!plan || people.length < 2 || plan.batches > 1000) return null;
+  const n = people.length;
+  const baseline = collectElfrWorkload(options.existingBatches || [], people);
+  const batchQtys = Array(plan.n120).fill(120).concat(Array(plan.n80).fill(80));
+  const jobs = [];
+  batchQtys.forEach((qty, batch) => {
+    const injCount = Math.min(qty >= 120 ? 3 : 2, n);
+    for (let k = 0; k < injCount; k++) jobs.push({ batch, role: 'inj', amount: qty * SCORE_INJ_PER_PILL / injCount });
+    for (let k = 0; k < 2; k++) jobs.push({ batch, role: 'ft', amount: qty * SCORE_FT_PER_PILL / 2 });
   });
+  jobs.sort((a, b) => b.amount - a.amount || a.batch - b.batch || a.role.localeCompare(b.role));
+  const metric = loads => [Math.max(...loads), loads.reduce((sum, v) => sum + v * v, 0), Math.max(...loads) - Math.min(...loads)];
+  const better = (a, b) => {
+    for (let k = 0; k < a.length; k++) if (Math.abs(a[k] - b[k]) > 1e-7) return a[k] < b[k];
+    return false;
+  };
+  const rotation = ((Number(options.rotation) || 0) % n + n) % n;
+  let best = null;
+  const attempts = Math.min(n, jobs.length <= 250 ? 12 : 1);
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    const loads = people.map(p => baseline.scores[p]);
+    const roleCounts = { inj: people.map(p => baseline.injTimes[p]), ft: people.map(p => baseline.ftTimes[p]) };
+    const owners = [];
+    const rank = p => (p - rotation - attempt + n * 2) % n;
+    const used = (jobIndex, person, excluded = -1) => jobs.some((j, index) => index !== jobIndex && index !== excluded && owners[index] === person && j.batch === jobs[jobIndex].batch && j.role === jobs[jobIndex].role);
+    jobs.forEach((job, index) => {
+      const pool = people.map((_, k) => k).filter(p => !used(index, p));
+      pool.sort((a, b) => loads[a] - loads[b] || roleCounts[job.role][a] - roleCounts[job.role][b] || rank(a) - rank(b));
+      const p = pool[0]; owners[index] = p; loads[p] += job.amount; roleCounts[job.role][p]++;
+    });
+    // Only alter the newly generated draft. Existing and completed work remain fixed.
+    if (jobs.length <= 250) for (let pass = 0; pass < 8; pass++) {
+      let move = null, target = metric(loads);
+      for (let j = 0; j < jobs.length; j++) {
+        const from = owners[j], amount = jobs[j].amount;
+        for (let to = 0; to < n; to++) if (to !== from && !used(j, to)) {
+          loads[from] -= amount; loads[to] += amount;
+          const candidate = metric(loads);
+          if (better(candidate, target)) { move = { j, to }; target = candidate; }
+          loads[from] += amount; loads[to] -= amount;
+        }
+        for (let k = j + 1; k < jobs.length; k++) {
+          const other = owners[k];
+          if (other === from || Math.abs(amount - jobs[k].amount) < 1e-9 || used(j, other, k) || used(k, from, j)) continue;
+          const delta = amount - jobs[k].amount;
+          loads[from] -= delta; loads[other] += delta;
+          const candidate = metric(loads);
+          if (better(candidate, target)) { move = { j, k }; target = candidate; }
+          loads[from] += delta; loads[other] -= delta;
+        }
+      }
+      if (!move) break;
+      const j = move.j, from = owners[j];
+      if (move.k !== undefined) {
+        const k = move.k, to = owners[k], delta = jobs[j].amount - jobs[k].amount;
+        owners[j] = to; owners[k] = from; loads[from] -= delta; loads[to] += delta;
+      } else {
+        owners[j] = move.to; loads[from] -= jobs[j].amount; loads[move.to] += jobs[j].amount;
+      }
+    }
+    const value = metric(loads);
+    if (!best || better(value, best.metric)) best = { owners: owners.slice(), metric: value };
+  }
+  const batches = batchQtys.map(qty => ({
+    id: 'eb_' + uid(), name: '', qty, injCount: Math.min(qty >= 120 ? 3 : 2, n), ftCount: 2, status: '待准备',
+    injectors: [], injectDate: '', ftTests: [{ id: 'ft_' + uid(), date: '', qty, actualTesters: [], plannedTesters: [], swapNote: '', remark: '', done: false }], remark: ''
+  }));
+  jobs.forEach((job, i) => {
+    const b = batches[job.batch], person = people[best.owners[i]];
+    if (job.role === 'inj') b.injectors.push(person); else b.ftTests[0].actualTesters.push(person);
+  });
+  batches.forEach(b => { b.ftTests[0].plannedTesters = b.ftTests[0].actualTesters.slice(); });
+  const workload = collectElfrWorkload((options.existingBatches || []).concat(batches), people);
+  return { batches, ...workload, plan, totalQty, personList: people };
+}
 
-  return { batches, scores, injTimes, ftTimes, plan, totalQty, personList };
+function canReplaceElfrDraft(b) {
+  return b.status === '待准备' && !b.injectDate && !(b.ftTests || []).some(t => t.done || t.date || t.swapNote);
 }
 
 function autoAssignElfr() {
   const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
-  openInputModal('🎲 自动分配 ELFR 批次', [
-    { id: 'total', label: '总颗数（每批 120 或 80）', type: 'number', value: 800 },
-    { id: 'persons', label: '参与人员（逗号/空格/换行分隔）', placeholder: '张三, 李四, 王五, 赵六, 钱七, 孙八, 周九, 吴十' },
-    { id: 'mode', label: '分配方式', type: 'select', options: ['覆盖现有批次', '追加到现有批次'], value: '覆盖现有批次' }
+  const existing = c.elfrBatches || [];
+  const knownPeople = uniqueElfrPeople(existing.flatMap(b => (b.injectors || []).concat((b.ftTests || []).flatMap(t => t.actualTesters || []))));
+  openInputModal('生成 ELFR 建议安排', [
+    { id: 'total', label: '本次新增 / 重建的颗数（每批 120 或 80）', type: 'number', value: 800 },
+    { id: 'persons', label: '本次可参与人员（逗号或空格分隔）', value: knownPeople.join(', '), placeholder: '张三, 李四, 王五' },
+    { id: 'mode', label: '处理方式', type: 'select', options: ['追加新批次，保留现有记录', '重建未开始草案，保留执行记录'], value: '追加新批次，保留现有记录' }
   ], ({ total, persons, mode }) => {
-    const totalQty = Number(total);
-    if (!totalQty || totalQty <= 0) { alert('请输入有效总颗数'); return false; }
-    const personList = String(persons || '').split(/[,，\n\r\s]+/).map(s => s.trim()).filter(Boolean);
-    if (personList.length < 2) { alert('至少需要 2 名参与人员'); return false; }
-    const result = computeAssignment(totalQty, personList);
-    if (!result) { alert(`总数 ${totalQty} 颗无法按 120/80 完全分配。\n\n常用组合：800 = 6×120+1×80`); return false; }
-    if (mode === '覆盖现有批次' && c.elfrBatches && c.elfrBatches.length > 0) {
-      if (!confirm(`当前已有 ${c.elfrBatches.length} 个批次，将覆盖（含所有 FT 记录），确定？`)) return false;
-    }
+    const totalQty = Number(total), personList = uniqueElfrPeople(persons);
+    if (!Number.isSafeInteger(totalQty) || totalQty <= 0) { alert('总颗数必须是有效正整数'); return false; }
+    if (personList.length < 2) { alert('至少需要两名不同的参与人员'); return false; }
+    const current = c.elfrBatches || [];
+    const replaceIds = mode.startsWith('重建') ? current.filter(canReplaceElfrDraft).map(b => b.id) : [];
+    const retained = current.filter(b => !replaceIds.includes(b.id));
+    const result = computeAssignment(totalQty, personList, { existingBatches: retained, rotation: c.assignmentRotation || 0 });
+    if (!result) { alert('无法按 120 / 80 组成完整批次，或一次生成超过 1000 批。例：800 = 6×120 + 1×80。'); return false; }
+    result.targetCardId = c.id;
+    result.sourceSignature = JSON.stringify(current);
+    result.replaceIds = replaceIds;
     setTimeout(() => showAssignPreview(result, mode), 80);
     return true;
   });
 }
 
 function showAssignPreview(result, mode) {
-  const { batches, scores, injTimes, ftTimes, plan, totalQty, personList } = result;
-  const avg = personList.reduce((s, p) => s + scores[p], 0) / personList.length;
-  const sorted = [...personList].sort((a, b) => scores[b] - scores[a]);
-  const maxScore = scores[sorted[0]];
-  const minScore = scores[sorted[sorted.length - 1]];
-  const gap = maxScore - minScore;
-
-  const rows = sorted.map(p => {
-    const s = scores[p];
-    const cls = (Math.abs(s - maxScore) < 0.01 && maxScore !== minScore) ? 'highest' : (Math.abs(s - minScore) < 0.01 && maxScore !== minScore ? 'lowest' : '');
-    return `<tr class="${cls}"><td>${esc(p)}</td><td class="num">${injTimes[p]}</td><td class="num">${ftTimes[p]}</td><td class="num">${s.toFixed(2)}</td></tr>`;
-  }).join('');
-
-  const html = `
-    <div style="margin-bottom:14px; font-size:13px;">
-      共 <b>${batches.length}</b> 批 · <b>${totalQty}</b> 颗（${plan.n120 ? plan.n120 + '×120' : ''}${plan.n120 && plan.n80 ? ' + ' : ''}${plan.n80 ? plan.n80 + '×80' : ''}）
-    </div>
-    <table class="score-preview-table">
-      <thead><tr><th>姓名</th><th class="num">投实验次数</th><th class="num">FT次数</th><th class="num">总分</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <div style="margin-top:12px; font-size:12.5px; color:#64748b;">
-      平均分 <b>${avg.toFixed(2)}</b> · 最高 ${maxScore.toFixed(2)} · 最低 ${minScore.toFixed(2)} · 分差 <b style="color:${gap > 5 ? '#dc2626' : '#10b981'};">${gap.toFixed(2)}</b>
-    </div>
-    <div style="margin-top:8px; font-size:11.5px; color:#94a3b8; line-height:1.5;">
-      提示：此评分仅用于辅助分配参考，应用后不再显示。应用后每批仍可手动调整（改人、改日期、改人数等），调整后重新点「📊 工作量评分」即可看到最新分数。
-    </div>
-  `;
-
-  $('#modalMatTitle').textContent = '分配方案预览';
-  $('#modalMatBody').innerHTML = html;
+  const { batches, plan, totalQty, replaceIds = [] } = result;
+  const rows = batches.map((b, i) => `<tr><td>新批 ${i + 1}</td><td class="num">${b.qty}</td><td>${esc(b.injectors.join(' / '))}</td><td>${esc(b.ftTests[0].actualTesters.join(' / '))}</td></tr>`).join('');
+  $('#modalMatTitle').textContent = '建议安排预览';
+  $('#modalMatBody').innerHTML = `
+    <div style="margin-bottom:14px;">本次 <b>${batches.length}</b> 批 · <b>${totalQty}</b> 颗（${plan.n120}×120 + ${plan.n80}×80）</div>
+    <div class="table-container"><table><thead><tr><th>批次</th><th class="num">数量</th><th>拟投实验人员</th><th>拟 FT 人员</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div style="margin-top:12px;color:var(--text-sec);font-size:12px;line-height:1.7;">
+      ${replaceIds.length ? `将替换 ${replaceIds.length} 个未开始草案；有执行日期或完成记录的批次保持原样。<br>` : '现有批次与完成记录保持原样。<br>'}
+      这里只生成建议，未标记任何实验完成。日期和人员可按实验室实际安排调整；临时换人只改对应记录并填原因。
+    </div>`;
   showModalOnTop('modalMat');
-  $('#modalMatOk').textContent = '应用此方案';
+  $('#modalMatOk').textContent = '应用建议安排';
   $('#modalMatOk').onclick = () => {
-    const c = testDb.cards.find(x => x.id === currentElfrCardId);
-    if (!c) { closeMatModal(); return; }
-    batches.forEach((b, i) => { b.name = `第${i + 1}批`; });
-    if (mode === '覆盖现有批次' || !c.elfrBatches || c.elfrBatches.length === 0) {
-      c.elfrBatches = batches;
-    } else {
-      const offset = c.elfrBatches.length;
-      batches.forEach((b, i) => { b.name = `第${offset + i + 1}批`; });
-      c.elfrBatches = c.elfrBatches.concat(batches);
+    const c = testDb.cards.find(x => x.id === result.targetCardId);
+    if (!c || currentElfrCardId !== result.targetCardId || JSON.stringify(c.elfrBatches || []) !== result.sourceSignature) {
+      alert('批次记录在预览后发生变化，请关闭预览并重新生成建议，避免覆盖最新调整。'); return;
     }
-    save(); renderElfrModal(); renderBoard();
-    closeMatModal();
-    setTimeout(() => alert(`分配方案已应用。\n\n共 ${batches.length} 批 · ${totalQty} 颗。\n\n⚠️ FT 记录已按方案预填执行人，但默认标记为"未完成"。实际做完 FT 后，请打开每条记录左侧的"完成"勾选框。\n\n如需调整人员，直接在批次里改即可；改完重新点「📊 工作量评分」评估。`), 50);
+    if (replaceIds.length && !confirm(`将替换 ${replaceIds.length} 个未开始草案，执行记录保持不变。确定应用？`)) return;
+    const retained = (c.elfrBatches || []).filter(b => !replaceIds.includes(b.id));
+    const names = new Set(retained.map(b => b.name)); let next = 1;
+    batches.forEach(b => { while (names.has(`第${next}批`)) next++; b.name = `第${next}批`; names.add(b.name); next++; });
+    c.elfrBatches = retained.concat(batches);
+    c.assignmentRotation = (Number(c.assignmentRotation) || 0) + 1;
+    save(); renderElfrModal(); renderBoard(); closeMatModal();
   };
 }
 
-/* ========== 资产设备 ========== */
-function renderEquipments() {
-  const kw = ($('#eqSearch').value || '').trim().toLowerCase();
-  const cat = $('#eqFilter').value;
-  const tbody = $('#eqBody');
-  const list = testDb.equipments.filter(e => {
-    if (cat && e.category !== cat) return false;
-    if (kw && ![e.name, e.sn, e.location, e.note].join(' ').toLowerCase().includes(kw)) return false;
-    return true;
+
+/* ========== 当前主题实验安排导出（仅业务安排，不含内部分配权重） ========== */
+function experimentScheduleHeaders() {
+  return ['实验主题','实验名称','试验项目','批次','工作事项','数量（颗）','计划执行人','当前安排 / 实际执行人','安排 / 执行日期','状态','下一步','下一步日期','当前进展','跟进说明 / 变更原因','试验条件','Grade','预计完成时间','手动提醒'];
+}
+
+function preparationScheduleRows(theme) {
+  return (theme.preparations || []).map(p=>[String(theme.name || ''),'实验准备','',String(p.name || ''),prepReady(p)?'准备已就绪':prepQuantityReady(p)?'验收准备事项':'备齐准备事项',Number(p.qty)||0,String(p.person || ''),String(p.person || ''),String(p.dueDate || ''),prepStage(p),`需要 ${p.qty ?? 0}，已备 ${p.done ?? 0}，${prepVerified(p)?'已验收':'待验收'}`,String(p.dueDate || ''),String(p.remark || ''),'','','',String(p.dueDate || ''),'—']);
+}
+
+function collectExperimentScheduleRows(batchId) {
+  const theme = testDb.batches.find(b => b.id === batchId);
+  if (!theme) return [];
+  const rows = preparationScheduleRows(theme);
+  const people = values => [...new Set((Array.isArray(values) ? values : []).map(p => String(p || '').trim()).filter(Boolean))].join(' / ');
+  const quantity = value => value === '' || value == null || !Number.isFinite(Number(value)) ? '' : Number(value);
+  const joinNotes = (...values) => values.map(v => String(v || '').trim()).filter(Boolean).join('；');
+  testDb.cards.filter(c => c.batchId === batchId).forEach(c => {
+    const project = typeof getSavedAecProject === 'function' ? getSavedAecProject(c) : c.aecProject || '';
+    const grade = c.aecGrade ?? c.grade ?? '';
+    const gradeText = grade === '' || grade == null ? '' : `Grade ${String(grade)}`;
+    const status = typeof getCardDisplayStatus === 'function' ? getCardDisplayStatus(c) : c.status || '待准备';
+    const endDate = typeof calcTime === 'function' ? calcTime(c.startDate,c.durationDays).endDate : '';
+    const dueDate = c.nextDate || '';
+    const expectedDate=getExperimentExpectedDate(c);
+    const prefix = [String(theme.name || ''),String(c.name || ''),String(project || '')];
+    const suffix = [String(c.nextAction || ''),String(dueDate),String(c.remark || '')];
+    const makeRow = (batch,work,qty,planned,current,date,rowStatus,extra) => prefix.concat([
+      String(batch || ''),work,quantity(qty),String(planned || ''),String(current || ''),String(date || ''),rowStatus
+    ],suffix,[joinNotes(c.blocker,extra),String(c.note || ''),gradeText,expectedDate,experimentAttentionLabel(c)]);
+    rows.push(makeRow('','实验概况',c.qty,c.person || '','',c.startDate || '',status,''));
+    (Array.isArray(c.elfrBatches) ? c.elfrBatches : []).forEach(b => {
+      const injectionCurrent = people(b.injectors);
+      const injectionPlanned = people(Array.isArray(b.plannedInjectors) ? b.plannedInjectors : b.injectors);
+      // 日期可能只是计划档期；是否已经执行以业务状态为准。
+      const sent = ['已送样','实验中','已取回','已FT'].includes(b.status);
+      rows.push(makeRow(b.name,'投实验',b.qty,injectionPlanned,injectionCurrent,b.injectDate || '',sent ? (b.injectDate ? '已投实验' : '已投实验（日期未登记）') : '待投实验',b.remark));
+      const tests = Array.isArray(b.ftTests) ? b.ftTests : [];
+      if (!tests.length) {
+        rows.push(makeRow(b.name,'FT',b.qty,'','','',b.status === '已FT' ? 'FT记录待核对' : 'FT待安排','尚无 FT 执行记录'));
+      }
+      tests.forEach(t => {
+        const planned = people(Array.isArray(t.plannedTesters) ? t.plannedTesters : t.actualTesters);
+        const current = people(t.actualTesters);
+        const changed = planned !== current;
+        const note = joinNotes(changed ? '执行人与原计划不同' : '',t.swapNote,t.remark);
+        rows.push(makeRow(b.name,'FT',t.qty,planned,current,t.date || '',t.done ? 'FT已完成' : 'FT待执行',note));
+      });
+    });
   });
-  if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty">暂无设备</td></tr>'; return; }
-  tbody.innerHTML = list.map(e => {
-    const statusCls = eqStatusClass(e.status);
-    return `<tr><td><strong>${esc(e.name)}</strong></td><td class="mono">${esc(e.sn || '-')}</td><td><span class="badge st-muted">${esc(e.category)}</span></td><td><span class="badge ${statusCls}">${esc(e.status)}</span></td><td>${esc(e.location || '-')}</td><td style="max-width:200px; overflow:hidden; text-overflow:ellipsis;">${esc(e.note || '-')}</td><td style="text-align:right;"><button class="link" onclick="openLogModal('${e.id}')">记录</button><button class="link" onclick="openEqModal('${e.id}')">编辑</button></td></tr>`;
-  }).join('');
+  return rows;
+}
+async function buildExperimentScheduleXlsx(rows) {
+  const blob = buildXlsx(experimentScheduleHeaders(),rows,'实验安排');
+  const files = await unzipAll(await blob.arrayBuffer());
+  const widths = [24,26,12,16,12,12,24,28,22,22,30,16,38,40,48,12,20,24];
+  const views = '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A2" sqref="A2"/></sheetView></sheetViews>';
+  const cols = '<cols>' + widths.map((width,i)=>`<col min="${i+1}" max="${i+1}" width="${width}" customWidth="1"/>`).join('') + '</cols>';
+  files['xl/worksheets/sheet1.xml'] = files['xl/worksheets/sheet1.xml'].replace('<sheetData>',views+cols+'<sheetData>').replace('</sheetData>',`</sheetData><autoFilter ref="A1:R${rows.length+1}"/>`);
+  files['xl/styles.xml'] = files['xl/styles.xml'].replace('<xf xfId="0"/>','<xf xfId="0" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>').replace('<xf fontId="1" xfId="0" applyFont="1"/>','<xf fontId="1" xfId="0" applyFont="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>');
+  return makeZip(Object.entries(files).map(([name,data])=>({name,data})));
+}
+async function exportExperimentSchedule() {
+  const theme = testDb.batches.find(b => b.id === currentBatchId);
+  if (!theme) return alert('请先选择试验主题');
+  const rows = collectExperimentScheduleRows(theme.id);
+  if (!rows.length) return alert('当前主题没有可导出的实验安排');
+  let blob;
+  try { blob = await buildExperimentScheduleXlsx(rows); }
+  catch (err) { alert('导出失败：' + err.message); return; }
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const filename = String(theme.name || '试验主题').replace(/[<>:"/\\|?*\u0000-\u001f]/g,'_');
+  link.href = url;
+  link.download = `${filename}_实验安排_${dateStr()}.xlsx`;
+  document.body.appendChild(link);
+  link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url),1000);
+}
+
+/* ========== 资产设备：表格导入与维护 ========== */
+const EQUIPMENT_HEADERS = ['序号','设备','品牌','编号','负责人','更新时间','设备状态'];
+let equipmentImportState = {records:[],sourceSignature:'',fileName:''};
+let equipmentImportRequest = 0;
+function equipmentKey(value) { return String(value ?? '').trim().normalize('NFKC').toLocaleLowerCase(); }
+function equipmentDate(value, date1904 = false) {
+  const text = String(value ?? '').trim();
+  if (!text || !/^\d+(?:\.\d+)?$/.test(text)) return text;
+  const serial = Number(text);
+  if (!Number.isFinite(serial) || serial < 0 || serial > 2958465) return text;
+  const whole = Math.floor(serial), seconds = Math.round((serial - whole) * 86400);
+  const offset = date1904 ? whole : whole - (whole >= 60 ? 1 : 0);
+  const epoch = date1904 ? Date.UTC(1904,0,1) : Date.UTC(1899,11,31);
+  const d = new Date(epoch + offset * 86400000 + seconds * 1000);
+  const day = `${d.getUTCFullYear()}-${pad2(d.getUTCMonth()+1)}-${pad2(d.getUTCDate())}`;
+  return seconds ? `${day} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}` : day;
+}
+function equipmentHeaderIndex(rows) {
+  const normalize = value => String(value ?? '').replace(/[\s\uFEFF]+/g,'');
+  let best = [];
+  for (let i=0;i<Math.min(10,rows.length);i++) {
+    const cells = rows[i].map(normalize), missing = EQUIPMENT_HEADERS.filter(h=>!cells.includes(h));
+    if (missing.length < (best.length || 8)) best = missing;
+    if (!missing.length) {
+      if (EQUIPMENT_HEADERS.some(h=>cells.filter(c=>c===h).length!==1)) throw new Error('表头有重复列，请保留每个表头一次');
+      return {row:i,columns:EQUIPMENT_HEADERS.map(h=>cells.indexOf(h))};
+    }
+  }
+  throw new Error('未找到完整表头，需要：' + EQUIPMENT_HEADERS.join('、') + (best.length ? '。缺少：'+best.join('、') : ''));
+}
+function parseEquipmentRows(rows, date1904 = false) {
+  if (!Array.isArray(rows) || !rows.length) throw new Error('设备表为空');
+  const header = equipmentHeaderIndex(rows), records = [], seen = new Map();
+  for(let i=header.row+1;i<rows.length;i++) {
+    const values = header.columns.map(index => String(rows[i][index] ?? '').trim());
+    if (values.every(v=>!v)) continue;
+    const [seq,name,brand,sn,person,time,status] = values;
+    if (!name) throw new Error(`第 ${i+1} 行设备名称为空`);
+    if (!sn) throw new Error(`第 ${i+1} 行编号为空，请填写唯一编号后再导入，避免重复新增设备`);
+    const key = equipmentKey(sn);
+    if (seen.has(key)) throw new Error(`编号「${sn}」在第 ${seen.get(key)}、${i+1} 行重复，请核对后再导入`);
+    seen.set(key,i+1);
+    records.push({seq:seq || String(records.length+1),name,brand,sn,person,updatedAt:equipmentDate(time,date1904),status:status || '未填写'});
+  }
+  if (!records.length) throw new Error('表头下没有有效设备记录');
+  return records;
+}
+function readEquipmentSheet(xml, shared, stylesXml = '') {
+  const rows = parseSheetXml(xml,shared);
+  if (!stylesXml || !rows.length) return rows;
+  let header;
+  try { header = equipmentHeaderIndex(rows); } catch (_) { return rows; }
+  const styleDoc = new DOMParser().parseFromString(stylesXml,'application/xml');
+  const formats = new Map();
+  for (const f of styleDoc.getElementsByTagNameNS('*','numFmt')) formats.set(f.getAttribute('numFmtId'),f.getAttribute('formatCode') || '');
+  const cellXfs = styleDoc.getElementsByTagNameNS('*','cellXfs')[0];
+  const styleCodes = cellXfs ? Array.from(cellXfs.children).map(x=>formats.get(x.getAttribute('numFmtId')) || '') : [];
+  const doc = new DOMParser().parseFromString(xml,'application/xml');
+  Array.from(doc.getElementsByTagNameNS('*','row')).forEach((row,index)=>{
+    if(index<=header.row) return;
+    for(const c of row.getElementsByTagNameNS('*','c')) {
+      if (['s','inlineStr','str'].includes(c.getAttribute('t'))) continue;
+      const col = colToIndex(c.getAttribute('r') || '');
+      if (col !== header.columns[3]) continue;
+      const code = styleCodes[Number(c.getAttribute('s') || 0)];
+      if (/^0+$/.test(code) && /^\d+$/.test(String(rows[index]?.[col] || ''))) rows[index][col] = String(rows[index][col]).padStart(code.length,'0');
+    }
+  });
+  return rows;
+}
+function mergeEquipmentRows(current, records) {
+  const equipments = JSON.parse(JSON.stringify(current || [])), indexes = new Map(), seen = new Set();
+  equipments.forEach((e,index)=>{
+    const key = equipmentKey(e.sn); if (!key) return;
+    if (!indexes.has(key)) indexes.set(key,[]);
+    indexes.get(key).push(index);
+  });
+  let added=0,updated=0;
+  records.forEach(record=>{
+    const key = equipmentKey(record.sn);
+    if (!key || !String(record.name || '').trim()) throw new Error('设备名称和编号不能为空');
+    if (seen.has(key)) throw new Error(`导入表内编号「${record.sn}」重复`);
+    seen.add(key);
+    const matching = indexes.get(key) || [];
+    if(matching.length>1) throw new Error(`现有设备中编号「${record.sn}」不唯一，请先核对重复记录`);
+    const values = {seq:String(record.seq ?? ''),name:String(record.name).trim(),brand:String(record.brand ?? ''),sn:String(record.sn).trim(),person:String(record.person ?? ''),updatedAt:String(record.updatedAt ?? ''),status:String(record.status || '未填写')};
+    if (matching.length) { Object.assign(equipments[matching[0]],values); updated++; }
+    else { equipments.push({id:'e_'+uid(),logs:[],category:'其他',location:'',note:'',...values}); indexes.set(key,[equipments.length-1]); added++; }
+  });
+  return {equipments,added,updated};
+}
+function commitEquipmentList(equipments) {
+  try {
+    assertStorageCurrent();
+    const next = {...testDb,equipments}, payload = statePayload(materialDb,next);
+    localStorage.setItem(STORE_KEY,payload);
+    clearTimeout(saveTimer); testDb=next; storageSnapshot=payload; memorySnapshot=payload;
+    setStatus('设备已保存','var(--success)'); return true;
+  } catch(err) { alert('设备没有变更：'+err.message); setStatus('设备未保存','var(--danger)'); return false; }
+}
+function openEquipmentImport() {
+  equipmentImportRequest++;
+  equipmentImportState={records:[],sourceSignature:JSON.stringify(testDb.equipments),fileName:''};
+  $('#eqImportBody').innerHTML=`<div style="margin-bottom:12px;"><button class="ghost" onclick="downloadEquipmentTemplate()">下载设备导入模板</button></div><div class="imp-box"><strong>选择设备 Excel 表格</strong><div style="font-size:12px;color:var(--text-sec);margin:8px 0;">表头：${EQUIPMENT_HEADERS.join('、')}</div><input type="file" id="equipmentExcelFile" accept=".xlsx" onchange="handleEquipmentExcel(this.files[0]);this.value=''" style="max-width:100%;"></div><p style="font-size:12px;color:var(--text-sec);line-height:1.7;">按编号匹配：已有编号更新，新编号新增；保留已有设备流转记录、分类、位置和备注。编号不能为空。</p><div id="eqImportStatus" role="status" aria-live="polite"></div><div id="eqImportPreview" style="margin-top:14px;"></div>`;
+  $('#eqImportConfirm').disabled=true;
+  showModalOnTop('modalEqImport');
+}
+async function handleEquipmentExcel(file) {
+  if(!file) return;
+  const request = ++equipmentImportRequest;
+  const status=$('#eqImportStatus'),preview=$('#eqImportPreview'),button=$('#eqImportConfirm');
+  equipmentImportState.records=[];button.disabled=true;preview.innerHTML='';
+  if(!/\.xlsx$/i.test(file.name)) {status.textContent='请选择 .xlsx 格式的设备表格';return;}
+  status.textContent='正在读取设备表格…';
+  try {
+    const files=await unzipAll(await file.arrayBuffer());
+    if(request!==equipmentImportRequest) return;
+    const wb=files['xl/workbook.xml'];if(!wb) throw new Error('不是有效的 Excel 工作簿');
+    const sheets=parseWorkbookXml(wb,files['xl/_rels/workbook.xml.rels'] || '');
+    if(!sheets.length) throw new Error('Excel 中没有工作表');
+    const shared=parseSharedStrings(files['xl/sharedStrings.xml'] || '');
+    const doc=new DOMParser().parseFromString(wb,'application/xml'),pr=doc.getElementsByTagNameNS('*','workbookPr')[0];
+    const date1904=pr ? ['1','true'].includes(pr.getAttribute('date1904')) : false;
+    const rows=readEquipmentSheet(files[sheets[0].path] || '',shared,files['xl/styles.xml'] || '');
+    const records=parseEquipmentRows(rows,date1904),result=mergeEquipmentRows(testDb.equipments,records);
+    equipmentImportState={records,sourceSignature:JSON.stringify(testDb.equipments),fileName:file.name};
+    status.textContent=`${file.name} · ${records.length} 条：新增 ${result.added}，更新 ${result.updated}。请检查后确认导入。`;
+    preview.innerHTML=`<div class="table-container"><table><thead><tr>${EQUIPMENT_HEADERS.map(h=>`<th>${h}</th>`).join('')}<th>处理</th></tr></thead><tbody>${records.map(r=>`<tr>${[r.seq,r.name,r.brand,r.sn,r.person,r.updatedAt,r.status].map(v=>`<td>${esc(v || '—')}</td>`).join('')}<td>${testDb.equipments.some(e=>equipmentKey(e.sn)===equipmentKey(r.sn))?'更新':'新增'}</td></tr>`).join('')}</tbody></table></div>`;
+    button.disabled=false;
+  } catch(err) {if(request!==equipmentImportRequest) return;equipmentImportState.records=[];status.textContent='未导入：'+err.message;}
+}
+function saveEquipmentImport() {
+  if(!equipmentImportState.records.length) return alert('请先选择有效的设备表格');
+  if(JSON.stringify(testDb.equipments)!==equipmentImportState.sourceSignature) return alert('设备数据已变化，请重新选择文件并检查预览');
+  try {
+    const result=mergeEquipmentRows(testDb.equipments,equipmentImportState.records);
+    if(!commitEquipmentList(result.equipments)) return;
+    equipmentImportState.records=[];$('#modalEqImport').classList.add('hidden');renderEquipments();
+    alert(`导入完成：新增 ${result.added} 台，更新 ${result.updated} 台，原有流转记录已保留。`);
+  } catch(err) {alert('未导入：'+err.message);}
+}
+function downloadEquipmentTemplate() {
+  const blob=buildXlsx(EQUIPMENT_HEADERS,[],'设备导入模板');
+  const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download='设备导入模板.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function renderEquipments() {
+  const kw=($('#eqSearch').value || '').trim().toLowerCase(),cat=$('#eqFilter').value,tbody=$('#eqBody');
+  const list=testDb.equipments.filter(e=>(!cat || e.category===cat) && (!kw || [e.seq,e.name,e.brand,e.sn,e.person,e.status,e.location,e.note].join(' ').toLowerCase().includes(kw)));
+  if(!list.length) {tbody.innerHTML='<tr><td colspan="10" class="empty">暂无设备</td></tr>';return;}
+  tbody.innerHTML=list.map((e,i)=>`<tr><td>${esc(e.seq || i+1)}</td><td><strong>${esc(e.name)}</strong>${e.note?`<div style="font-size:11px;color:var(--text-sec);margin-top:4px;white-space:normal;max-width:200px;">${esc(e.note)}</div>`:''}</td><td>${esc(e.brand || '—')}</td><td class="mono">${esc(e.sn || '—')}</td><td>${esc(e.person || '—')}</td><td>${esc(e.updatedAt || '—')}</td><td><span class="badge ${eqStatusClass(e.status)}">${esc(e.status || '未填写')}</span></td><td>${esc(e.category || '其他')}</td><td>${esc(e.location || '—')}</td><td style="text-align:right;"><button class="link" onclick="openLogModal(${esc(JSON.stringify(String(e.id)))})">记录</button><button class="link" onclick="openEqModal(${esc(JSON.stringify(String(e.id)))})">编辑</button></td></tr>`).join('');
 }
 function openEqModal(id) {
-  const e = id ? testDb.equipments.find(x => x.id === id) : { name:'', sn:'', category:'电源', status:'正常', location:'', note:'' };
-  const statusOpts = EQ_STATUSES.map(s => `<option value="${s}" ${e.status===s?'selected':''}>${s}</option>`).join('');
-  $('#eqFormBody').innerHTML = `<div class="form-group"><label>设备名称</label><input id="eq_name" value="${esc(e.name)}"></div><div class="form-group"><label>资产号</label><input id="eq_sn" value="${esc(e.sn)}"></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;"><div class="form-group"><label>分类</label><select id="eq_category"><option value="电源" ${e.category==='电源'?'selected':''}>电源</option><option value="通讯工具" ${e.category==='通讯工具'?'selected':''}>通讯工具</option><option value="电脑" ${e.category==='电脑'?'selected':''}>电脑</option><option value="治具/耗材" ${e.category==='治具/耗材'?'selected':''}>治具/耗材</option><option value="其他" ${e.category==='其他'?'selected':''}>其他</option></select></div><div class="form-group"><label>状态</label><select id="eq_status">${statusOpts}</select></div></div><div class="form-group"><label>存放位置</label><input id="eq_location" value="${esc(e.location)}"></div><div class="form-group"><label>备注</label><input id="eq_note" value="${esc(e.note)}"></div><input type="hidden" id="eq_id" value="${id || ''}">`;
-  $('#modalEq').classList.remove('hidden');
+  const e=id?testDb.equipments.find(x=>x.id===id):{name:'',sn:'',seq:'',brand:'',person:'',updatedAt:'',category:'电源',status:'正常',location:'',note:''};
+  if(!e) return alert('设备记录已不存在');
+  const statuses=[...new Set(EQ_STATUSES.concat(e.status || []))],categories=[...new Set(['电源','通讯工具','电脑','治具/耗材','其他'].concat(e.category || []))];
+  $('#eqFormBody').innerHTML=`<div class="form-grid"><div class="form-group"><label>序号</label><input id="eq_seq" value="${esc(e.seq || '')}"></div><div class="form-group"><label>设备 *</label><input id="eq_name" value="${esc(e.name)}"></div><div class="form-group"><label>品牌</label><input id="eq_brand" value="${esc(e.brand || '')}"></div><div class="form-group"><label>编号</label><input id="eq_sn" value="${esc(e.sn)}"></div><div class="form-group"><label>负责人</label><input id="eq_person" value="${esc(e.person || '')}"></div><div class="form-group"><label>更新时间</label><input id="eq_updatedAt" value="${esc(e.updatedAt || '')}" placeholder="留空使用当前时间"></div><div class="form-group"><label>分类</label><select id="eq_category">${categories.map(c=>`<option value="${esc(c)}" ${e.category===c?'selected':''}>${esc(c)}</option>`).join('')}</select></div><div class="form-group"><label>设备状态</label><select id="eq_status">${statuses.map(s=>`<option value="${esc(s)}" ${e.status===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div><div class="form-group full"><label>存放位置</label><input id="eq_location" value="${esc(e.location)}"></div><div class="form-group full"><label>备注</label><input id="eq_note" value="${esc(e.note)}"></div></div><input type="hidden" id="eq_id" value="${esc(id || '')}">`;
+  showModalOnTop('modalEq');
 }
 function saveEq() {
-  const id = $('#eq_id').value; const name = $('#eq_name').value;
-  if (!name) { alert('请填写设备名称'); return; }
-  const payload = { name, sn: $('#eq_sn').value, category: $('#eq_category').value, status: $('#eq_status').value, location: $('#eq_location').value, note: $('#eq_note').value };
-  if (id) { Object.assign(testDb.equipments.find(x => x.id === id), payload); }
-  else { testDb.equipments.push({ id: 'e_'+Date.now(), logs: [], ...payload }); }
-  save(); $('#modalEq').classList.add('hidden'); renderEquipments();
+  const id=$('#eq_id').value,name=$('#eq_name').value.trim(),sn=$('#eq_sn').value.trim();
+  if(!name) return alert('请填写设备名称');
+  const equipments=JSON.parse(JSON.stringify(testDb.equipments));
+  if(sn && equipments.some(e=>e.id!==id && equipmentKey(e.sn)===equipmentKey(sn))) return alert('该编号已存在，请核对后再保存');
+  const payload={seq:$('#eq_seq').value.trim(),name,brand:$('#eq_brand').value.trim(),sn,person:$('#eq_person').value.trim(),updatedAt:$('#eq_updatedAt').value.trim() || new Date().toLocaleString('sv-SE'),category:$('#eq_category').value,status:$('#eq_status').value,location:$('#eq_location').value.trim(),note:$('#eq_note').value.trim()};
+  if(id) {const record=equipments.find(e=>e.id===id);if(!record) return alert('设备记录已不存在');Object.assign(record,payload);}
+  else equipments.push({id:'e_'+uid(),logs:[],...payload});
+  if(!commitEquipmentList(equipments)) return;
+  $('#modalEq').classList.add('hidden');renderEquipments();
 }
+
 function openLogModal(id) {
   const eq = testDb.equipments.find(x => x.id === id); if (!eq) return;
   const color = a => a === '借出' ? '#f59e0b' : (a === '归还' ? '#10b981' : (a === '送计量' ? '#a855f7' : '#2563eb'));
@@ -1738,6 +2616,7 @@ function addEqLog(id) {
   else if (action === '归还') eq.status = '归还';
   else if (action === '送计量') eq.status = '计量';
   else if (action === '完成计量') eq.status = '正常';
+  eq.updatedAt = timeStr;
   save(); renderEquipments(); openLogModal(id);
 }
 
@@ -1832,8 +2711,8 @@ function buildXlsx(header, rows, sheetName){
 }
 
 function exportJSON() {
-  forceSave();
-  const allData = { version: '1.7', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
+  try { forceSave(); } catch (err) { setStatus('导出本页快照：' + err.message, 'var(--warning)'); }
+  const allData = { version: '2.4', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
   const blob = new Blob([JSON.stringify(allData, null, 2)], {type:'application/json'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `综合系统备份_${dateStr()}.json`; a.click();
   setTimeout(() => alert(`导出完成：元器件 ${(materialDb.components||[]).length} 条，主题 ${(testDb.batches||[]).length} 个，卡片 ${(testDb.cards||[]).length} 条，设备 ${(testDb.equipments||[]).length} 台`), 100);
@@ -1852,12 +2731,115 @@ function importJSON(input) {
   };
   r.readAsText(f, 'utf-8');
 }
-function openMatImportModal() { alert('暂不支持直接导入台账 Excel。'); }
+const MATERIAL_IMPORT_COLUMNS = [
+  ['物料ID','id'],['物料名','name'],['规格值','spec'],['封装','pkg'],['耐压/功率','rating'],['是否车规','auto'],['精度','tol'],['工作温度','temp'],['备注','note'],['实时量','qty'],['安全库存','safety'],['位置','location']
+];
+let materialImportState = {records:[],signature:'',fileName:''};
+function downloadImportTemplate(headers, name) {
+  const blob=buildXlsx(headers,[],name),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=name+'.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function downloadMaterialTemplate() { downloadImportTemplate(MATERIAL_IMPORT_COLUMNS.map(c=>c[0]),'元器件台账导入模板'); }
+function downloadBomTemplate() { downloadImportTemplate(['Designator','Comment','Footprint','Quantity'],'BOM导入模板'); }
+function materialImportKey(value) { return String(value ?? '').trim().normalize('NFKC').toLowerCase(); }
+function parseMaterialImportRows(rows) {
+  let header=-1,columns=null;
+  for(let i=0;i<Math.min(rows.length,10);i++) {
+    const h=rows[i].map(v=>String(v ?? '').replace(/[\s\uFEFF]+/g,''));
+    if(h.includes('物料名') || h.includes('物料ID')) {
+      if(MATERIAL_IMPORT_COLUMNS.some(([name])=>h.filter(v=>v===name).length>1)) throw new Error('表头有重复列');
+      header=i;columns=MATERIAL_IMPORT_COLUMNS.map(([name,key])=>({key,index:h.indexOf(name)}));break;
+    }
+  }
+  if(header<0) throw new Error('未找到物料名或物料ID表头，请使用导入模板');
+  const records=[];
+  for(let i=header+1;i<rows.length;i++) {
+    const record={row:i+1};
+    columns.forEach(({key,index})=>{if(index>=0){const text=String(rows[i][index] ?? '').trim();if(text!=='') record[key]=text;}});
+    if(Object.keys(record).length===1) continue;
+    if(!record.id && !record.name) throw new Error(`第 ${i+1} 行请填写物料ID或物料名`);
+    if(record.qty!==undefined) record.qty=stockInteger(record.qty,`第 ${i+1} 行实时量`);
+    if(record.safety!==undefined) record.safety=stockInteger(record.safety,`第 ${i+1} 行安全库存`);
+    records.push(record);
+  }
+  if(!records.length) throw new Error('表头下没有有效物料记录');
+  return records;
+}
+function mergeMaterialImport(current, records) {
+  const material=JSON.parse(JSON.stringify(current)),used=new Set(),actions=[];
+  const identity=['name','spec','pkg','rating','auto','tol','temp','location'];
+  const now=Date.now(),txId='import_'+uid();
+  records.forEach(row=>{
+    let matches=[];
+    if(row.id) {
+      matches=material.components.filter(c=>String(c.id)===String(row.id));
+      if(!matches.length) throw new Error(`第 ${row.row} 行物料ID不存在，请检查ID；新增物料请留空ID`);
+    } else {
+      if(!row.name || (!row.spec && !row.pkg)) throw new Error(`第 ${row.row} 行没有物料ID时，请填写物料名及规格值或封装，避免误匹配`);
+      const fields=identity.filter(key=>row[key]!==undefined && row[key]!=='');
+      matches=material.components.filter(c=>fields.every(key=>materialImportKey(c[key])===materialImportKey(row[key])));
+    }
+    if(matches.length>1) throw new Error(`第 ${row.row} 行匹配到多个物料，请填写物料ID后重试`);
+    let record=matches[0],isNew=!record;
+    if(isNew) {
+      record={id:uid(),name:'',spec:'',pkg:'',rating:'',auto:'',tol:'',temp:'',note:'',qty:0,safety:0,location:'',logs:[]};
+      material.components.push(record);
+    }
+    const key=String(record.id);
+    if(used.has(key)) throw new Error(`第 ${row.row} 行与前面记录对应同一物料，请合并为一行后导入`);
+    used.add(key);
+    const before=stockInteger(record.qty ?? 0,'原库存');
+    const after=row.qty===undefined?before:stockInteger(row.qty,'导入库存');
+    const values={};
+    MATERIAL_IMPORT_COLUMNS.forEach(([_,key])=>{if(key!=='id' && key!=='qty' && row[key]!==undefined) values[key]=row[key];});
+    Object.assign(record,values,{qty:after});
+    if(!Array.isArray(record.logs)) record.logs=[];
+    if(after!==before) record.logs.push({t:now,type:'fix',qty:after-before,after,txId,source:'台账Excel导入盘点'});
+    actions.push({row:row.row,id:record.id,name:record.name,spec:record.spec,pkg:record.pkg,before,after,kind:isNew?'新增':'更新',qtySupplied:row.qty!==undefined});
+  });
+  return {material,actions};
+}
+function openMatImportModal() {
+  materialImportState={records:[],signature:JSON.stringify(materialDb),fileName:''};
+  $('#materialImportBody').innerHTML=`<button class="ghost" onclick="downloadMaterialTemplate()">下载台账导入模板</button><p style="font-size:12px;line-height:1.8;color:var(--text-sec);">优先按物料ID更新；没有ID时按已填写的名称、规格等匹配。已有物料的空白单元格保留原值，空实时量不改库存；新增物料空实时量为0。库存修改会记盘点流水，其他物料及BOM不受影响。</p><input type="file" accept=".xlsx" id="materialExcelFile" onchange="handleMaterialExcel(this.files[0]);this.value=''"><div id="materialImportStatus" role="status" style="margin:12px 0;"></div><div id="materialImportPreview"></div>`;
+  $('#materialImportConfirm').disabled=true;showModalOnTop('modalMaterialImport');
+}
+async function handleMaterialExcel(file) {
+  if(!file) return;
+  const status=$('#materialImportStatus'),preview=$('#materialImportPreview'),button=$('#materialImportConfirm');
+  materialImportState.records=[];button.disabled=true;preview.innerHTML='';
+  if(!/\.xlsx$/i.test(file.name)) {status.textContent='请选择 .xlsx 文件';return;}
+  status.textContent='正在读取台账…';
+  try {
+    const files=await unzipAll(await file.arrayBuffer()),wb=files['xl/workbook.xml'];
+    if(!wb) throw new Error('不是有效的Excel工作簿');
+    const sheets=parseWorkbookXml(wb,files['xl/_rels/workbook.xml.rels'] || '');
+    if(!sheets.length) throw new Error('工作簿中没有工作表');
+    const rows=parseSheetXml(files[sheets[0].path] || '',parseSharedStrings(files['xl/sharedStrings.xml'] || ''));
+    const records=parseMaterialImportRows(rows),result=mergeMaterialImport(materialDb,records);
+    materialImportState={records,signature:JSON.stringify(materialDb),fileName:file.name};
+    const changed=result.actions.filter(a=>a.before!==a.after).length;
+    status.textContent=`${records.length} 行 · 新增 ${result.actions.filter(a=>a.kind==='新增').length} · 更新 ${result.actions.filter(a=>a.kind==='更新').length} · ${changed} 项库存将变化。请核对后确认。`;
+    preview.innerHTML=`<div class="table-container"><table><thead><tr><th>行</th><th>处理</th><th>物料</th><th>规格 / 封装</th><th>原库存</th><th>导入后库存</th><th>库存处理</th></tr></thead><tbody>${result.actions.map(a=>`<tr><td>${a.row}</td><td>${a.kind}</td><td>${esc(a.name)}</td><td>${esc(a.spec)} / ${esc(a.pkg)}</td><td>${a.before}</td><td style="${a.before!==a.after?'color:var(--warning);font-weight:600;':''}">${a.after}</td><td>${a.qtySupplied?'使用表格数量':'保留原库存'}</td></tr>`).join('')}</tbody></table></div>`;
+    button.disabled=false;
+  } catch(err) {status.textContent='未导入：'+err.message;}
+}
+function saveMaterialImport() {
+  if(!materialImportState.records.length) return alert('请先选择有效台账');
+  if(JSON.stringify(materialDb)!==materialImportState.signature) return alert('物料已变化，请重新选择文件并核对预览');
+  try {
+    const result=mergeMaterialImport(materialDb,materialImportState.records);
+    if(!commitMaterialChange(result.material)) return;
+    materialImportState.records=[];$('#modalMaterialImport').classList.add('hidden');
+    renderComponents();renderChips();renderShortage();renderCalc();
+    alert('台账导入完成，库存变化已记录盘点流水。');
+  } catch(err) {alert('未导入：'+err.message);}
+}
 function exportXlsx() {
-  if (!materialDb.components.length) { alert('没有元器件可导出'); return; }
-  const rows = materialDb.components.map(c => [c.name, c.spec, c.pkg, c.rating, c.auto, c.tol, c.temp, c.note, Number(c.qty)]);
-  const blob = buildXlsx(['物料名','规格值','封装','耐压/功率','是否车规','精度','工作温度','备注','实时量'], rows, '元器件台账');
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `元器件台账_${dateStr()}.xlsx`; a.click();
+  if(!materialDb.components.length) return alert('没有元器件可导出');
+  const rows=materialDb.components.map(c=>MATERIAL_IMPORT_COLUMNS.map(([_,key])=>key==='qty'||key==='safety'?Number(c[key] || 0):String(c[key] ?? '')));
+  const blob=buildXlsx(MATERIAL_IMPORT_COLUMNS.map(c=>c[0]),rows,'元器件台账'),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=`元器件台账_${dateStr()}.xlsx`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function exportShortageXlsx() {
   const demand = computeDemand();
@@ -1876,8 +2858,12 @@ function exportShortageXlsx() {
 }
 
 
+
+
+
   
 loadAll();
 </script>
 </body>
 </html>
+
