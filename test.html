@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>可靠性综合管理中心 V1.7</title>
+<style>
+:root { --bg:#f4f6f8;--surface:#fff;--border:#e2e8f0;--text:#1e293b;--text-sec:#64748b;--primary:#2563eb;--primary-bg:#eff6ff;--success:#10b981;--success-bg:#ecfdf5;--warning:#f59e0b;--warning-bg:#fffbeb;--danger:#dc2626;--danger-bg:#fef2f2; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); font-size: 14px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; z-index: 10; }
+.logo { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 20px; }
+.nav-tabs { display: flex; gap: 4px; overflow-x: auto; }
+.nav-tab { padding: 8px 16px; cursor: pointer; color: var(--text-sec); font-weight: 500; border-radius: 6px; transition: 0.2s; white-space: nowrap; }
+.nav-tab:hover { background: #f1f5f9; }
+.nav-tab.active { background: var(--primary-bg); color: var(--primary); }
+.hd-actions { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.hd-actions button { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); background: #fff; cursor: pointer; font-family: inherit; }
+.hd-actions button:hover { background: #f8fafc; }
+.hd-actions button.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.hd-actions button.hl { background: var(--success-bg); color: #065f46; border-color: #a7f3d0; font-weight: 600; }
+#saveStatus { font-size: 12px; color: var(--text-sec); margin-right: 4px; }
+.hint-bar { background: #f0f9ff; color: #075985; padding: 6px 24px; font-size: 12px; border-bottom: 1px solid #bae6fd; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.hint-bar b { color: #0369a1; }
+.page-container { flex: 1; overflow: hidden; position: relative; }
+.page { display: none; height: 100%; overflow-y: auto; padding: 24px; }
+.page.active { display: block; }
+.page.flex-layout { display: none; flex-direction: column; overflow-y: hidden; padding: 24px; }
+.page.flex-layout.active { display: flex; }
+button.primary { background: var(--primary); color: #fff; border: 1px solid var(--primary); border-radius: 6px; cursor: pointer; padding: 8px 16px; font-size: 13px; font-family: inherit; }
+button.primary:hover { background: #1d4ed8; }
+button.ghost { background: #fff; color: var(--text); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; padding: 8px 16px; font-size: 13px; font-family: inherit; }
+button.ghost:hover { background: #f8fafc; }
+button.link { background: transparent; border: none; color: var(--primary); cursor: pointer; padding: 3px 8px; border-radius: 4px; font-size: 13px; font-family: inherit; }
+button.link:hover { background: var(--primary-bg); }
+button.link.danger { color: var(--danger); }
+button.link.danger:hover { background: var(--danger-bg); }
+.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+input[type="text"], input[type="number"], input[type="date"], select.filter-select, .search-box { height: 34px; padding: 0 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; font-family: inherit; outline: none; }
+input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+.search-box { position: relative; width: 240px; padding-left: 34px; }
+.search-box svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-sec); }
+.table-container { background: #fff; border: 1px solid var(--border); border-radius: 8px; overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+table { width: 100%; border-collapse: collapse; text-align: left; }
+th, td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; white-space: nowrap; }
+th { background: #f8fafc; font-weight: 600; color: var(--text-sec); border-bottom: 1px solid var(--border); }
+tr:hover td { background: #f8fafc; }
+tr:last-child td { border-bottom: none; }
+.mono { font-family: Consolas, monospace; font-size: 12.5px; word-break: break-all; }
+.text-danger { color: var(--danger); font-weight: 600; }
+.text-warn { color: var(--warning); font-weight: 600; }
+.badge { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 500; }
+.st-ok { background: var(--success-bg); color: #065f46; }
+.st-warn { background: var(--warning-bg); color: #92400e; }
+.st-danger { background: var(--danger-bg); color: #991b1b; }
+.st-info { background: #cffafe; color: #155e75; }
+.st-muted { background: #e2e8f0; color: #475569; }
+.st-purple { background: #f3e8ff; color: #6b21a8; }
+.empty { padding: 30px; text-align: center; color: var(--text-sec); }
+.chip-btn { height: 34px; padding: 0 14px; background: #fff; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; color: var(--text); font-family: inherit; }
+.chip-btn.active { background: var(--danger-bg); border-color: #fca5a5; color: var(--danger); font-weight: 600; }
+tr.group-row td { background: #eef2f7; cursor: pointer; font-weight: 600; user-select: none; }
+.group-arrow { display: inline-block; width: 16px; font-size: 11px; color: var(--text-sec); }
+.group-count { font-weight: 400; font-size: 12px; color: var(--text-sec); margin-left: 8px; }
+.drag-handle { color: #94a3b8; font-size: 13px; margin-right: 6px; letter-spacing: -2px; user-select: none; }
+.split { display: grid; grid-template-columns: 260px 1fr; gap: 20px; align-items: start; }
+.chip-list { max-height: calc(100vh - 180px); overflow-y: auto; background: #fff; border: 1px solid var(--border); border-radius: 8px; }
+.chip-item { padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer; border-left: 3px solid transparent; }
+.chip-item:hover { background: #f8fafc; }
+.chip-item.active { background: var(--primary-bg); border-left-color: var(--primary); }
+.chip-name { font-weight: 600; font-size: 14px; }
+.chip-sub { font-size: 12px; color: var(--text-sec); margin-top: 4px; }
+.board-block { border-bottom: 1px solid var(--border); background: #fff; }
+.board-block:last-child { border-bottom: none; }
+.board-head { padding: 12px 16px; background: #f8fafc; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+.board-head input { width: 80px; height: 28px; }
+.calc-chips { padding: 16px; background: #fff; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 16px; }
+.calc-chip-block { padding: 12px 0; border-bottom: 1px dashed var(--border); }
+.calc-chip-block:last-child { border-bottom: none; }
+.calc-summary { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+.imp-box { border: 2px dashed var(--border); border-radius: 8px; padding: 22px; text-align: center; cursor: pointer; background: #fafbfc; }
+.imp-box:hover { border-color: var(--primary); background: var(--primary-bg); }
+.layout-board { display: flex; height: 100%; gap: 16px; }
+aside.board-aside { width: 270px; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 12px 0; flex-shrink: 0; overflow-y: auto; }
+.batch-item { padding: 10px 16px; cursor: pointer; border-left: 3px solid transparent; font-size: 13px; color: var(--text-sec); display: flex; justify-content: space-between; align-items: center; }
+.batch-item:hover { background: #f8fafc; }
+.batch-item.active { background: var(--primary-bg); border-left-color: var(--primary); color: var(--primary); font-weight: 600; }
+.btn-copy-batch { color: var(--text-sec); background: transparent; border: none; cursor: pointer; font-size: 12px; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+.btn-copy-batch:hover { background: var(--primary-bg); color: var(--primary); }
+.btn-copy-batch.del:hover { background: var(--danger-bg); color: var(--danger); }
+.board-main { flex: 1; overflow-y: auto; }
+.board-header { margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
+.board-header h2 { margin: 0 0 6px 0; font-size: 18px; }
+.grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+.tc-card { background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+.tc-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
+.tc-title { font-size: 15px; font-weight: 600; margin: 0; }
+.tc-sub { font-size: 12px; color: var(--text-sec); margin-top: 4px; }
+.tc-body { padding: 16px; flex: 1; }
+.remark-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 10px; font-size: 13px; margin-bottom: 16px; line-height: 1.5; }
+.remark-box::before { content: '当前进展'; display: block; font-size: 11px; font-weight: 600; color: var(--primary); margin-bottom: 4px; }
+.remark-box.empty { color: var(--text-sec); font-style: italic; }
+.info-row { display: flex; margin-bottom: 6px; font-size: 13px; }
+.info-label { width: 70px; color: var(--text-sec); flex-shrink: 0; }
+.info-val { flex: 1; color: var(--text-sec); white-space: pre-wrap; word-break: break-all; }
+.progress-wrap { margin-top: 12px; background: #f1f5f9; border-radius: 99px; height: 6px; overflow: hidden; }
+.progress-bar { height: 100%; background: var(--primary); }
+.tc-footer { padding: 12px 16px; border-top: 1px solid var(--border); background: #fafafa; display: flex; justify-content: space-between; align-items: center; border-radius: 0 0 8px 8px; }
+.person { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.person-avatar { width: 24px; height: 24px; border-radius: 50%; background: #cbd5e1; color: #fff; display: flex; justify-content: center; align-items: center; font-size: 12px; }
+.bp-wrap { min-width: 240px; }
+.bp-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 5px; }
+.bp-pct { font-size: 22px; font-weight: 700; color: var(--primary); line-height: 1; }
+.bp-meta { font-size: 12px; color: var(--text-sec); }
+.bp-bar { height: 8px; background: #e2e8f0; border-radius: 99px; overflow: hidden; }
+.bp-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #3b82f6, #10b981); transition: width .35s; }
+.bp-sub { font-size: 11px; color: var(--text-sec); margin-top: 5px; text-align: right; }
+.batch-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.batch-meta { font-size: 11px; color: var(--text-sec); margin-top: 3px; font-weight: 400; }
+.batch-item.active .batch-meta { color: var(--primary); opacity: .75; }
+.elfr-box { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 6px; padding: 10px; margin-bottom: 12px; }
+.elfr-box-title { font-weight: 600; color: #c2410c; font-size: 13px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+.elfr-stat { font-size: 12.5px; color: #9a3412; }
+.elfr-batch-card { background: #fff; border: 1px solid #fed7aa; border-radius: 8px; margin-bottom: 14px; overflow: hidden; }
+.elfr-batch-card-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #fff7ed; border-bottom: 1px solid #fed7aa; flex-wrap: wrap; }
+.elfr-batch-card-head select { height: 26px; padding: 0 8px; font-size: 12px; border: 1px solid #fdba74; background: #fff; border-radius: 5px; }
+.elfr-batch-card-head select.old-status { border-color: #dc2626; background: #fef2f2; }
+.elfr-batch-card-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; }
+.elfr-sec { border: 1px dashed #e2e8f0; border-radius: 6px; padding: 10px 12px; background: #fcfdfe; }
+.elfr-sec-title { font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.elfr-injector-inputs { display: grid; gap: 8px; }
+.elfr-injector-inputs input { height: 32px; padding: 0 10px; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 13px; font-family: inherit; outline: none; }
+.elfr-injector-inputs input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+.elfr-ft-row { display: grid; grid-template-columns: 60px 110px 1fr 1fr 72px 1fr 46px; gap: 8px; align-items: center; margin-bottom: 6px; padding: 6px 8px; border-radius: 6px; transition: background .2s; }
+.elfr-ft-row.swapped { background: #fff7ed; border-left: 3px solid #f59e0b; padding-left: 5px; }
+.elfr-ft-row.done { background: #f0fdf4; border-left: 3px solid #10b981; padding-left: 5px; }
+.elfr-ft-row.swapped.done { background: #fff7ed; border-left-color: #10b981; }
+.elfr-ft-row input { height: 30px; padding: 0 10px; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 12.5px; font-family: inherit; outline: none; min-width: 0; }
+.elfr-ft-row .del { color: #dc2626; cursor: pointer; background: none; border: none; font-size: 12px; font-family: inherit; padding: 4px; }
+.elfr-ft-row .done-check { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #64748b; cursor: pointer; user-select: none; white-space: nowrap; }
+.elfr-ft-row.done .done-check { color: #065f46; font-weight: 600; }
+.elfr-ft-row .done-check input { width: 16px; height: 16px; cursor: pointer; }
+.elfr-summary-bar { margin-bottom: 14px; padding: 10px 14px; background: #fef3c7; border-radius: 6px; font-size: 13px; color: #78350f; border: 1px solid #fde68a; line-height: 1.6; }
+.elfr-summary-bar b { color: #92400e; }
+.elfr-toolbar { margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 10px 14px; background: #f0f9ff; border: 1px dashed #bae6fd; border-radius: 6px; }
+.elfr-toolbar .hint { font-size: 12px; color: #075985; }
+.score-preview-table { width: 100%; font-size: 13px; border-collapse: collapse; }
+.score-preview-table th, .score-preview-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; }
+.score-preview-table th { background: #f8fafc; font-weight: 600; color: #64748b; }
+.score-preview-table td.num { text-align: right; }
+.score-preview-table .highest { background: #fef2f2; }
+.score-preview-table .lowest { background: #f0fdf4; }
+.old-status-warn { margin-bottom: 12px; padding: 10px 14px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; font-size: 12.5px; color: #991b1b; line-height: 1.6; }
+.modal { position: fixed; inset: 0; background: rgba(15,23,42,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.modal.hidden { display: none; }
+.modal.modal-on-top { z-index: 300 !important; }
+.modal-box { background: #fff; border-radius: 10px; width: min(540px, 95vw); max-height: 90vh; display: flex; flex-direction: column; }
+.modal-head { padding: 16px 20px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+.modal-body { padding: 20px; overflow-y: auto; display: grid; gap: 14px; }
+.form-group label { display: block; font-size: 13px; color: var(--text-sec); margin-bottom: 6px; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 14px; }
+.form-group textarea { resize: vertical; height: 80px; }
+.modal-foot { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+.form-grid .full { grid-column: 1/-1; }
+#dropOverlay { position: fixed; inset: 0; background: rgba(37,99,235,0.15); z-index: 200; border: 3px dashed #2563eb; display: none; align-items: center; justify-content: center; font-size: 22px; font-weight: 600; color: #1d4ed8; pointer-events: none; }
+#dropOverlay.on { display: flex; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span>可靠性综合管理中心 <span style="font-size:12px; font-weight:normal; color:#64748b;">V1.7</span></span>
+    <div class="nav-tabs">
+      <div class="nav-tab active" onclick="switchPage('components')">元器件台账</div>
+      <div class="nav-tab" onclick="switchPage('chips')">芯片 / BOM</div>
+      <div class="nav-tab" onclick="switchPage('shortage')">缺货预警</div>
+      <div class="nav-tab" onclick="switchPage('calc')">需求核算</div>
+      <div class="nav-tab" onclick="switchPage('board')">实验看板</div>
+      <div class="nav-tab" onclick="switchPage('equipment')">资产设备</div>
+    </div>
+  </div>
+  <div class="hd-actions">
+    <span id="saveStatus">初始化…</span>
+    <button class="hl" onclick="autoLoadFromSameDir()">⟳ 自动加载</button>
+    <button onclick="document.getElementById('serverJsonFile').click()">📂 选择 data.json</button>
+    <input type="file" id="serverJsonFile" accept=".json,application/json" hidden onchange="loadFromLocalFile(this)">
+    <button onclick="copySharePath()">📋 复制路径</button>
+    <button onclick="exportServerJson()">导出为 data.json</button>
+    <button onclick="exportJSON()">导出备份</button>
+    <button onclick="document.getElementById('importFile').click()">导入备份</button>
+    <button class="primary" id="btnGlobalAdd" onclick="globalAdd()">+ 新增</button>
+    <input type="file" id="importFile" accept=".json" hidden onchange="importJSON(this)">
+  </div>
+</header>
+
+<div class="hint-bar"><span>💡 加载 data.json 三选一：<b>⟳ 自动加载</b> · <b>📂 选择文件</b> · <b>直接拖到页面任意位置</b></span></div>
+
+<div class="page-container">
+  <div class="page active" id="page-components">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="searchComp" placeholder="搜索..." oninput="renderComponents()"></div>
+        <select id="filterType" class="filter-select" onchange="renderComponents()"><option value="">全部类型</option></select>
+        <button id="filterWarning" class="chip-btn" onclick="toggleWarnFilter(this)">仅看预警</button>
+      </div>
+      <div class="toolbar-right">
+        <button class="ghost" onclick="openMatImportModal()">导入 Excel</button>
+        <button class="ghost" onclick="exportXlsx()">导出 Excel</button>
+        <button class="ghost" id="btnSortMode" onclick="toggleSortMode()">拖拽排序</button>
+      </div>
+    </div>
+    <div class="table-container"><table><thead><tr><th>物料名</th><th>规格值</th><th>封装</th><th>耐压/功率</th><th>是否车规</th><th>精度</th><th>工作温度</th><th>备注</th><th class="num">实时量</th><th class="num">安全库存</th><th>位置</th><th>状态</th><th>操作</th></tr></thead><tbody id="compBody"></tbody></table></div>
+  </div>
+  <div class="page" id="page-chips">
+    <div class="split">
+      <aside><div style="padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background:#fff; border-radius: 8px 8px 0 0;"><span style="font-weight: 600;">芯片列表</span><button class="primary" style="padding:4px 10px; font-size:12px;" onclick="editChip()">新增</button></div><div id="chipList" class="chip-list"></div></aside>
+      <div id="chipDetail" style="background:#fff; border:1px solid var(--border); border-radius:8px; overflow:hidden;"></div>
+    </div>
+  </div>
+  <div class="page" id="page-shortage">
+    <h2 style="margin-top:0;">缺货物料</h2>
+    <div class="table-container" style="margin-bottom: 24px;"><table><thead><tr><th>物料名</th><th>规格值</th><th>封装</th><th class="num">实时量</th><th>备注</th><th>操作</th></tr></thead><tbody id="shortageBody"></tbody></table></div>
+    <h2>低库存物料</h2>
+    <div class="table-container"><table><thead><tr><th>物料名</th><th>规格值</th><th>封装</th><th class="num">实时量</th><th class="num">安全库存</th><th class="num">缺口</th><th>操作</th></tr></thead><tbody id="lowBody"></tbody></table></div>
+  </div>
+  <div class="page" id="page-calc">
+    <div class="calc-chips" id="calcChips"></div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:12px;"><h2 style="margin:0; font-size:18px;">物料需求汇总</h2><button class="ghost" onclick="exportShortageXlsx()">导出采购清单</button></div>
+    <div id="calcSummary" class="calc-summary"></div>
+    <div class="table-container"><table><thead><tr><th>物料名</th><th>规格值</th><th class="num">总需求</th><th class="num">实时量</th><th class="num">缺口</th><th>状态</th><th>需求来源</th></tr></thead><tbody id="calcBody"></tbody></table></div>
+  </div>
+  <div class="page flex-layout" id="page-board">
+    <div class="layout-board">
+      <aside class="board-aside" id="batchList"></aside>
+      <div class="board-main">
+        <div class="board-header">
+          <div>
+            <h2 id="currentBatchTitle">请先新增试验主题</h2>
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+              <select id="filterPerson" onchange="renderBoard()" class="filter-select" style="height:30px; font-size:13px;"><option value="">全部责任人</option></select>
+              <button class="ghost" style="padding:4px 12px; font-size:12px;" onclick="openPrepModal()">实验准备清单</button>
+            </div>
+          </div>
+          <div id="batchProgress"></div>
+        </div>
+        <div class="grid-cards" id="cardGrid"></div>
+      </div>
+    </div>
+  </div>
+  <div class="page flex-layout" id="page-equipment">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <input type="text" id="eqSearch" class="search-box" placeholder="搜索..." oninput="renderEquipments()">
+        <select id="eqFilter" class="filter-select" onchange="renderEquipments()"><option value="">全部分类</option><option value="电源">电源</option><option value="通讯工具">通讯工具</option><option value="电脑">电脑</option><option value="治具/耗材">治具/耗材</option><option value="其他">其他</option></select>
+      </div>
+      <button class="primary" onclick="openEqModal()">新增设备</button>
+    </div>
+    <div class="table-container" style="flex:1; overflow-y:auto;"><table><thead><tr><th>设备名称</th><th>资产号</th><th>分类</th><th>状态</th><th>位置</th><th>备注</th><th style="text-align:right">操作</th></tr></thead><tbody id="eqBody"></tbody></table></div>
+  </div>
+</div>
+
+<div id="dropOverlay">松开鼠标加载 data.json</div>
+
+<div id="modalMat" class="modal hidden"><div class="modal-box"><div class="modal-head" id="modalMatTitle"></div><div class="modal-body" id="modalMatBody"></div><div class="modal-foot"><button class="ghost" onclick="closeMatModal()">取消</button><button class="primary" id="modalMatOk">确定</button></div></div></div>
+<div id="modalBoard" class="modal hidden"><div class="modal-box"><div class="modal-head">新增/编辑实验项</div><div class="modal-body" id="boardFormBody"></div><div class="modal-foot"><button class="ghost" onclick="document.getElementById('modalBoard').classList.add('hidden')">取消</button><button class="primary" onclick="saveCard()">保存</button></div></div></div>
+<div id="modalEq" class="modal hidden"><div class="modal-box"><div class="modal-head">设备</div><div class="modal-body" id="eqFormBody"></div><div class="modal-foot"><button class="ghost" onclick="document.getElementById('modalEq').classList.add('hidden')">取消</button><button class="primary" onclick="saveEq()">保存</button></div></div></div>
+<div id="modalLog" class="modal hidden"><div class="modal-box"><div class="modal-head" id="logModalTitle"></div><div class="modal-body" id="logFormBody"></div><div class="modal-foot"><button class="ghost" onclick="document.getElementById('modalLog').classList.add('hidden')">关闭</button></div></div></div>
+<div id="modalElfr" class="modal hidden"><div class="modal-box" style="width: min(1000px, 98vw);"><div class="modal-head">早期失效 (ELFR) 人员分工与 FT</div><div class="modal-body" id="elfrFormBody"></div><div class="modal-foot"><button class="ghost" onclick="document.getElementById('modalElfr').classList.add('hidden')">关闭</button></div></div></div>
+<div id="modalCopyBom" class="modal hidden"><div class="modal-box"><div class="modal-head">复制 BOM</div><div class="modal-body" id="copyBomFormBody"></div><div class="modal-foot"><button class="ghost" onclick="document.getElementById('modalCopyBom').classList.add('hidden')">取消</button><button class="primary" onclick="saveCopyBom()">确定复制</button></div></div></div>
+<div id="modalBomImp" class="modal hidden"><div class="modal-box" style="width: 800px;"><div class="modal-head">导入 BOM</div><div class="modal-body" id="bomImpFormBody"></div><div class="modal-foot"><button class="ghost" onclick="document.getElementById('modalBomImp').classList.add('hidden')">取消</button><button class="primary" onclick="saveBomImport()">确认导入</button></div></div></div>
+<div id="modalPrep" class="modal hidden"><div class="modal-box" style="width: min(780px, 96vw);"><div class="modal-head">实验准备清单</div><div class="modal-body" id="prepFormBody"></div><div class="modal-foot"><button class="ghost" onclick="document.getElementById('modalPrep').classList.add('hidden')">关闭</button></div></div></div>
+<div id="modalInput" class="modal hidden"><div class="modal-box" style="width: min(440px, 95vw);"><div class="modal-head" id="inputModalTitle">输入</div><div class="modal-body" id="inputModalBody"></div><div class="modal-foot"><button class="ghost" onclick="closeInputModal()">取消</button><button class="primary" id="inputModalOk">确定</button></div></div></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const pad2 = n => String(n).padStart(2, '0');
+const dateStr = () => { const d = new Date(); return `${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}`; };
+
+const STORE_KEY = 'reliability_system_v4';
+let materialDb = { components: [], chips: [] };
+let testDb = { batches: [], cards: [], equipments: [] };
+let currentBatchId = null;
+let saveTimer = null;
+let currentPage = 'components';
+
+const SHARE_UNC = '\\\\sjnas01\\semi\\嵌入式产品中心\\工控MCU\\音频功放\\★秘密★可靠性\\★一般★可靠性实验系统';
+const DATA_FILE_NAME = 'data.json';
+const DATA_FULL_UNC = SHARE_UNC + '\\' + DATA_FILE_NAME;
+
+const BOARD_KEYS = ['base','hast','top'];
+const BOARD_NAMES = {base:'可靠性底板', hast:'可靠性HAST板', top:'可靠性顶板'};
+const BOARD_SHORT = {base:'底板', hast:'HAST板', top:'顶板'};
+const FOLD_GROUPS = [{key:'电容', patterns:['电容']},{key:'电阻', patterns:['电阻']},{key:'保险丝', patterns:['保险丝','熔断器']},{key:'螺丝', patterns:['螺丝','螺钉']},{key:'散热片', patterns:['散热片','散热器']}];
+let sortMode = false, collapsedGroups = {};
+let editingComp = null, editLogs = [];
+let copyBomTarget = null;
+let currentElfrCardId = null;
+let bomImportState = { chipId: null, boardKey: '', parsedRows: [] };
+
+/* 工作量权重（内部使用，界面不显示） */
+/* 投实验 40颗=10分 → 每颗 0.25 分 */
+/* FT 60颗=5分 → 每颗 5/60 分 */
+const SCORE_INJ_PER_PILL = 0.25;
+const SCORE_FT_PER_PILL = 5/60;
+
+const CARD_STATUSES = ['待准备', '已送样', '实验中', '已取回', '已FT'];
+function statusClass(s) {
+  if (s === '已FT') return 'st-ok';
+  if (s === '已取回') return 'st-warn';
+  if (s === '实验中') return 'st-purple';
+  if (s === '已送样') return 'st-info';
+  return 'st-muted';
+}
+function migrateStatus(s) {
+  const map = { '待测': '待准备', '测试中': '实验中', '进行中': '实验中' };
+  if (!s) return '待准备';
+  return map[s] || s;
+}
+const EQ_STATUSES = ['正常', '实验中', '归还', '计量'];
+function eqStatusClass(s) {
+  if (s === '正常') return 'st-ok';
+  if (s === '实验中') return 'st-warn';
+  if (s === '归还') return 'st-info';
+  if (s === '计量') return 'st-purple';
+  return 'st-muted';
+}
+function migrateEqStatus(s) {
+  const map = { '使用中': '实验中', '维修中': '计量', '报废': '计量', '待维修': '计量' };
+  if (!s) return '正常';
+  return map[s] || s;
+}
+
+/* ====== 弹窗显隐管理（z-index 层级） ====== */
+function showModalOnTop(id) {
+  document.querySelectorAll('.modal').forEach(m => m.classList.remove('modal-on-top'));
+  const el = document.getElementById(id);
+  if (el) { el.classList.remove('hidden'); el.classList.add('modal-on-top'); }
+}
+function closeMatModal() {
+  const el = $('#modalMat');
+  if (el) { el.classList.add('hidden'); el.classList.remove('modal-on-top'); }
+  $('#modalMatOk').textContent = '确定';
+}
+function closeInputModal() {
+  const el = $('#modalInput');
+  if (el) { el.classList.add('hidden'); el.classList.remove('modal-on-top'); }
+}
+
+function normalizeElfrBatch(b) {
+  if (!b.qty) b.qty = 120;
+  if (!b.injCount) {
+    if (Array.isArray(b.injectors) && b.injectors.length >= 2) b.injCount = b.injectors.length;
+    else b.injCount = Number(b.qty) >= 120 ? 3 : 2;
+  }
+  if (!b.ftCount) b.ftCount = 2;
+  if (!Array.isArray(b.injectors)) b.injectors = [b.person || ''];
+  while (b.injectors.length < b.injCount) b.injectors.push('');
+  while (b.injectors.length > b.injCount) b.injectors.pop();
+  if (typeof b.injectDate !== 'string') b.injectDate = '';
+  if (!Array.isArray(b.ftTests)) b.ftTests = [];
+  b.ftTests.forEach(t => {
+    if (!Array.isArray(t.actualTesters)) t.actualTesters = Array.isArray(t.testers) ? t.testers.slice(0, 2) : ['', ''];
+    while (t.actualTesters.length < 2) t.actualTesters.push('');
+    if (t.testers !== undefined) delete t.testers;
+    if (!t.id) t.id = 'ft_' + uid();
+    if (t.qty == null) t.qty = b.qty;
+    if (typeof t.swapNote !== 'string') t.swapNote = '';
+    if (typeof t.date !== 'string') t.date = '';
+    if (typeof t.done !== 'boolean') t.done = false;
+  });
+  if (typeof b.remark !== 'string') b.remark = '';
+  if (!b.status) b.status = '待准备';
+  return b;
+}
+
+function loadAll() {
+  try {
+    const s = localStorage.getItem(STORE_KEY);
+    if (s) {
+      const d = JSON.parse(s);
+      if (d.material) materialDb = d.material;
+      if (d.test) testDb = d.test;
+      if (!testDb.equipments) testDb.equipments = [];
+    }
+  } catch(e){ console.error(e); }
+
+  if (!materialDb || typeof materialDb !== 'object') materialDb = { components: [], chips: [] };
+  if (!Array.isArray(materialDb.components)) materialDb.components = [];
+  if (!Array.isArray(materialDb.chips)) materialDb.chips = [];
+  if (!testDb || typeof testDb !== 'object') testDb = { batches: [], cards: [], equipments: [] };
+  if (!Array.isArray(testDb.batches)) testDb.batches = [];
+  if (!Array.isArray(testDb.cards)) testDb.cards = [];
+  if (!Array.isArray(testDb.equipments)) testDb.equipments = [];
+
+  (testDb.cards || []).forEach(c => {
+    c.status = migrateStatus(c.status);
+    if (Array.isArray(c.elfrBatches)) c.elfrBatches.forEach(b => { b.status = migrateStatus(b.status); normalizeElfrBatch(b); });
+  });
+  (testDb.equipments || []).forEach(e => {
+    if (!e.logs) e.logs = [];
+    e.status = migrateEqStatus(e.status);
+    if (!EQ_STATUSES.includes(e.status)) e.status = '正常';
+  });
+
+  if (testDb.batches) {
+    testDb.batches = testDb.batches.filter(b => b.id !== 'b1' && b.name !== '第一轮实验');
+    testDb.batches.forEach(b => { if (!Array.isArray(b.preparations)) b.preparations = []; });
+  }
+  if (testDb.batches.length === 0) currentBatchId = null;
+  else if (!testDb.batches.find(b => b.id === currentBatchId)) currentBatchId = testDb.batches[0].id;
+
+  renderComponents(); renderChips(); renderShortage(); renderCalc();
+  renderBatches(); renderBoard(); renderEquipments();
+  setStatus('数据已就绪', '#4ade80');
+}
+function forceSave() { clearTimeout(saveTimer); localStorage.setItem(STORE_KEY, JSON.stringify({ material: materialDb, test: testDb })); }
+function save() {
+  setStatus('保存中…');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try { forceSave(); setStatus('已保存 ' + new Date().toLocaleTimeString('zh-CN',{hour12:false}), '#4ade80'); }
+    catch(e) { setStatus('保存失败：' + e.message, '#ef4444'); }
+  }, 300);
+}
+function setStatus(t, color) { const el = $('#saveStatus'); el.textContent = t; el.style.color = color || 'var(--text-sec)'; }
+window.addEventListener('beforeunload', forceSave);
+
+function switchPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  const tabs = { components:0, chips:1, shortage:2, calc:3, board:4, equipment:5 };
+  document.querySelectorAll('.nav-tab')[tabs[page]].classList.add('active');
+  $(`#page-${page}`).classList.add('active');
+  const btnAdd = $('#btnGlobalAdd');
+  if(page === 'components') { btnAdd.style.display = 'inline-block'; btnAdd.textContent = '+ 新增物料'; btnAdd.onclick = () => editComp(); }
+  else if(page === 'chips') { btnAdd.style.display = 'inline-block'; btnAdd.textContent = '+ 新增芯片'; btnAdd.onclick = () => editChip(); }
+  else if(page === 'board') { btnAdd.style.display = 'inline-block'; btnAdd.textContent = '+ 新增实验项'; btnAdd.onclick = () => { if(!currentBatchId) return alert('请先新增试验主题！'); openBoardModal(); }; }
+  else if(page === 'equipment') { btnAdd.style.display = 'inline-block'; btnAdd.textContent = '+ 新增设备'; btnAdd.onclick = () => openEqModal(); }
+  else { btnAdd.style.display = 'none'; }
+  if(page === 'components') renderComponents();
+  if(page === 'chips') renderChips();
+  if(page === 'shortage') renderShortage();
+  if(page === 'calc') renderCalc();
+  if(page === 'board') renderBoard();
+  if(page === 'equipment') renderEquipments();
+}
+function globalAdd() {
+  if(currentPage === 'components') editComp();
+  else if(currentPage === 'chips') editChip();
+  else if(currentPage === 'board') { if(!currentBatchId) return alert('请先新增试验主题！'); openBoardModal(); }
+  else if(currentPage === 'equipment') openEqModal();
+}
+function openMatModal(title, body, onOk) {
+  $('#modalMatTitle').textContent = title;
+  $('#modalMatBody').innerHTML = body;
+  showModalOnTop('modalMat');
+  $('#modalMatOk').textContent = '确定';
+  $('#modalMatOk').onclick = () => { if(onOk() !== false) closeMatModal(); };
+}
+function openInputModal(title, fields, onOk) {
+  $('#inputModalTitle').textContent = title;
+  $('#inputModalBody').innerHTML = fields.map(f => {
+    let inputHtml;
+    if (f.type === 'select') {
+      const opts = (f.options || []).map(o => `<option value="${esc(o)}" ${o === f.value ? 'selected' : ''}>${esc(o)}</option>`).join('');
+      inputHtml = `<select id="im_${f.id}">${opts}</select>`;
+    } else {
+      inputHtml = `<input id="im_${f.id}" type="${f.type || 'text'}" value="${esc(f.value ?? '')}" placeholder="${esc(f.placeholder || '')}">`;
+    }
+    return `<div class="form-group"><label>${esc(f.label)}</label>${inputHtml}</div>`;
+  }).join('');
+  showModalOnTop('modalInput');
+  $('#inputModalOk').onclick = () => {
+    const values = {};
+    fields.forEach(f => { values[f.id] = $(`#im_${f.id}`).value; });
+    if (onOk(values) !== false) closeInputModal();
+  };
+  setTimeout(() => { const first = $('#inputModalBody input, #inputModalBody select'); if (first) { first.focus(); if (first.select && first.tagName === 'INPUT') first.select(); } }, 30);
+}
+
+function applyImportedData(d) {
+  if (!d || typeof d !== 'object') throw new Error('数据不是对象');
+  if (d.material || d.test) {
+    if (d.material) {
+      if (!Array.isArray(d.material.components)) d.material.components = [];
+      if (!Array.isArray(d.material.chips)) d.material.chips = [];
+      materialDb = d.material;
+    }
+    if (d.test) {
+      if (!Array.isArray(d.test.batches)) d.test.batches = [];
+      if (!Array.isArray(d.test.cards)) d.test.cards = [];
+      if (!Array.isArray(d.test.equipments)) d.test.equipments = [];
+      testDb = d.test;
+    }
+  } else if (d.components || d.chips) {
+    materialDb = { components: d.components || [], chips: d.chips || [] };
+  } else if (d.batches || d.cards) {
+    testDb = { batches: d.batches || [], cards: d.cards || [], equipments: d.equipments || [] };
+  } else throw new Error('无法识别的数据格式');
+  forceSave(); loadAll();
+}
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
+  try { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); document.body.removeChild(ta); return Promise.resolve(ok); } catch(e) { return Promise.resolve(false); }
+}
+function copySharePath() {
+  copyText(DATA_FULL_UNC).then(ok => {
+    if (ok) alert('已复制完整路径：\n\n' + DATA_FULL_UNC + '\n\n用法：点「📂 选择 data.json」→ 文件对话框顶部地址栏 Ctrl+A 全选 → Ctrl+V 粘贴 → 回车 → 选中 data.json');
+    else prompt('请手动复制：', DATA_FULL_UNC);
+  });
+}
+function handleJsonFile(file) {
+  if (!file) return;
+  if (!/\.json$/i.test(file.name)) { alert('请选择 .json 文件'); return; }
+  setStatus('正在读取 ' + file.name + ' …', '#f59e0b');
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      let d; try { d = JSON.parse(e.target.result); } catch (err) { throw new Error('不是有效 JSON'); }
+      if (!confirm('将用「' + file.name + '」覆盖当前数据？')) { setStatus('已取消', 'var(--text-sec)'); return; }
+      applyImportedData(d);
+      setStatus('已加载', '#4ade80');
+      setTimeout(() => alert(`加载成功：${file.name}\n· 元器件 ${(materialDb.components||[]).length} 条\n· 试验主题 ${(testDb.batches||[]).length} 个\n· 实验卡片 ${(testDb.cards||[]).length} 条\n· 设备 ${(testDb.equipments||[]).length} 台`), 60);
+    } catch (err) { setStatus('加载失败：' + err.message, '#ef4444'); alert('加载失败：' + err.message); }
+  };
+  r.onerror = () => { setStatus('文件读取失败', '#ef4444'); alert('文件读取失败'); };
+  r.readAsText(file, 'utf-8');
+}
+function loadFromLocalFile(input) { const f = input.files[0]; if (f) handleJsonFile(f); input.value = ''; }
+async function autoLoadFromSameDir() {
+  setStatus('尝试自动读取…', '#f59e0b');
+  try {
+    const text = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', './' + DATA_FILE_NAME + '?_t=' + Date.now(), true);
+      xhr.timeout = 3000;
+      xhr.onreadystatechange = () => { if (xhr.readyState === 4) { if (xhr.status === 200 || (xhr.status === 0 && xhr.responseText)) resolve(xhr.responseText); else reject(new Error('HTTP ' + xhr.status)); } };
+      xhr.onerror = () => reject(new Error('浏览器拒绝（file:// 安全限制）'));
+      xhr.ontimeout = () => reject(new Error('读取超时'));
+      xhr.send();
+    });
+    let d; try { d = JSON.parse(text); } catch (err) { throw new Error('不是有效 JSON'); }
+    if (!confirm('检测到同目录 ' + DATA_FILE_NAME + '，是否加载并覆盖？')) { setStatus('已取消', 'var(--text-sec)'); return; }
+    applyImportedData(d);
+    setStatus('已自动加载', '#4ade80');
+    setTimeout(() => alert('自动加载成功！'), 60);
+  } catch (e) {
+    setStatus('自动加载失败', '#ef4444');
+    alert('自动加载失败：' + e.message + '\n\nfile:// 下 Chrome/Edge 默认禁止脚本读取本地文件。\n\n👉 两种办法：\n【一】📋 复制路径 → 📂 选择 data.json → 对话框地址栏粘贴回车\n【二】把 data.json 拖到本页面');
+  }
+}
+let dragCounter = 0;
+window.addEventListener('dragenter', e => { if (e.dataTransfer && Array.from(e.dataTransfer.types).includes('Files')) { dragCounter++; document.getElementById('dropOverlay')?.classList.add('on'); } });
+window.addEventListener('dragleave', () => { dragCounter--; if (dragCounter <= 0) { dragCounter = 0; document.getElementById('dropOverlay')?.classList.remove('on'); } });
+window.addEventListener('dragover', e => { e.preventDefault(); });
+window.addEventListener('drop', e => { e.preventDefault(); dragCounter = 0; document.getElementById('dropOverlay')?.classList.remove('on'); const f = e.dataTransfer && e.dataTransfer.files[0]; if (f) handleJsonFile(f); });
+function exportServerJson() {
+  forceSave();
+  const allData = { version: '1.7', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
+  const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = DATA_FILE_NAME; a.click();
+  setTimeout(() => alert('已导出 ' + DATA_FILE_NAME + '。\n\n请覆盖到共享目录：\n' + SHARE_UNC), 100);
+}
+
+/* ========== 物料台账 ========== */
+function compStatus(c) {
+  if (c.status) return c.status;
+  const q = Number(c.qty) || 0, s = Number(c.safety) || 0;
+  if (q <= 0) return '缺货';
+  if (q < s) return '低库存';
+  return '正常';
+}
+function matchFoldGroup(name) {
+  const n = String(name || '').trim();
+  for (const g of FOLD_GROUPS) { for (const p of g.patterns) { if (n.includes(p)) return g.key; } }
+  return null;
+}
+function toggleWarnFilter(btn) { btn.classList.toggle('active'); renderComponents(); }
+function renderComponents() {
+  const types = [...new Set(materialDb.components.map(c => c.name))].sort();
+  const filterSelect = $('#filterType');
+  if (filterSelect.options.length !== types.length + 1) {
+    const cur = filterSelect.value;
+    filterSelect.innerHTML = '<option value="">全部类型</option>' + types.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+    filterSelect.value = cur;
+  }
+  const kw = ($('#searchComp').value || '').trim().toLowerCase();
+  const typeFilter = filterSelect.value;
+  const showWarn = $('#filterWarning').classList.contains('active');
+  let list = materialDb.components.filter(c => {
+    if (typeFilter && c.name !== typeFilter) return false;
+    if (showWarn) { const st = compStatus(c); if (st !== '缺货' && st !== '低库存') return false; }
+    if (kw && ![c.name,c.spec,c.pkg,c.rating,c.auto,c.tol,c.temp,c.note].join(' ').toLowerCase().includes(kw)) return false;
+    return true;
+  });
+  const tb = $('#compBody');
+  if (!list.length) { tb.innerHTML = '<tr><td colspan="13" class="empty">没有符合条件的物料</td></tr>'; return; }
+  if (kw || typeFilter || showWarn || sortMode) { tb.innerHTML = list.map(c => renderCompRow(c, null)).join(''); return; }
+  const seen = new Set(); const blocks = [];
+  materialDb.components.forEach(c => {
+    const g = matchFoldGroup(c.name);
+    if (g) { if (seen.has(g)) return; seen.add(g); blocks.push({ type:'group', key:g, items: materialDb.components.filter(x => matchFoldGroup(x.name) === g) }); }
+    else { blocks.push({ type:'single', item:c }); }
+  });
+  let html = '';
+  blocks.forEach(b => {
+    if (b.type === 'single') { html += renderCompRow(b.item, null); return; }
+    const collapsed = !!collapsedGroups[b.key];
+    const handle = sortMode ? '<span class="drag-handle">⋮⋮</span>' : '';
+    html += `<tr class="group-row" data-group="${esc(b.key)}"><td colspan="13">${handle}<span class="group-arrow">${collapsed ? '▶' : '▼'}</span>${esc(b.key)}<span class="group-count">${b.items.length} 项</span></td></tr>`;
+    if (!collapsed) b.items.forEach(c => { html += renderCompRow(c, b.key); });
+  });
+  tb.innerHTML = html;
+}
+function renderCompRow(c, groupKey) {
+  const st = compStatus(c);
+  const q = Number(c.qty) || 0;
+  const handle = sortMode ? '<span class="drag-handle">⋮⋮</span>' : '';
+  return `<tr data-id="${c.id}"><td><strong>${handle}${esc(c.name)}</strong></td><td class="mono">${esc(c.spec) || '-'}</td><td class="mono">${esc(c.pkg) || '-'}</td><td class="mono">${esc(c.rating) || '-'}</td><td>${c.auto === '是' ? '<span class="badge st-ok">车规</span>' : (c.auto === '否' ? '<span class="badge st-muted">非车规</span>' : '-')}</td><td class="mono">${esc(c.tol) || '-'}</td><td class="mono">${esc(c.temp) || '-'}</td><td class="note" style="max-width:150px; overflow:hidden; text-overflow:ellipsis;" title="${esc(c.note)}">${esc(c.note) || '-'}</td><td class="num ${q <= 0 ? 'text-danger' : ''}">${q}</td><td class="num">${Number(c.safety) || 0}</td><td>${esc(c.location) || '-'}</td><td><span class="badge ${st==='缺货'?'st-danger':(st==='低库存'?'st-warn':'st-ok')}">${st}</span></td><td><button class="link" onclick="editComp('${c.id}')">编辑</button><button class="link" onclick="showLogs('${c.id}')">流水</button><button class="link danger" onclick="delComp('${c.id}')">删除</button></td></tr>`;
+}
+function editComp(id) {
+  const isNew = !id;
+  const c = isNew ? {id:uid(), name:'', spec:'', pkg:'', rating:'', auto:'', tol:'', temp:'', qty:0, safety:0, location:'', note:'', logs:[]} : materialDb.components.find(x => x.id === id);
+  if (!c) return;
+  editingComp = c; editLogs = [];
+  const oldQty = Number(c.qty) || 0;
+  const html = `<div class="form-grid"><div class="form-group full"><label>物料名 *</label><input id="f_name" value="${esc(c.name)}"></div><div class="form-group"><label>规格值</label><input id="f_spec" value="${esc(c.spec)}"></div><div class="form-group"><label>封装</label><input id="f_pkg" value="${esc(c.pkg)}"></div><div class="form-group"><label>耐压/功率</label><input id="f_rating" value="${esc(c.rating)}"></div><div class="form-group"><label>是否车规</label><select id="f_auto"><option value="">未指定</option><option value="是" ${c.auto==='是'?'selected':''}>是</option><option value="否" ${c.auto==='否'?'selected':''}>否</option></select></div><div class="form-group"><label>精度</label><input id="f_tol" value="${esc(c.tol)}"></div><div class="form-group"><label>工作温度</label><input id="f_temp" value="${esc(c.temp)}"></div><div class="form-group"><label>安全库存</label><input id="f_safety" type="number" value="${Number(c.safety)||0}"></div><div class="form-group"><label>存放位置</label><input id="f_location" value="${esc(c.location)}"></div><div class="form-group full"><label>备注</label><textarea id="f_note" rows="2">${esc(c.note)}</textarea></div><div class="full" style="background:#f8fafc; padding:12px; border-radius:6px;"><label style="font-weight:600;">实时量</label><div style="display:flex; gap:10px; align-items:center; margin-top:6px; flex-wrap:wrap;"><input id="f_qty" type="number" value="${oldQty}" style="width:100px; height:34px; font-weight:bold;"><span style="color:var(--text-sec);">数量:</span><input id="f_adj" type="number" value="1" style="width:70px; height:34px;"><button type="button" class="primary" style="padding:4px 10px;" onclick="adjustQty(1)">进货 +</button><button type="button" class="ghost" style="padding:4px 8px;" onclick="adjustQty(-1)">出货 -</button></div><div id="edit_log_preview" style="margin-top:10px; font-size:12px; color:var(--primary);"></div></div></div>`;
+  openMatModal(isNew ? '新增物料' : '编辑物料', html, () => {
+    const name = $('#f_name').value.trim();
+    if (!name) { alert('请填写物料名'); return false; }
+    const newQty = Math.max(0, Number($('#f_qty').value) || 0);
+    Object.assign(c, { name, spec: $('#f_spec').value.trim(), pkg: $('#f_pkg').value.trim(), rating: $('#f_rating').value.trim(), auto: $('#f_auto').value, tol: $('#f_tol').value.trim(), temp: $('#f_temp').value.trim(), note: $('#f_note').value.trim(), qty: newQty, safety: Number($('#f_safety').value)||0, location: $('#f_location').value.trim() });
+    let logs = (c.logs || []).slice();
+    if (editLogs.length) logs = logs.concat(editLogs);
+    else if (newQty !== oldQty) logs.push({t: Date.now(), type: 'fix', qty: newQty - oldQty, after: newQty});
+    c.logs = logs.slice(-100);
+    if (isNew) materialDb.components.push(c);
+    editingComp = null; editLogs = [];
+    save(); renderComponents();
+    return true;
+  });
+  renderEditLogPreview();
+}
+function renderEditLogPreview() {
+  const box = $('#edit_log_preview'); if (!box) return;
+  const pending = editLogs.slice().reverse();
+  if (!pending.length) { box.innerHTML = ''; return; }
+  box.innerHTML = pending.map(l => `<span style="margin-right:10px;">${l.type==='in'?'进货':'出货'} ${l.type==='in'?'+':'-'}${l.qty} → ${l.after}</span>`).join('');
+}
+function adjustQty(sign) {
+  const qtyEl = $('#f_qty'), adjEl = $('#f_adj');
+  const n = Math.max(1, Math.floor(Number(adjEl.value) || 1));
+  let cur = Math.max(0, Number(qtyEl.value) || 0);
+  let after;
+  if (sign > 0) { after = cur + n; editLogs.push({t: Date.now(), type: 'in', qty: n, after}); }
+  else { const actual = Math.min(cur, n); if (actual === 0) { alert('已为0'); return; } after = Math.max(0, cur - actual); editLogs.push({t: Date.now(), type: 'out', qty: actual, after}); }
+  qtyEl.value = after;
+  renderEditLogPreview();
+}
+function delComp(id) {
+  if (!confirm('确定删除该物料？')) return;
+  materialDb.components = materialDb.components.filter(x => x.id !== id);
+  materialDb.chips.forEach(ch => { BOARD_KEYS.forEach(k => { ch.boards[k].bom = ch.boards[k].bom.filter(b => b.cid !== id); }); });
+  save(); renderComponents(); renderChips();
+}
+function showLogs(id) {
+  const c = materialDb.components.find(x => x.id === id);
+  const logs = (c.logs || []).slice().reverse();
+  let html = `<div style="margin-bottom:14px; font-weight:600;">当前实时量：${c.qty}</div>`;
+  if (!logs.length) html += '<div class="empty">暂无记录</div>';
+  else {
+    html += '<table style="width:100%; font-size:12px;"><tr><th>时间</th><th>类型</th><th>数量</th><th>结果</th></tr>';
+    logs.forEach(l => { const sign = l.type === 'out' ? '−' : (l.type === 'in' ? '+' : (l.qty >= 0 ? '+' : '')); html += `<tr><td>${new Date(l.t).toLocaleString()}</td><td>${l.type}</td><td>${sign}${Math.abs(l.qty)}</td><td>${l.after}</td></tr>`; });
+    html += '</table>';
+  }
+  openMatModal('出入库流水', html, () => true);
+}
+function toggleSortMode() {
+  sortMode = !sortMode;
+  const btn = $('#btnSortMode');
+  btn.textContent = sortMode ? '退出排序' : '拖拽排序';
+  btn.style.background = sortMode ? 'var(--primary)' : '#fff';
+  btn.style.color = sortMode ? '#fff' : 'var(--text)';
+  renderComponents();
+}
+
+/* ========== 芯片 BOM ========== */
+function renderChips() {
+  const list = $('#chipList');
+  if (!materialDb.chips.length) { list.innerHTML = '<div class="empty">暂无芯片</div>'; $('#chipDetail').innerHTML = ''; return; }
+  let activeId = list.dataset.activeId;
+  if (!activeId || !materialDb.chips.some(c => c.id === activeId)) activeId = materialDb.chips[0].id;
+  list.dataset.activeId = activeId;
+  list.innerHTML = materialDb.chips.map(c => { const bomLen = BOARD_KEYS.reduce((s,k)=>s+c.boards[k].bom.length,0); return `<div class="chip-item ${c.id===activeId?'active':''}" onclick="selectChip('${c.id}')"><div class="chip-name">${esc(c.name)}</div><div class="chip-sub">${bomLen} 种物料</div></div>`; }).join('');
+  renderChipDetail(activeId);
+}
+function selectChip(id) { $('#chipList').dataset.activeId = id; renderChips(); }
+function renderChipDetail(chipId) {
+  const ch = materialDb.chips.find(c => c.id === chipId); if (!ch) return;
+  const box = $('#chipDetail');
+  const sections = BOARD_KEYS.map(k => {
+    const b = ch.boards[k];
+    const rows = b.bom.map(item => {
+      const c = materialDb.components.find(x => x.id === item.cid); if (!c) return '';
+      return `<tr><td><strong>${esc(c.name)}</strong></td><td class="mono">${esc(c.spec)}</td><td class="num">${c.qty}</td><td class="num">${item.qty}</td><td><button class="link danger" onclick="delBom('${k}','${item.cid}')">移除</button></td></tr>`;
+    }).join('');
+    return `<div class="board-block"><div class="board-head"><div style="font-weight:600;">${BOARD_NAMES[k]} (计划 ${b.qty}, 已出 ${b.shipped})</div><div style="display:flex; gap:8px; align-items:center;"><input type="number" min="0" value="${b.qty}" oninput="setBoardQty('${ch.id}','${k}',this.value)"><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="shipBoard('${k}')">一键出货</button><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="openBomImport('${ch.id}','${k}')">导入</button><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="openCopyBom('${ch.id}','${k}')">复制</button><button class="primary" style="padding:4px 8px; font-size:12px;" onclick="addBom('${k}')">+ 添加</button></div></div><table><thead><tr style="background:#f8fafc; font-size:12px;"><th>物料名</th><th>规格</th><th class="num">库存</th><th class="num">用量</th><th>操作</th></tr></thead><tbody>${rows || '<tr><td colspan="5" class="empty">暂无 BOM</td></tr>'}</tbody></table></div>`;
+  }).join('');
+  box.innerHTML = `<div style="padding:16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between;"><div><h3 style="margin:0;">${esc(ch.name)}</h3></div><div><button class="ghost" onclick="editChip('${ch.id}')">编辑</button><button class="ghost" style="color:var(--danger);" onclick="delChip('${ch.id}')">删除</button></div></div>${sections}`;
+}
+function editChip(id) {
+  const isNew = !id;
+  const ch = isNew ? {id:uid(), name:'', desc:'', boards:{base:{qty:0,bom:[],shipped:0}, hast:{qty:0,bom:[],shipped:0}, top:{qty:0,bom:[],shipped:0}}} : materialDb.chips.find(x => x.id === id);
+  openMatModal(isNew ? '新增芯片' : '编辑芯片', `<div class="form-group"><label>名称</label><input id="c_name" value="${esc(ch.name)}"></div><div class="form-group"><label>描述</label><input id="c_desc" value="${esc(ch.desc)}"></div>`, () => {
+    if (!$('#c_name').value.trim()) { alert('名称必填'); return false; }
+    ch.name = $('#c_name').value.trim(); ch.desc = $('#c_desc').value.trim();
+    if (isNew) materialDb.chips.push(ch);
+    $('#chipList').dataset.activeId = ch.id;
+    save(); renderChips();
+    return true;
+  });
+}
+function delChip(id) { if (confirm('删除芯片及BOM？')) { materialDb.chips = materialDb.chips.filter(x=>x.id!==id); save(); renderChips(); } }
+function setBoardQty(chipId, key, v) { const ch = materialDb.chips.find(c=>c.id===chipId); if (ch) { ch.boards[key].qty = Math.max(0, Number(v)||0); save(); renderCalc(); } }
+function addBom(boardKey) {
+  const ch = materialDb.chips.find(c=>c.id===$('#chipList').dataset.activeId); if (!ch) return;
+  const opts = materialDb.components.map(c => `<option value="${c.id}">${esc(c.name)} ${esc(c.spec)}</option>`).join('');
+  openMatModal('添加 BOM', `<div class="form-group"><label>选择物料</label><select id="b_cid">${opts}</select></div><div class="form-group"><label>单板用量</label><input id="b_qty" type="number" value="1"></div>`, () => {
+    const cid = $('#b_cid').value, qty = Number($('#b_qty').value)||1;
+    const exist = ch.boards[boardKey].bom.find(b=>b.cid===cid);
+    if (exist) exist.qty = qty; else ch.boards[boardKey].bom.push({cid, qty});
+    save(); renderChips(); renderCalc();
+    return true;
+  });
+}
+function delBom(k, cid) { const ch = materialDb.chips.find(c=>c.id===$('#chipList').dataset.activeId); if (ch) { ch.boards[k].bom = ch.boards[k].bom.filter(b=>b.cid!==cid); save(); renderChips(); renderCalc(); } }
+function shipBoard(boardKey) {
+  const ch = materialDb.chips.find(c=>c.id===$('#chipList').dataset.activeId);
+  if (!ch || !ch.boards[boardKey].bom.length) return alert('无 BOM');
+  const b = ch.boards[boardKey];
+  openInputModal('一键出货', [{ id: 'n', label: `出货板数（计划 ${b.qty}，已出 ${b.shipped}）`, type: 'number', value: Math.max(1, b.qty - b.shipped) }], ({ n }) => {
+    const num = Number(n);
+    if (!num || num <= 0) { alert('请输入有效数'); return false; }
+    let ok = 0;
+    b.bom.forEach(item => { const c = materialDb.components.find(x=>x.id===item.cid); if (c) { const need = item.qty * num; const actual = Math.min(need, c.qty); if (actual > 0) { c.qty -= actual; c.logs.push({t: Date.now(), type: 'out', qty: actual, after: c.qty}); ok++; } } });
+    if (ok === 0) { alert('库存不足'); return false; }
+    b.shipped = (b.shipped||0) + num;
+    save(); renderChips(); renderComponents(); renderShortage(); renderCalc();
+    setTimeout(() => alert('出货成功'), 50);
+    return true;
+  });
+}
+function openCopyBom(chipId, boardKey) {
+  copyBomTarget = { chipId, boardKey };
+  let opts = '';
+  materialDb.chips.forEach(c => { BOARD_KEYS.forEach(k => { if (c.boards[k].bom.length > 0 && !(c.id === chipId && k === boardKey)) opts += `<option value="${c.id}|${k}">${esc(c.name)} - ${BOARD_NAMES[k]} (${c.boards[k].bom.length}项)</option>`; }); });
+  if (!opts) return alert('无可复制的源 BOM');
+  $('#copyBomFormBody').innerHTML = `<div class="form-group"><label>选择源 BOM</label><select id="copy_bom_src">${opts}</select></div>`;
+  $('#modalCopyBom').classList.remove('hidden');
+}
+function saveCopyBom() {
+  if (!copyBomTarget) return;
+  const srcVal = $('#copy_bom_src').value; if (!srcVal) return;
+  const [srcChipId, srcBoardKey] = srcVal.split('|');
+  const srcChip = materialDb.chips.find(c => c.id === srcChipId); if (!srcChip) return;
+  const targetChip = materialDb.chips.find(c => c.id === copyBomTarget.chipId);
+  targetChip.boards[copyBomTarget.boardKey].bom = JSON.parse(JSON.stringify(srcChip.boards[srcBoardKey].bom));
+  save(); renderChips(); renderCalc();
+  $('#modalCopyBom').classList.add('hidden');
+  alert('BOM 复制成功！');
+}
+function openBomImport(chipId, boardKey) {
+  bomImportState = { chipId, boardKey, parsedRows: [] };
+  $('#bomImpFormBody').innerHTML = `<div class="imp-box" id="bomImpDrop"><div style="font-size:30px;">Excel</div><div><strong>点击选择或拖拽 BOM Excel</strong></div><input type="file" id="bomImpFile" accept=".xlsx" hidden></div><div id="bomImpStatus" style="margin-top:12px;"></div><div id="bomImpPreview" style="margin-top:16px; display:none;"></div>`;
+  $('#modalBomImp').classList.remove('hidden');
+  const drop = $('#bomImpDrop'); const fileInput = $('#bomImpFile');
+  drop.onclick = () => fileInput.click();
+  fileInput.onchange = () => { if (fileInput.files[0]) handleBomExcel(fileInput.files[0]); };
+  drop.ondragover = e => { e.preventDefault(); drop.style.background = '#eff6ff'; };
+  drop.ondragleave = () => drop.style.background = '#fafbfc';
+  drop.ondrop = e => { e.preventDefault(); drop.style.background = '#fafbfc'; const f = e.dataTransfer.files[0]; if (f) handleBomExcel(f); };
+}
+async function handleBomExcel(file) {
+  const status = $('#bomImpStatus');
+  if (!/\.xlsx$/i.test(file.name)) { status.innerHTML = '<span class="badge st-danger">格式不支持</span>'; return; }
+  status.innerHTML = '<span class="muted">正在解析…</span>';
+  try {
+    const buf = await file.arrayBuffer();
+    const files = await unzipAll(buf);
+    const shared = parseSharedStrings(files['xl/sharedStrings.xml'] || '');
+    const wbXml = files['xl/workbook.xml'];
+    if (!wbXml) throw new Error('不是有效的 xlsx');
+    const sheetDefs = parseWorkbookXml(wbXml, files['xl/_rels/workbook.xml.rels'] || '');
+    if (!sheetDefs.length) throw new Error('无工作表');
+    const xml = files[sheetDefs[0].path];
+    if (!xml) throw new Error('无法读取工作表');
+    const rows = parseSheetXml(xml, shared);
+    if (rows.length < 2) throw new Error('数据为空');
+    let headerRowIndex = -1;
+    let idxDes=-1, idxCom=-1, idxFoot=-1, idxQty=-1;
+    for (let i=0; i<Math.min(10, rows.length); i++) {
+      const h = rows[i].map(c => String(c||'').trim().toLowerCase());
+      const d = h.findIndex(x => x.includes('designator') || x.includes('位号'));
+      const c = h.findIndex(x => x.includes('comment') || x.includes('值'));
+      const f = h.findIndex(x => x.includes('footprint') || x.includes('封装'));
+      if (d > -1 || c > -1 || f > -1) { headerRowIndex = i; idxDes = d; idxCom = c; idxFoot = f; idxQty = h.findIndex(x => x.includes('quantity') || x.includes('用量') || x.includes('数量')); break; }
+    }
+    if (headerRowIndex === -1) throw new Error('未找到表头');
+    const parsed = []; let lastComment = '', lastFoot = '';
+    for (let i = headerRowIndex + 1; i < rows.length; i++) {
+      const r = rows[i]; if (!r || r.every(c => !c)) continue;
+      const designator = idxDes > -1 ? String(r[idxDes] || '').trim() : '';
+      let comment = idxCom > -1 ? String(r[idxCom] || '').trim() : '';
+      let footprint = idxFoot > -1 ? String(r[idxFoot] || '').trim() : '';
+      if (designator && !comment && lastComment) comment = lastComment;
+      if (designator && !footprint && lastFoot) footprint = lastFoot;
+      if (comment) lastComment = comment; if (footprint) lastFoot = footprint;
+      let qty = 1;
+      if (idxQty > -1) { const qStr = String(r[idxQty] || '').trim(); if (qStr) qty = Math.max(1, parseInt(qStr, 10) || 1); }
+      let matchedCid = ''; let bestScore = 0;
+      materialDb.components.forEach(c => {
+        let score = 0;
+        if (comment && c.spec) { if (c.spec.toLowerCase() === comment.toLowerCase()) score += 20; else if (c.spec.toLowerCase().includes(comment.toLowerCase())) score += 10; }
+        if (footprint && c.pkg) { if (c.pkg.toLowerCase() === footprint.toLowerCase()) score += 10; else if (c.pkg.toLowerCase().includes(footprint.toLowerCase())) score += 5; }
+        if (score > bestScore) { bestScore = score; matchedCid = c.id; }
+      });
+      parsed.push({ designator, comment, footprint, qty, matchedCid: bestScore >= 5 ? matchedCid : '' });
+    }
+    bomImportState.parsedRows = parsed;
+    renderBomImportPreview();
+    status.innerHTML = `<span class="badge st-ok">解析完成</span> 共 ${parsed.length} 行`;
+    $('#bomImpPreview').style.display = 'block';
+  } catch (e) { status.innerHTML = `<span class="badge st-danger">解析失败</span> ${esc(e.message)}`; }
+}
+function renderBomImportPreview() {
+  const box = $('#bomImpPreview'); if (!box) return;
+  const rows = bomImportState.parsedRows;
+  if (!rows.length) { box.innerHTML = '<div class="empty">无数据</div>'; return; }
+  let html = '<div class="table-container"><table style="font-size:12px"><thead><tr><th>位号</th><th>值</th><th>封装</th><th class="num">用量</th><th>系统物料</th></tr></thead><tbody>';
+  rows.forEach((r, idx) => {
+    html += `<tr><td>${esc(r.designator) || '—'}</td><td>${esc(r.comment) || '—'}</td><td>${esc(r.footprint) || '—'}</td><td class="num">${r.qty}</td><td><select id="bom_sel_${idx}" style="width:100%;padding:4px;border:1px solid #e2e8f0;border-radius:4px;font-size:12px"><option value="">-- 忽略 --</option>${materialDb.components.map(c => `<option value="${c.id}" ${c.id === r.matchedCid ? 'selected' : ''}>${esc(c.name)} ${esc(c.spec)}</option>`).join('')}</select></td></tr>`;
+  });
+  box.innerHTML = html + '</tbody></table></div>';
+}
+function saveBomImport() {
+  const { chipId, boardKey, parsedRows } = bomImportState;
+  const ch = materialDb.chips.find(c => c.id === chipId); if (!ch) return;
+  const b = ch.boards[boardKey]; let count = 0;
+  parsedRows.forEach((r, idx) => {
+    const sel = document.getElementById(`bom_sel_${idx}`); if (!sel || !sel.value) return;
+    const cid = sel.value; const qty = Math.max(1, Number(r.qty) || 1);
+    const exist = b.bom.find(x => x.cid === cid);
+    if (exist) exist.qty = qty; else b.bom.push({ cid, qty });
+    count++;
+  });
+  if (count === 0) { alert('未选中有效物料'); return; }
+  save(); renderChips(); renderCalc();
+  $('#modalBomImp').classList.add('hidden');
+  setTimeout(() => alert(`成功导入 ${count} 项`), 50);
+}
+
+/* ========== 需求核算 ========== */
+function computeDemand() {
+  const demand = {};
+  materialDb.chips.forEach(ch => { BOARD_KEYS.forEach(k => {
+    const b = ch.boards[k]; if (!b.qty) return;
+    b.bom.forEach(item => {
+      if (!demand[item.cid]) demand[item.cid] = {total: 0, sources: []};
+      const need = item.qty * b.qty;
+      demand[item.cid].total += need;
+      demand[item.cid].sources.push(`${ch.name}·${BOARD_SHORT[k]} ${b.qty}×${item.qty}`);
+    });
+  }); });
+  return demand;
+}
+function renderShortage() {
+  const shortage = materialDb.components.filter(c => compStatus(c) === '缺货');
+  const low = materialDb.components.filter(c => compStatus(c) === '低库存');
+  $('#shortageBody').innerHTML = shortage.length ? shortage.map(c => `<tr><td><strong>${esc(c.name)}</strong></td><td class="mono">${esc(c.spec)}</td><td class="mono">${esc(c.pkg)}</td><td class="num text-danger">${c.qty}</td><td>${esc(c.note)}</td><td><button class="link" onclick="editComp('${c.id}')">补货</button></td></tr>`).join('') : '<tr><td colspan="6" class="empty">无缺货</td></tr>';
+  $('#lowBody').innerHTML = low.length ? low.map(c => `<tr><td><strong>${esc(c.name)}</strong></td><td class="mono">${esc(c.spec)}</td><td class="mono">${esc(c.pkg)}</td><td class="num">${c.qty}</td><td class="num">${c.safety}</td><td class="num text-warn">${c.safety - c.qty}</td><td><button class="link" onclick="editComp('${c.id}')">补货</button></td></tr>`).join('') : '<tr><td colspan="7" class="empty">无低库存</td></tr>';
+}
+function renderCalc() {
+  const wrap = $('#calcChips');
+  if (!materialDb.chips.length) { wrap.innerHTML = '<div class="empty">请先添加芯片</div>'; return; }
+  wrap.innerHTML = materialDb.chips.map(ch => `<div class="calc-chip-block"><div style="font-weight:600; margin-bottom:8px;">${esc(ch.name)}</div><div style="display:flex; gap:16px;">${BOARD_KEYS.map(k => `<div style="display:flex; align-items:center; gap:8px; font-size:13px;"><span style="color:var(--text-sec);">${BOARD_NAMES[k]}</span><input type="number" min="0" value="${ch.boards[k].qty}" oninput="setBoardQty('${ch.id}','${k}',this.value)"></div>`).join('')}</div></div>`).join('');
+  renderCalcResult();
+}
+function renderCalcResult() {
+  const demand = computeDemand();
+  const cids = Object.keys(demand);
+  let shortage = 0;
+  const rows = cids.map(cid => {
+    const c = materialDb.components.find(x=>x.id===cid); if (!c) return '';
+    const d = demand[cid];
+    const gap = Math.max(0, d.total - c.qty);
+    if (gap > 0) shortage++;
+    return `<tr><td><strong>${esc(c.name)}</strong></td><td class="mono">${esc(c.spec)}</td><td class="num">${d.total}</td><td class="num">${c.qty}</td><td class="num ${gap>0?'text-danger':''}">${gap||'-'}</td><td><span class="badge ${gap>0?'st-danger':'st-ok'}">${gap>0?'缺货':'充足'}</span></td><td style="font-size:11px; color:var(--text-sec);">${d.sources.slice(0,3).join('; ')}${d.sources.length>3?'...':''}</td></tr>`;
+  }).join('');
+  $('#calcSummary').innerHTML = cids.length ? `<span class="badge st-info">涉及 ${cids.length} 种物料</span> <span class="badge ${shortage?'st-danger':'st-ok'}">${shortage?'缺货 '+shortage+' 种':'全部充足'}</span>` : '';
+  $('#calcBody').innerHTML = rows || '<tr><td colspan="7" class="empty">暂无数据</td></tr>';
+}
+
+/* ========== 实验看板 ========== */
+function renderBatches() {
+  let html = `<div style="padding: 0 16px 12px 16px; border-bottom: 1px solid var(--border); margin-bottom: 12px;"><button class="primary" style="width: 100%; padding: 6px; font-size: 13px;" onclick="addNewBatch()">+ 新增试验主题</button></div>`;
+  if (!testDb.batches || testDb.batches.length === 0) {
+    html += '<div style="text-align:center; padding:20px; color:var(--text-sec); font-size:12px;">暂无试验</div>';
+    $('#batchList').innerHTML = html;
+    $('#currentBatchTitle').textContent = '请先新增试验主题';
+    $('#cardGrid').innerHTML = ''; $('#batchProgress').innerHTML = '';
+    return;
+  }
+  html += testDb.batches.map(b => {
+    const pr = calcBatchProgress(b.id);
+    return `<div class="batch-item ${b.id === currentBatchId ? 'active' : ''}" onclick="switchBatch('${b.id}')"><div style="flex:1; min-width:0; margin-right:8px;"><div class="batch-name">${esc(b.name)}</div><div class="batch-meta">总进度 ${pr.pct}% · 完成 ${pr.done}/${pr.total} 项</div></div><div style="display:flex; gap:2px; flex-shrink:0;"><button class="btn-copy-batch" onclick="event.stopPropagation(); copyBatch('${b.id}')">复制</button><button class="btn-copy-batch del" onclick="event.stopPropagation(); delBatch('${b.id}')">删除</button></div></div>`;
+  }).join('');
+  $('#batchList').innerHTML = html;
+}
+function addNewBatch() {
+  openInputModal('新增试验主题', [{ id: 'name', label: '试验主题名称', placeholder: '例如：GL002 第三轮' }], ({ name }) => {
+    name = (name || '').trim();
+    if (!name) { alert('请输入'); return false; }
+    const newId = 'b_' + Date.now();
+    if (!testDb.batches) testDb.batches = [];
+    testDb.batches.push({ id: newId, name, preparations: [] });
+    currentBatchId = newId;
+    save(); renderBatches(); renderBoard();
+    return true;
+  });
+}
+function copyBatch(sourceBatchId) {
+  const sourceBatch = testDb.batches.find(b => b.id === sourceBatchId); if (!sourceBatch) return;
+  openInputModal('复制试验主题', [{ id: 'name', label: '新主题名称', value: sourceBatch.name + ' - 副本' }], ({ name }) => {
+    name = (name || '').trim(); if (!name) { alert('请输入'); return false; }
+    const newBatchId = 'b_' + Date.now();
+    testDb.batches.push({ id: newBatchId, name, preparations: (sourceBatch.preparations || []).map(p => ({ ...p, id: 'p_' + uid() })) });
+    const sourceCards = testDb.cards.filter(c => c.batchId === sourceBatchId);
+    sourceCards.forEach(c => {
+      const newCard = JSON.parse(JSON.stringify(c));
+      newCard.id = 'c_' + Date.now() + Math.random().toString(36).slice(2,5);
+      newCard.batchId = newBatchId;
+      if (newCard.elfrBatches) newCard.elfrBatches.forEach(b => { b.id = 'eb_' + uid(); (b.ftTests||[]).forEach(t => { t.id = 'ft_' + uid(); }); });
+      testDb.cards.push(newCard);
+    });
+    currentBatchId = newBatchId;
+    save(); renderBatches(); renderBoard();
+    setTimeout(() => alert(`成功复制 ${sourceCards.length} 个实验项`), 50);
+    return true;
+  });
+}
+function delBatch(batchId) {
+  const b = testDb.batches.find(x => x.id === batchId); if (!b) return;
+  if (!confirm(`确定删除「${b.name}」？关联的实验卡片也会删除！`)) return;
+  testDb.batches = testDb.batches.filter(x => x.id !== batchId);
+  testDb.cards = testDb.cards.filter(x => x.batchId !== batchId);
+  if (currentBatchId === batchId) currentBatchId = testDb.batches.length > 0 ? testDb.batches[0].id : null;
+  save(); renderBatches(); renderBoard();
+}
+function switchBatch(id) { currentBatchId = id; renderBatches(); renderBoard(); }
+function calcBatchProgress(batchId) {
+  const cards = testDb.cards.filter(c => c.batchId === batchId);
+  let sum = 0, done = 0, sentCount = 0, runningCount = 0, waitingCount = 0;
+  cards.forEach(c => {
+    if (c.status === '已FT' || c.status === '已取回') { sum += 100; done++; }
+    else if (c.status === '实验中') { sum += calcTime(c.startDate, c.durationDays).progress; runningCount++; }
+    else if (c.status === '已送样') { sentCount++; }
+    else { waitingCount++; }
+  });
+  return { pct: cards.length ? Math.round(sum / cards.length) : 0, total: cards.length, done, sentCount, runningCount, waitingCount };
+}
+function renderBatchProgress() {
+  const box = $('#batchProgress'); if (!box) return;
+  const batch = testDb.batches.find(b => b.id === currentBatchId); if (!batch) { box.innerHTML = ''; return; }
+  const p = calcBatchProgress(batch.id);
+  const st = prepStats(batch);
+  const sub = st.total ? ` · 准备清单 ${st.done}/${st.total}` : '';
+  box.innerHTML = `<div class="bp-wrap"><div class="bp-top"><span class="bp-pct">${p.pct}%</span><span class="bp-meta">完成 ${p.done} / 共 ${p.total}</span></div><div class="bp-bar"><div class="bp-fill" style="width:${p.pct}%"></div></div><div class="bp-sub">已送样 ${p.sentCount} · 实验中 ${p.runningCount} · 待准备 ${p.waitingCount}${sub}</div></div>`;
+}
+function prepStats(batch) {
+  const list = (batch && batch.preparations) || [];
+  return { total: list.length, done: list.filter(p => p.status === '已完成').length, itemsDone: list.reduce((s, p) => s + Number(p.done || 0), 0), itemsNeed: list.reduce((s, p) => s + Number(p.qty || 0), 0) };
+}
+function autoPrepStatus(p) {
+  if (Number(p.qty) > 0 && Number(p.done) >= Number(p.qty)) p.status = '已完成';
+  else if (Number(p.done) > 0) p.status = '准备中';
+  else p.status = '待准备';
+}
+function openPrepModal() {
+  if (!currentBatchId) return alert('请先新增试验主题！');
+  const batch = testDb.batches.find(b => b.id === currentBatchId); if (!batch) return;
+  if (!Array.isArray(batch.preparations)) batch.preparations = [];
+  renderPrepModal();
+  $('#modalPrep').classList.remove('hidden');
+}
+function renderPrepModal() {
+  const batch = testDb.batches.find(b => b.id === currentBatchId); if (!batch) return;
+  const list = batch.preparations || []; const st = prepStats(batch);
+  const rows = list.map(p => {
+    const cls = p.status === '已完成' ? 'st-ok' : (p.status === '准备中' ? 'st-warn' : 'st-muted');
+    return `<tr><td><strong>${esc(p.name)}</strong></td><td class="num">${p.qty}</td><td class="num"><input type="number" min="0" value="${p.done}" style="width:74px;height:28px;" onchange="updatePrepDone('${p.id}', this.value)"></td><td><span class="badge ${cls}">${esc(p.status)}</span></td><td style="text-align:center;"><input type="checkbox" ${p.verified ? 'checked' : ''} onchange="togglePrepVerified('${p.id}', this.checked)"></td><td style="max-width:200px; white-space:normal; font-size:12px; color:var(--text-sec);">${esc(p.remark) || '-'}</td><td style="text-align:right;"><button class="link danger" onclick="delPrepItem('${p.id}')">删除</button></td></tr>`;
+  }).join('');
+  $('#prepFormBody').innerHTML = `<div style="font-size:13px; color:var(--text-sec); margin-bottom:14px;">${esc(batch.name)} · 共 ${st.total} 项，已完成 ${st.done} · 已备 ${st.itemsDone}/${st.itemsNeed}</div><div class="table-container" style="margin-bottom:18px; max-height:300px; overflow-y:auto;"><table><thead><tr><th>准备项目</th><th class="num">需要</th><th class="num">已备</th><th>状态</th><th style="text-align:center;">验过</th><th>备注</th><th style="text-align:right;">操作</th></tr></thead><tbody>${rows || '<tr><td colspan="7" class="empty">暂无</td></tr>'}</tbody></table></div><div style="border-top:1px dashed var(--border); padding-top:16px;"><div style="font-weight:600; margin-bottom:12px;">新增准备项</div><div class="form-grid"><div class="form-group full"><label>名称 *</label><input id="prep_name" placeholder="如：可靠性底板"></div><div class="form-group"><label>需要数量</label><input id="prep_qty" type="number" value="1"></div><div class="form-group"><label>已备数量</label><input id="prep_done" type="number" value="0"></div><div class="form-group"><label>状态</label><select id="prep_status"><option>待准备</option><option>准备中</option><option>已完成</option></select></div><div class="form-group"><label>是否验过</label><select id="prep_verified"><option value="否">未验过</option><option value="是">已验过</option></select></div><div class="form-group full"><label>备注</label><input id="prep_remark"></div></div><button class="primary" style="margin-top:14px;" onclick="addPrepItem()">添加准备项</button></div>`;
+}
+function addPrepItem() {
+  const batch = testDb.batches.find(b => b.id === currentBatchId); if (!batch) return;
+  const name = ($('#prep_name').value || '').trim(); if (!name) return alert('请填写名称');
+  if (!Array.isArray(batch.preparations)) batch.preparations = [];
+  const item = { id: 'p_' + uid(), name, qty: Math.max(0, Number($('#prep_qty').value) || 0), done: Math.max(0, Number($('#prep_done').value) || 0), status: $('#prep_status').value, verified: $('#prep_verified').value === '是', remark: ($('#prep_remark').value || '').trim() };
+  autoPrepStatus(item); batch.preparations.push(item);
+  save(); renderPrepModal(); renderBoard(); renderBatches();
+}
+function delPrepItem(id) {
+  const batch = testDb.batches.find(b => b.id === currentBatchId);
+  if (!batch || !batch.preparations) return;
+  if (!confirm('确定删除？')) return;
+  batch.preparations = batch.preparations.filter(p => p.id !== id);
+  save(); renderPrepModal(); renderBoard(); renderBatches();
+}
+function updatePrepDone(id, val) {
+  const batch = testDb.batches.find(b => b.id === currentBatchId);
+  const p = batch && batch.preparations ? batch.preparations.find(x => x.id === id) : null;
+  if (!p) return;
+  p.done = Math.max(0, Number(val) || 0); autoPrepStatus(p);
+  save(); renderPrepModal(); renderBoard(); renderBatches();
+}
+function togglePrepVerified(id, checked) {
+  const batch = testDb.batches.find(b => b.id === currentBatchId);
+  const p = batch && batch.preparations ? batch.preparations.find(x => x.id === id) : null;
+  if (!p) return;
+  p.verified = !!checked; save();
+}
+function calcTime(startDate, durationDays) {
+  if (!startDate || !durationDays || durationDays <= 0) return { progress: 0, endDate: '' };
+  const start = new Date(startDate); start.setHours(0,0,0,0);
+  const now = new Date(); now.setHours(0,0,0,0);
+  const days = Math.floor((now - start) / 86400000);
+  const progress = days <= 0 ? 0 : (days >= durationDays ? 100 : Math.floor((days/durationDays)*100));
+  const end = new Date(start); end.setDate(end.getDate() + Number(durationDays));
+  return { progress, endDate: `${end.getFullYear()}-${pad2(end.getMonth()+1)}-${pad2(end.getDate())}` };
+}
+
+function calcElfrOverview(elfrB) {
+  const sentQty = elfrB.filter(b => b.status !== '待准备').reduce((s, b) => s + Number(b.qty || 0), 0);
+  const ftQty = elfrB.filter(b => b.status === '已FT').reduce((s, b) => s + Number(b.qty || 0), 0);
+  return { sentQty, ftQty };
+}
+
+function renderBoard() {
+  const batch = testDb.batches.find(b => b.id === currentBatchId);
+  if (batch) $('#currentBatchTitle').textContent = batch.name;
+  else { $('#batchProgress').innerHTML = ''; return; }
+  renderBatchProgress();
+
+  const allPersons = new Set();
+  testDb.cards.filter(c => c.batchId === currentBatchId).forEach(c => {
+    if (c.person) allPersons.add(c.person);
+    if (Array.isArray(c.elfrBatches)) {
+      c.elfrBatches.forEach(b => {
+        (b.injectors || []).forEach(p => { if (p) allPersons.add(p); });
+        (b.ftTests || []).forEach(t => { (t.actualTesters || []).forEach(p => { if (p) allPersons.add(p); }); });
+      });
+    }
+  });
+  const persons = [...allPersons];
+  const filter = $('#filterPerson');
+  const cur = filter.value;
+  filter.innerHTML = '<option value="">全部责任人</option>' + persons.map(p => `<option value="${p}" ${p===cur?'selected':''}>${p}</option>`).join('');
+
+  let cards = testDb.cards.filter(c => c.batchId === currentBatchId);
+  if (cur) {
+    cards = cards.filter(c => {
+      if (c.person === cur) return true;
+      if (Array.isArray(c.elfrBatches)) {
+        if (c.elfrBatches.some(b => (b.injectors || []).includes(cur))) return true;
+        if (c.elfrBatches.some(b => (b.ftTests || []).some(t => (t.actualTesters || []).includes(cur)))) return true;
+      }
+      return false;
+    });
+  }
+
+  const grid = $('#cardGrid');
+  if (cards.length === 0) { grid.innerHTML = '<div class="empty">暂无实验项</div>'; return; }
+
+  grid.innerHTML = cards.map(c => {
+    const badgeCls = statusClass(c.status);
+    const timeData = calcTime(c.startDate, c.durationDays);
+    const progress = c.status === '已FT' ? 100 : timeData.progress;
+    let elfrHtml = '';
+    if (c.name.includes('ELFR') || c.name.includes('早期失效')) {
+      const elfrB = c.elfrBatches || [];
+      const { sentQty, ftQty } = calcElfrOverview(elfrB);
+      elfrHtml = `
+        <div class="elfr-box">
+          <div class="elfr-box-title">分批管理 <button class="link" onclick="openElfrModal('${c.id}')">管理</button></div>
+          <div class="elfr-stat">已送样 <b>${sentQty}</b> 颗 · 已FT <b>${ftQty}</b> 颗</div>
+          <div style="display:flex; gap:4px; flex-wrap:wrap; margin-top:6px;">
+            ${elfrB.map(b => {
+              const injArr = (b.injectors || []).filter(Boolean);
+              const injTxt = injArr.length ? ' · ' + injArr.join('/') : '';
+              const ftDoneCnt = (b.ftTests || []).filter(t => t.done).length;
+              const ftPendingCnt = (b.ftTests || []).length - ftDoneCnt;
+              let ftTxt = '';
+              if (ftDoneCnt > 0) ftTxt = ` · FT完成${ftDoneCnt}次`;
+              else if (ftPendingCnt > 0) ftTxt = ` · FT计划`;
+              return `<span class="badge ${statusClass(b.status)}" title="投实验：${esc(injArr.join('/')||'未分配')}">${esc(b.name)}: ${b.qty}颗·${esc(b.status)}${injTxt}${ftTxt}</span>`;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+    return `<div class="tc-card"><div class="tc-header"><div><h3 class="tc-title">${esc(c.name)}</h3><div class="tc-sub">数量: ${c.qty} pcs</div></div><span class="badge ${badgeCls}">${esc(c.status)}</span></div><div class="tc-body">${c.remark ? `<div class="remark-box">${esc(c.remark)}</div>` : `<div class="remark-box empty">暂无进展</div>`}${elfrHtml}<div class="info-row"><div class="info-label">试验条件:</div><div class="info-val">${esc(c.note) || '未设置'}</div></div><div class="info-row"><div class="info-label">预计结束:</div><div class="info-val" style="color:${timeData.endDate ? 'var(--danger)' : 'var(--text-sec)'}; font-weight:600;">${timeData.endDate || '未设置'}</div></div><div class="progress-wrap"><div class="progress-bar" style="width: ${progress}%; ${progress===100?'background:var(--success)':''}"></div></div><div style="display:flex; justify-content:space-between; font-size:12px; margin-top:4px; color:var(--text-sec)"><span>进度: ${progress}%</span><span>更新: ${c.updatedAt || '未记录'}</span></div></div><div class="tc-footer"><div class="person"><div class="person-avatar">${c.person?c.person.slice(-1):'?'}</div>${esc(c.person||'未分配')}</div><div style="display:flex; gap:6px;"><button class="link" onclick="openBoardModal('${c.id}')">编辑</button><button class="link danger" onclick="delCard('${c.id}')">删除</button></div></div></div>`;
+  }).join('');
+}
+function openBoardModal(id) {
+  if (!currentBatchId) return alert('请先新增试验主题！');
+  const c = id ? testDb.cards.find(x => x.id === id) : { name:'', qty:'', person:'', status:'待准备', startDate:'', durationDays:'', remark:'', note:'' };
+  const aecProjects = ['HTOL', 'ELFR', 'HAST', 'AC', 'HTSL', 'TC', 'PTC', 'LTOL', 'PC', 'SD'];
+  const projectOptions = aecProjects.map(p => `<option value="${p}">${p}</option>`).join('');
+  const statusOpts = CARD_STATUSES.map(s => `<option value="${s}" ${c.status===s?'selected':''}>${s}</option>`).join('');
+  $('#boardFormBody').innerHTML = `<div class="form-group"><label>实验项目名称</label><input id="f_name" value="${esc(c.name)}"></div><div style="background: #eff6ff; border: 1px dashed #bfdbfe; padding: 12px; border-radius: 6px;"><div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--primary);">快捷填充 AEC-Q100</div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;"><div class="form-group" style="margin: 0;"><select id="aec_grade" class="filter-select" style="width: 100%;" onchange="fillAecCondition()"><option value="">选择 Grade...</option><option value="0">Grade 0</option><option value="1">Grade 1</option><option value="2">Grade 2</option><option value="3">Grade 3</option></select></div><div class="form-group" style="margin: 0;"><select id="aec_project" class="filter-select" style="width: 100%;" onchange="fillAecCondition()"><option value="">选择试验项目...</option>${projectOptions}</select></div></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;"><div class="form-group"><label>样品数量</label><input id="f_qty" type="number" value="${esc(c.qty)}"></div><div class="form-group"><label>责任人</label><input id="f_person" value="${esc(c.person)}"></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;"><div class="form-group"><label>状态</label><select id="f_status">${statusOpts}</select></div><div class="form-group"><label>送样时间</label><input id="f_startDate" type="date" value="${esc(c.startDate)}"></div></div><div class="form-group"><label>预计总时长(天)</label><input id="f_duration" type="number" value="${esc(c.durationDays)}"></div><div class="form-group"><label>当前进展</label><textarea id="f_remark" rows="2">${esc(c.remark)}</textarea></div><div class="form-group"><label>其他备注</label><textarea id="f_note" rows="3">${esc(c.note)}</textarea></div><input type="hidden" id="f_id" value="${id || ''}">`;
+  $('#modalBoard').classList.remove('hidden');
+}
+function fillAecCondition() {
+  const grade = $('#aec_grade').value; const project = $('#aec_project').value;
+  const noteInput = $('#f_note'); const durationInput = $('#f_duration'); const nameInput = $('#f_name');
+  if (!grade || !project) return;
+  let condition = ''; let duration = 0; let fullName = '';
+  if (project === 'HTOL') { fullName = '高温工作试验 (HTOL)'; duration = 50; if (grade === '0') condition = 'Ta=+150℃, 1000h, 带电'; if (grade === '1') condition = 'Ta=+125℃, 1000h, 带电'; if (grade === '2') condition = 'Ta=+105℃, 1000h, 带电'; if (grade === '3') condition = 'Ta=+85℃, 1000h, 带电'; }
+  else if (project === 'ELFR') { fullName = '早期失效 (ELFR)'; duration = 20; condition = 'Ta=+125℃, 48h, 带电'; }
+  else if (project === 'HAST') { fullName = 'HAST'; duration = 4; condition = '130℃, 85%RH, 96h, 带电'; }
+  else if (project === 'AC') { fullName = 'AC'; duration = 7; condition = '121℃, 100%RH, 15psig, 96h'; }
+  else if (project === 'HTSL') { fullName = '高温存储 (HTSL)'; duration = 50; if (grade === '0' || grade === '1' || grade === '2') condition = 'Ta=+150℃, 1000h'; if (grade === '3') condition = 'Ta=+125℃, 1000h'; }
+  else if (project === 'TC') { fullName = '温度循环 (TC/TS)'; duration = 7; condition = '-55℃ ~ +150℃/125℃, 1000 cycles'; }
+  else if (project === 'PTC') { fullName = '功率温度循环 (PTC)'; duration = 60; condition = 'JESD22-A105'; }
+  else if (project === 'LTOL') { fullName = '低温工作 (LTOL)'; duration = 42; condition = 'Ta=-40℃, 1000h, 带电'; }
+  else if (project === 'PC') { fullName = '预处理 (PC)'; duration = 10; condition = 'J-STD-020'; }
+  else if (project === 'SD') { fullName = '可焊性 (SD)'; duration = 1; condition = '焊锡覆盖率 >95%'; }
+  if (!nameInput.value || nameInput.value.includes('(')) nameInput.value = fullName;
+  noteInput.value = condition; durationInput.value = duration;
+}
+function saveCard() {
+  const id = $('#f_id').value; const name = $('#f_name').value;
+  if (!name) { alert('请填写实验项目名称'); return; }
+  const now = new Date();
+  const timeStr = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+  const payload = { name, qty: $('#f_qty').value, person: $('#f_person').value, status: $('#f_status').value, startDate: $('#f_startDate').value, durationDays: Number($('#f_duration').value) || 0, remark: $('#f_remark').value, note: $('#f_note').value, updatedAt: timeStr };
+  if (id) { Object.assign(testDb.cards.find(x => x.id === id), payload); }
+  else { testDb.cards.push({ id: 'c_'+Date.now(), batchId: currentBatchId, elfrBatches: [], ...payload }); }
+  save(); $('#modalBoard').classList.add('hidden'); renderBoard(); renderBatches();
+}
+function delCard(id) {
+  const c = testDb.cards.find(x => x.id === id); if (!c) return;
+  if (!confirm(`确定删除「${c.name}」？`)) return;
+  testDb.cards = testDb.cards.filter(x => x.id !== id); save();
+  renderBoard(); renderBatches();
+}
+
+/* ========== ELFR 弹窗 ========== */
+function openElfrModal(cardId) {
+  const c = testDb.cards.find(x => x.id === cardId); if (!c) return;
+  currentElfrCardId = cardId;
+  if (!Array.isArray(c.elfrBatches)) c.elfrBatches = [];
+  c.elfrBatches.forEach(normalizeElfrBatch);
+  renderElfrModal();
+  $('#modalElfr').classList.remove('hidden');
+}
+
+function renderElfrModal() {
+  const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
+  const batches = c.elfrBatches || [];
+  const oldStatusBatches = batches.filter(b => !CARD_STATUSES.includes(b.status));
+  const oldWarn = oldStatusBatches.length ? `
+    <div class="old-status-warn">
+      ⚠️ 检测到 <b>${oldStatusBatches.length}</b> 个批次状态不在标准 5 种之内，下方这些批次的下拉框会标红显示。
+      可以用「🔄 批量设置状态」一次性修正，也可以逐个改。
+    </div>` : '';
+  const cardsHtml = batches.map(b => renderElfrBatchCard(b)).join('') || '<div class="empty" style="padding:20px 0;">暂无批次，点下方「+ 新增批次」或「🎲 自动分配」</div>';
+  $('#elfrFormBody').innerHTML = `
+    <div class="elfr-toolbar">
+      <button class="primary" onclick="autoAssignElfr()">🎲 自动分配</button>
+      <button class="ghost" onclick="addElfrBatch()">+ 新增批次</button>
+      <button class="ghost" onclick="showScorePreview()" title="查看当前每人工作量评分（实时反映当前分配）">📊 工作量评分</button>
+      <button class="ghost" onclick="batchSetElfrStatus()" title="一次性把所有批次设成统一状态">🔄 批量设置状态</button>
+    </div>
+    ${oldWarn}
+    <div id="elfrSummary" class="elfr-summary-bar"></div>
+    <div id="elfrBatchCards">${cardsHtml}</div>
+  `;
+  refreshElfrSummary();
+}
+
+function renderElfrBatchCard(b) {
+  const injArr = b.injectors || [];
+  const injFilled = injArr.filter(Boolean).length;
+  const injStatColor = injFilled === b.injCount ? '#065f46' : '#92400e';
+  const inj = injArr.filter(Boolean);
+  const injGridCols = `repeat(${b.injCount}, 1fr) 150px`;
+
+  const ftTests = b.ftTests || [];
+  const ftDoneCount = ftTests.filter(t => t.done).length;
+  const ftPendingCount = ftTests.length - ftDoneCount;
+  const ftDoneQty = ftTests.filter(t => t.done).reduce((s, t) => s + Number(t.qty || 0), 0);
+  const ftAllDone = ftTests.length > 0 && ftTests.every(t => t.done);
+  const ftDone = ftAllDone && ftDoneQty >= Number(b.qty || 0) && b.qty > 0;
+
+  const injInputs = [];
+  for (let i = 0; i < b.injCount; i++) {
+    injInputs.push(`<input placeholder="投实验人 ${i+1}" value="${esc(injArr[i]||'')}" oninput="setElfrInjector('${b.id}', ${i}, this.value)">`);
+  }
+  injInputs.push(`<input type="date" value="${esc(b.injectDate||'')}" oninput="setElfrInjectDate('${b.id}', this.value)" title="投实验日期">`);
+
+  const ftRowsHtml = ftTests.map(t => {
+    const actual = t.actualTesters || ['', ''];
+    const swapped = actual.some(name => name && !inj.includes(name));
+    const isDone = !!t.done;
+    return `<div class="elfr-ft-row ${swapped ? 'swapped' : ''} ${isDone ? 'done' : ''}" id="ft_row_${t.id}">
+      <label class="done-check"><input type="checkbox" ${isDone ? 'checked' : ''} onchange="toggleFtDone('${b.id}','${t.id}',this.checked)">完成</label>
+      <input type="date" value="${esc(t.date || '')}" oninput="setFtValue('${b.id}','${t.id}','date',this.value)">
+      <input placeholder="实际执行人 1" value="${esc(actual[0] || '')}" oninput="setFtValue('${b.id}','${t.id}','t0',this.value)">
+      <input placeholder="实际执行人 2" value="${esc(actual[1] || '')}" oninput="setFtValue('${b.id}','${t.id}','t1',this.value)">
+      <input type="number" placeholder="数量" value="${t.qty ?? ''}" oninput="setFtValue('${b.id}','${t.id}','qty',this.value)">
+      <input class="swap-input" placeholder="${swapped ? '换人原因' : '备注'}" value="${esc(t.swapNote || '')}" oninput="setFtValue('${b.id}','${t.id}','swapNote',this.value)">
+      <button class="del" onclick="delElfrFt('${b.id}','${t.id}')">删除</button>
+    </div>`;
+  }).join('') || '<div style="font-size:12px;color:#94a3b8;padding:4px 0;">暂无 FT 记录</div>';
+
+  let ftBadge;
+  if (!ftTests.length) {
+    ftBadge = '<span class="badge st-muted">FT未开始</span>';
+  } else if (ftDone) {
+    ftBadge = `<span class="badge st-ok">FT完成 ${ftDoneCount}次</span>`;
+  } else if (ftDoneCount > 0) {
+    ftBadge = `<span class="badge st-warn">FT完成 ${ftDoneCount}次 · 待执行 ${ftPendingCount}次</span>`;
+  } else {
+    ftBadge = `<span class="badge st-info">FT计划 ${ftPendingCount}次</span>`;
+  }
+
+  const isOldStatus = !CARD_STATUSES.includes(b.status);
+  const statusOptions = CARD_STATUSES.map(s => `<option value="${s}" ${b.status===s?'selected':''}>${s}</option>`).join('') +
+    (isOldStatus ? `<option value="${esc(b.status)}" selected>${esc(b.status)}（旧状态）</option>` : '');
+
+  return `<div class="elfr-batch-card">
+    <div class="elfr-batch-card-head">
+      <strong style="font-size:14px;">${esc(b.name)}</strong>
+      <span class="badge st-muted">${b.qty} 颗</span>
+      <select class="${isOldStatus ? 'old-status' : ''}" onchange="updateElfrStatus('${b.id}', this.value)">${statusOptions}</select>
+      ${ftBadge}
+      <div style="margin-left:auto; display:flex; gap:4px;">
+        <button class="link" onclick="editElfrBatch('${b.id}')">编辑</button>
+        <button class="link danger" onclick="delElfrBatch('${b.id}')">删除</button>
+      </div>
+    </div>
+    <div class="elfr-batch-card-body">
+      <div class="elfr-sec">
+        <div class="elfr-sec-title">
+          <span>🧑‍🔬 投实验安排 · ${b.injCount} 人 · ${b.qty} 颗</span>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span id="elfr_inj_stat_${b.id}" style="color:${injStatColor}; font-weight:600; font-size:11.5px;">已填 ${injFilled}/${b.injCount}</span>
+            <select onchange="setElfrInjCount('${b.id}', this.value)" style="height:24px; padding:0 6px; font-size:11.5px; border:1px solid #fdba74; background:#fff; border-radius:4px;">
+              <option value="2" ${b.injCount===2?'selected':''}>2 人</option>
+              <option value="3" ${b.injCount===3?'selected':''}>3 人</option>
+            </select>
+          </div>
+        </div>
+        <div class="elfr-injector-inputs" style="grid-template-columns: ${injGridCols};">${injInputs.join('')}</div>
+      </div>
+      <div class="elfr-sec">
+        <div class="elfr-sec-title">
+          <span>🔬 FT 测试记录 · 2 人 · ${b.qty} 颗</span>
+          <span id="elfr_ft_stat_${b.id}" style="font-weight:600; color:${ftDone ? '#065f46' : (ftDoneCount > 0 ? '#92400e' : '#64748b')}; font-size:11.5px;">${ftDoneCount} 次完成 / ${ftPendingCount} 次待执行 · 已完成 ${ftDoneQty} 颗</span>
+        </div>
+        ${ftRowsHtml}
+        <button class="ghost" style="padding:4px 10px; font-size:12px; margin-top:6px;" onclick="addElfrFt('${b.id}')">+ 添加 FT 记录</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function refreshElfrSummary() {
+  const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
+  const el = document.getElementById('elfrSummary'); if (!el) return;
+  const batches = c.elfrBatches || [];
+  const totalQty = batches.reduce((s, b) => s + Number(b.qty||0), 0);
+  const injFilled = batches.reduce((s, b) => s + (b.injectors||[]).filter(Boolean).length, 0);
+  const injNeeded = batches.reduce((s, b) => s + Number(b.injCount||0), 0);
+  const ftDoneBatches = batches.filter(b => {
+    const tests = b.ftTests || [];
+    if (!tests.length) return false;
+    if (!tests.every(t => t.done)) return false;
+    const doneQty = tests.reduce((s, t) => s + Number(t.qty || 0), 0);
+    return doneQty >= Number(b.qty || 0) && b.qty > 0;
+  }).length;
+  el.innerHTML = `共 <b>${batches.length}</b> 批 · <b>${totalQty}</b> 颗 · 投实验已填 <b>${injFilled}/${injNeeded}</b> · FT完成 <b>${ftDoneBatches}/${batches.length}</b> 批`;
+}
+
+/* ===== 📊 工作量评分（当前分配，实时反映分配工作量，不区分完成与否） ===== */
+function showScorePreview() {
+  const c = testDb.cards.find(x => x.id === currentElfrCardId);
+  if (!c || !c.elfrBatches || !c.elfrBatches.length) { alert('暂无批次，无法计算'); return; }
+
+  const personSet = new Set();
+  c.elfrBatches.forEach(b => {
+    (b.injectors || []).forEach(p => { if (p) personSet.add(p); });
+    (b.ftTests || []).forEach(t => {
+      (t.actualTesters || []).forEach(p => { if (p) personSet.add(p); });
+    });
+  });
+  const personList = [...personSet];
+  if (!personList.length) { alert('还没有填任何投实验人或 FT 执行人'); return; }
+
+  const scores = {}; personList.forEach(p => scores[p] = 0);
+  const injTimes = {}; personList.forEach(p => injTimes[p] = 0);
+  const ftTimes = {}; personList.forEach(p => ftTimes[p] = 0);
+  const ftDoneTimes = {}; personList.forEach(p => ftDoneTimes[p] = 0);
+  const injQty = {}; personList.forEach(p => injQty[p] = 0);
+  const ftQty = {}; personList.forEach(p => ftQty[p] = 0);
+
+  c.elfrBatches.forEach(b => {
+    const bQty = Number(b.qty) || 0;
+    const injCount = Number(b.injCount) || 3;
+    const injPer = bQty * SCORE_INJ_PER_PILL / injCount;
+    (b.injectors || []).forEach(p => {
+      if (!p) return;
+      scores[p] += injPer;
+      injTimes[p]++;
+      injQty[p] += bQty / injCount;
+    });
+    (b.ftTests || []).forEach(t => {
+      // 不检查 done：所有 FT 记录（计划 + 已完成）都算入分配工作量
+      const tQty = Number(t.qty) || bQty;
+      const ftPer = tQty * SCORE_FT_PER_PILL / 2;
+      (t.actualTesters || []).forEach(p => {
+        if (!p) return;
+        scores[p] += ftPer;
+        ftTimes[p]++;
+        ftQty[p] += tQty / 2;
+        if (t.done) ftDoneTimes[p]++;
+      });
+    });
+  });
+
+  const sorted = personList.sort((a,b) => scores[b] - scores[a]);
+  const maxScore = scores[sorted[0]];
+  const minScore = scores[sorted[sorted.length-1]];
+  const avg = sorted.reduce((s,p)=>s+scores[p],0)/sorted.length;
+  const gap = maxScore - minScore;
+
+  const rows = sorted.map(p => {
+    const cls = (Math.abs(scores[p]-maxScore)<0.01 && maxScore!==minScore) ? 'highest' : (Math.abs(scores[p]-minScore)<0.01 && maxScore!==minScore ? 'lowest' : '');
+    const ftDoneTxt = ftDoneTimes[p] > 0 ? `<br><span style="font-size:10.5px;color:#065f46;">已完成 ${ftDoneTimes[p]}</span>` : '';
+    return `<tr class="${cls}">
+      <td>${esc(p)}</td>
+      <td class="num">${injTimes[p]} 次<br><span style="font-size:11px;color:#94a3b8;">${injQty[p].toFixed(0)}颗</span></td>
+      <td class="num">${ftTimes[p]} 次<br><span style="font-size:11px;color:#94a3b8;">${ftQty[p].toFixed(0)}颗</span>${ftDoneTxt}</td>
+      <td class="num"><b>${scores[p].toFixed(2)}</b></td>
+    </tr>`;
+  }).join('');
+
+  const totalBatchesQty = c.elfrBatches.reduce((s,b)=>s+Number(b.qty||0),0);
+  const html = `
+    <div style="margin-bottom:14px; font-size:13px;">
+      当前共 <b>${c.elfrBatches.length}</b> 批 · <b>${totalBatchesQty}</b> 颗 · <b>${personList.length}</b> 人参与
+    </div>
+    <table class="score-preview-table">
+      <thead><tr><th>姓名</th><th class="num">投实验</th><th class="num">FT（分配量）</th><th class="num">总分</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="margin-top:12px; font-size:12.5px; color:#64748b;">
+      平均 <b>${avg.toFixed(2)}</b> · 最高 ${maxScore.toFixed(2)} · 最低 ${minScore.toFixed(2)} · 分差 <b style="color:${gap > 10 ? '#dc2626' : (gap > 5 ? '#f59e0b' : '#10b981')};">${gap.toFixed(2)}</b>
+    </div>
+    <div style="margin-top:12px; font-size:11.5px; color:#94a3b8; line-height:1.6;">
+      💡 评分反映"分配的工作量"（含未完成的 FT 计划）。改动任何批次的人数、执行人、FT 数量后，重新点此按钮即可看到最新分数。FT 列下方小字显示该人已完成的次数，仅供参考。
+    </div>
+  `;
+
+  $('#modalMatTitle').textContent = '📊 工作量评分（当前分配）';
+  $('#modalMatBody').innerHTML = html;
+  showModalOnTop('modalMat');
+  $('#modalMatOk').textContent = '关闭';
+  $('#modalMatOk').onclick = () => closeMatModal();
+}
+
+/* ===== 🔄 批量设置状态 ===== */
+function batchSetElfrStatus() {
+  const c = testDb.cards.find(x => x.id === currentElfrCardId);
+  if (!c || !c.elfrBatches || !c.elfrBatches.length) { alert('暂无批次'); return; }
+  openInputModal('🔄 批量设置所有批次状态', [
+    { id: 'status', label: `目标状态（${c.elfrBatches.length} 个批次都将被改为该状态）`, type: 'select', options: CARD_STATUSES, value: '待准备' },
+    { id: 'confirm', label: '确认操作（输入 yes 才会执行）', placeholder: '输入 yes' }
+  ], ({ status, confirm }) => {
+    if (String(confirm).trim().toLowerCase() !== 'yes') { alert('未输入 yes，操作取消'); return false; }
+    c.elfrBatches.forEach(b => { b.status = status; });
+    save(); renderElfrModal(); renderBoard();
+    setTimeout(() => alert(`已将 ${c.elfrBatches.length} 个批次的状态全部设为「${status}」`), 50);
+    return true;
+  });
+}
+
+function setElfrInjCount(batchId, val) {
+  const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
+  const b = c.elfrBatches.find(x => x.id === batchId); if (!b) return;
+  const n = Math.max(2, Math.min(3, Number(val) || 3));
+  b.injCount = n;
+  while (b.injectors.length < n) b.injectors.push('');
+  while (b.injectors.length > n) b.injectors.pop();
+  save(); renderElfrModal(); renderBoard();
+}
+
+function setElfrInjector(batchId, idx, val) {
+  const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
+  const b = c.elfrBatches.find(x => x.id === batchId); if (!b) return;
+  b.injectors[idx] = (val || '').trim();
+  save();
+  const injFilled = b.injectors.filter(Boolean).length;
+  const el = document.getElementById('elfr_inj_stat_' + batchId);
+  if (el) { el.textContent = '已填 ' + injFilled + '/' + b.injCount; el.style.color = injFilled === b.injCount ? '#065f46' : '#92400e'; }
+  refreshElfrSummary();
+  clearTimeout(window._boardUpdateTimer);
+  window._boardUpdateTimer = setTimeout(() => renderBoard(), 500);
+}
+
+function setElfrInjectDate(batchId, val) {
+  const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
+  const b = c.elfrBatches.find(x => x.id === batchId); if (!b) return;
+  b.injectDate = val || ''; save();
+}
+
+function addElfrFt(batchId) {
+  const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
+  const b = c.elfrBatches.find(x => x.id === batchId); if (!b) return;
+  if (!Array.isArray(b.ftTests)) b.ftTests = [];
+  const inj = (b.injectors || []).filter(Boolean);
+  b.ftTests.push({ id: 'ft_' + uid(), date: '', qty: Number(b.qty) || 120, actualTesters: [inj[0] || '', inj[1] || ''], swapNote: '', remark: '', done: false });
+  save(); renderElfrModal(); renderBoard();
+}
+
+function setFtValue(batchId, ftId, field, val) {
+  const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
+  const b = c.elfrBatches.find(x => x.id === batchId); if (!b) return;
+  const t = (b.ftTests || []).find(x => x.id === ftId); if (!t) return;
+  if (field === 'date') t.date = val || '';
+  else if (field === 't0') t.actualTesters[0] = (val || '').trim();
+  else if (field === 't1') t.actualTesters[1] = (val || '').trim();
+  else if (field === 'qty') t.qty = Math.max(0, Number(val) || 0);
+  else if (field === 'swapNote') t.swapNote = (val || '').trim();
+  save();
+  clearTimeout(window._ftUITimer);
+  window._ftUITimer = setTimeout(() => {
+    updateFtRowState(batchId, ftId);
+    refreshElfrSummary();
+    clearTimeout(window._boardUpdateTimer);
+    window._boardUpdateTimer = setTimeout(() => renderBoard(), 400);
+  }, 400);
+}
+
+function toggleFtDone(batchId, ftId, checked) {
+  const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
+  const b = c.elfrBatches.find(x => x.id === batchId); if (!b) return;
+  const t = (b.ftTests || []).find(x => x.id === ftId); if (!t) return;
+  t.done = !!checked;
+  save();
+  renderElfrModal();
+  renderBoard();
+}
+
+function updateFtRowState(batchId, ftId) {
+  const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
+  const b = c.elfrBatches.find(x => x.id === batchId); if (!b) return;
+  const t = (b.ftTests || []).find(x => x.id === ftId); if (!t) return;
+  const row = document.getElementById('ft_row_' + ftId); if (!row) return;
+  const inj = (b.injectors || []).filter(Boolean);
+  const swapped = (t.actualTesters || []).some(name => name && !inj.includes(name));
+  row.classList.toggle('swapped', swapped);
+  row.classList.toggle('done', !!t.done);
+  const swapInput = row.querySelector('.swap-input');
+  if (swapInput) swapInput.placeholder = swapped ? '换人原因' : '备注';
+  const ftStatEl = document.getElementById('elfr_ft_stat_' + batchId);
+  if (ftStatEl) {
+    const ftTests = b.ftTests || [];
+    const doneCount = ftTests.filter(x => x.done).length;
+    const pendingCount = ftTests.length - doneCount;
+    const doneQty = ftTests.filter(x => x.done).reduce((s,x) => s + Number(x.qty||0), 0);
+    const allDone = ftTests.length > 0 && ftTests.every(x => x.done);
+    const isDone = allDone && doneQty >= Number(b.qty||0) && b.qty > 0;
+    ftStatEl.textContent = `${doneCount} 次完成 / ${pendingCount} 次待执行 · 已完成 ${doneQty} 颗`;
+    ftStatEl.style.color = isDone ? '#065f46' : (doneCount > 0 ? '#92400e' : '#64748b');
+  }
+}
+
+function delElfrFt(batchId, ftId) {
+  const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
+  const b = c.elfrBatches.find(x => x.id === batchId); if (!b) return;
+  if (!confirm('确定删除这条 FT 记录？')) return;
+  b.ftTests = (b.ftTests || []).filter(x => x.id !== ftId);
+  save(); renderElfrModal(); renderBoard();
+}
+
+function addElfrBatch() {
+  const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
+  openInputModal('新增 ELFR 批次', [
+    { id: 'name', label: '批次名', placeholder: '如：第1批' },
+    { id: 'qty', label: '投料数量（120 或 80）', type: 'number', value: 120 },
+    { id: 'status', label: '状态', type: 'select', options: CARD_STATUSES, value: '待准备' }
+  ], ({ name, qty, status }) => {
+    name = (name || '').trim(); const n = Number(qty);
+    if (!name) { alert('请输入批次名'); return false; }
+    if (!n || n <= 0) { alert('请输入有效数量'); return false; }
+    if (!c.elfrBatches) c.elfrBatches = [];
+    const injCount = n >= 120 ? 3 : 2;
+    c.elfrBatches.push({
+      id: 'eb_' + uid(), name, qty: n,
+      status: CARD_STATUSES.includes(status) ? status : '待准备',
+      injCount, ftCount: 2,
+      injectors: Array(injCount).fill(''),
+      injectDate: '', ftTests: [], remark: ''
+    });
+    save(); renderElfrModal(); renderBoard();
+    return true;
+  });
+}
+function editElfrBatch(batchId) {
+  const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
+  const b = c.elfrBatches.find(x => x.id === batchId); if (!b) return;
+  openInputModal('编辑批次', [
+    { id: 'name', label: '批次名', value: b.name },
+    { id: 'qty', label: '投料数量', type: 'number', value: b.qty }
+  ], ({ name, qty }) => {
+    name = (name || '').trim(); const n = Number(qty);
+    if (!name) { alert('请输入批次名'); return false; }
+    if (!n || n <= 0) { alert('请输入有效数量'); return false; }
+    b.name = name; b.qty = n;
+    save(); renderElfrModal(); renderBoard();
+    return true;
+  });
+}
+function delElfrBatch(batchId) {
+  const c = testDb.cards.find(x => x.id === currentElfrCardId);
+  if (!c || !c.elfrBatches) return;
+  const b = c.elfrBatches.find(x => x.id === batchId); if (!b) return;
+  if (!confirm(`确定删除批次「${b.name}」及其所有 FT 记录吗？`)) return;
+  c.elfrBatches = c.elfrBatches.filter(x => x.id !== batchId);
+  save(); renderElfrModal(); renderBoard();
+}
+function updateElfrStatus(batchId, newStatus) {
+  const c = testDb.cards.find(x => x.id === currentElfrCardId);
+  const b = c && c.elfrBatches.find(x => x.id === batchId); if (!b) return;
+  if (!CARD_STATUSES.includes(newStatus)) return;
+  b.status = newStatus;
+  save(); renderBoard(); renderElfrModal();
+}
+
+/* ===== 🎲 自动分配 ===== */
+function planBatchCombination(total) {
+  for (let n120 = Math.floor(total / 120); n120 >= 0; n120--) {
+    const rest = total - n120 * 120;
+    if (rest === 0) return { n120, n80: 0, batches: n120 };
+    if (rest % 80 === 0) return { n120, n80: rest / 80, batches: n120 + rest / 80 };
+  }
+  return null;
+}
+
+function computeAssignment(totalQty, personList) {
+  const plan = planBatchCombination(totalQty);
+  if (!plan) return null;
+  const batchQtys = [];
+  for (let i = 0; i < plan.n120; i++) batchQtys.push(120);
+  for (let i = 0; i < plan.n80; i++) batchQtys.push(80);
+  batchQtys.sort((a, b) => b - a);
+
+  const scores = {}; personList.forEach(p => scores[p] = 0);
+  const injTimes = {}; personList.forEach(p => injTimes[p] = 0);
+  const ftTimes = {}; personList.forEach(p => ftTimes[p] = 0);
+
+  const batches = batchQtys.map(qty => {
+    const bInjCount = qty >= 120 ? 3 : 2;
+    const bFtCount = 2;
+    const injPer = qty * SCORE_INJ_PER_PILL / bInjCount;
+    const ftPer = qty * SCORE_FT_PER_PILL / bFtCount;
+
+    const sortFn = (a, b) => scores[a] - scores[b] || injTimes[a] - injTimes[b] || a.localeCompare(b);
+    const injectors = [...personList].sort(sortFn).slice(0, bInjCount);
+    injectors.forEach(p => { scores[p] += injPer; injTimes[p]++; });
+
+    const remaining = personList.filter(p => !injectors.includes(p));
+    let fters;
+    if (remaining.length >= bFtCount) {
+      fters = [...remaining].sort((a, b) => scores[a] - scores[b] || ftTimes[a] - ftTimes[b] || a.localeCompare(b)).slice(0, bFtCount);
+    } else {
+      const pool = [...personList].sort((a, b) => {
+        const aInj = injectors.includes(a) ? 1 : 0;
+        const bInj = injectors.includes(b) ? 1 : 0;
+        if (aInj !== bInj) return aInj - bInj;
+        return scores[a] - scores[b] || ftTimes[a] - ftTimes[b] || a.localeCompare(b);
+      });
+      fters = pool.slice(0, bFtCount);
+    }
+    fters.forEach(p => { scores[p] += ftPer; ftTimes[p]++; });
+
+    return {
+      id: 'eb_' + uid(), name: '', qty,
+      injCount: bInjCount, ftCount: bFtCount, status: '待准备',
+      injectors: injectors.slice(), injectDate: '',
+      ftTests: [{ id: 'ft_' + uid(), date: '', qty, actualTesters: fters.slice(), swapNote: '', remark: '', done: false }],
+      remark: ''
+    };
+  });
+
+  return { batches, scores, injTimes, ftTimes, plan, totalQty, personList };
+}
+
+function autoAssignElfr() {
+  const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
+  openInputModal('🎲 自动分配 ELFR 批次', [
+    { id: 'total', label: '总颗数（每批 120 或 80）', type: 'number', value: 800 },
+    { id: 'persons', label: '参与人员（逗号/空格/换行分隔）', placeholder: '张三, 李四, 王五, 赵六, 钱七, 孙八, 周九, 吴十' },
+    { id: 'mode', label: '分配方式', type: 'select', options: ['覆盖现有批次', '追加到现有批次'], value: '覆盖现有批次' }
+  ], ({ total, persons, mode }) => {
+    const totalQty = Number(total);
+    if (!totalQty || totalQty <= 0) { alert('请输入有效总颗数'); return false; }
+    const personList = String(persons || '').split(/[,，\n\r\s]+/).map(s => s.trim()).filter(Boolean);
+    if (personList.length < 2) { alert('至少需要 2 名参与人员'); return false; }
+    const result = computeAssignment(totalQty, personList);
+    if (!result) { alert(`总数 ${totalQty} 颗无法按 120/80 完全分配。\n\n常用组合：800 = 6×120+1×80`); return false; }
+    if (mode === '覆盖现有批次' && c.elfrBatches && c.elfrBatches.length > 0) {
+      if (!confirm(`当前已有 ${c.elfrBatches.length} 个批次，将覆盖（含所有 FT 记录），确定？`)) return false;
+    }
+    setTimeout(() => showAssignPreview(result, mode), 80);
+    return true;
+  });
+}
+
+function showAssignPreview(result, mode) {
+  const { batches, scores, injTimes, ftTimes, plan, totalQty, personList } = result;
+  const avg = personList.reduce((s, p) => s + scores[p], 0) / personList.length;
+  const sorted = [...personList].sort((a, b) => scores[b] - scores[a]);
+  const maxScore = scores[sorted[0]];
+  const minScore = scores[sorted[sorted.length - 1]];
+  const gap = maxScore - minScore;
+
+  const rows = sorted.map(p => {
+    const s = scores[p];
+    const cls = (Math.abs(s - maxScore) < 0.01 && maxScore !== minScore) ? 'highest' : (Math.abs(s - minScore) < 0.01 && maxScore !== minScore ? 'lowest' : '');
+    return `<tr class="${cls}"><td>${esc(p)}</td><td class="num">${injTimes[p]}</td><td class="num">${ftTimes[p]}</td><td class="num">${s.toFixed(2)}</td></tr>`;
+  }).join('');
+
+  const html = `
+    <div style="margin-bottom:14px; font-size:13px;">
+      共 <b>${batches.length}</b> 批 · <b>${totalQty}</b> 颗（${plan.n120 ? plan.n120 + '×120' : ''}${plan.n120 && plan.n80 ? ' + ' : ''}${plan.n80 ? plan.n80 + '×80' : ''}）
+    </div>
+    <table class="score-preview-table">
+      <thead><tr><th>姓名</th><th class="num">投实验次数</th><th class="num">FT次数</th><th class="num">总分</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="margin-top:12px; font-size:12.5px; color:#64748b;">
+      平均分 <b>${avg.toFixed(2)}</b> · 最高 ${maxScore.toFixed(2)} · 最低 ${minScore.toFixed(2)} · 分差 <b style="color:${gap > 5 ? '#dc2626' : '#10b981'};">${gap.toFixed(2)}</b>
+    </div>
+    <div style="margin-top:8px; font-size:11.5px; color:#94a3b8; line-height:1.5;">
+      提示：此评分仅用于辅助分配参考，应用后不再显示。应用后每批仍可手动调整（改人、改日期、改人数等），调整后重新点「📊 工作量评分」即可看到最新分数。
+    </div>
+  `;
+
+  $('#modalMatTitle').textContent = '分配方案预览';
+  $('#modalMatBody').innerHTML = html;
+  showModalOnTop('modalMat');
+  $('#modalMatOk').textContent = '应用此方案';
+  $('#modalMatOk').onclick = () => {
+    const c = testDb.cards.find(x => x.id === currentElfrCardId);
+    if (!c) { closeMatModal(); return; }
+    batches.forEach((b, i) => { b.name = `第${i + 1}批`; });
+    if (mode === '覆盖现有批次' || !c.elfrBatches || c.elfrBatches.length === 0) {
+      c.elfrBatches = batches;
+    } else {
+      const offset = c.elfrBatches.length;
+      batches.forEach((b, i) => { b.name = `第${offset + i + 1}批`; });
+      c.elfrBatches = c.elfrBatches.concat(batches);
+    }
+    save(); renderElfrModal(); renderBoard();
+    closeMatModal();
+    setTimeout(() => alert(`分配方案已应用。\n\n共 ${batches.length} 批 · ${totalQty} 颗。\n\n⚠️ FT 记录已按方案预填执行人，但默认标记为"未完成"。实际做完 FT 后，请打开每条记录左侧的"完成"勾选框。\n\n如需调整人员，直接在批次里改即可；改完重新点「📊 工作量评分」评估。`), 50);
+  };
+}
+
+/* ========== 资产设备 ========== */
+function renderEquipments() {
+  const kw = ($('#eqSearch').value || '').trim().toLowerCase();
+  const cat = $('#eqFilter').value;
+  const tbody = $('#eqBody');
+  const list = testDb.equipments.filter(e => {
+    if (cat && e.category !== cat) return false;
+    if (kw && ![e.name, e.sn, e.location, e.note].join(' ').toLowerCase().includes(kw)) return false;
+    return true;
+  });
+  if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty">暂无设备</td></tr>'; return; }
+  tbody.innerHTML = list.map(e => {
+    const statusCls = eqStatusClass(e.status);
+    return `<tr><td><strong>${esc(e.name)}</strong></td><td class="mono">${esc(e.sn || '-')}</td><td><span class="badge st-muted">${esc(e.category)}</span></td><td><span class="badge ${statusCls}">${esc(e.status)}</span></td><td>${esc(e.location || '-')}</td><td style="max-width:200px; overflow:hidden; text-overflow:ellipsis;">${esc(e.note || '-')}</td><td style="text-align:right;"><button class="link" onclick="openLogModal('${e.id}')">记录</button><button class="link" onclick="openEqModal('${e.id}')">编辑</button></td></tr>`;
+  }).join('');
+}
+function openEqModal(id) {
+  const e = id ? testDb.equipments.find(x => x.id === id) : { name:'', sn:'', category:'电源', status:'正常', location:'', note:'' };
+  const statusOpts = EQ_STATUSES.map(s => `<option value="${s}" ${e.status===s?'selected':''}>${s}</option>`).join('');
+  $('#eqFormBody').innerHTML = `<div class="form-group"><label>设备名称</label><input id="eq_name" value="${esc(e.name)}"></div><div class="form-group"><label>资产号</label><input id="eq_sn" value="${esc(e.sn)}"></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;"><div class="form-group"><label>分类</label><select id="eq_category"><option value="电源" ${e.category==='电源'?'selected':''}>电源</option><option value="通讯工具" ${e.category==='通讯工具'?'selected':''}>通讯工具</option><option value="电脑" ${e.category==='电脑'?'selected':''}>电脑</option><option value="治具/耗材" ${e.category==='治具/耗材'?'selected':''}>治具/耗材</option><option value="其他" ${e.category==='其他'?'selected':''}>其他</option></select></div><div class="form-group"><label>状态</label><select id="eq_status">${statusOpts}</select></div></div><div class="form-group"><label>存放位置</label><input id="eq_location" value="${esc(e.location)}"></div><div class="form-group"><label>备注</label><input id="eq_note" value="${esc(e.note)}"></div><input type="hidden" id="eq_id" value="${id || ''}">`;
+  $('#modalEq').classList.remove('hidden');
+}
+function saveEq() {
+  const id = $('#eq_id').value; const name = $('#eq_name').value;
+  if (!name) { alert('请填写设备名称'); return; }
+  const payload = { name, sn: $('#eq_sn').value, category: $('#eq_category').value, status: $('#eq_status').value, location: $('#eq_location').value, note: $('#eq_note').value };
+  if (id) { Object.assign(testDb.equipments.find(x => x.id === id), payload); }
+  else { testDb.equipments.push({ id: 'e_'+Date.now(), logs: [], ...payload }); }
+  save(); $('#modalEq').classList.add('hidden'); renderEquipments();
+}
+function openLogModal(id) {
+  const eq = testDb.equipments.find(x => x.id === id); if (!eq) return;
+  const color = a => a === '借出' ? '#f59e0b' : (a === '归还' ? '#10b981' : (a === '送计量' ? '#a855f7' : '#2563eb'));
+  const sorted = [...(eq.logs || [])].sort((a,b) => new Date(b.time) - new Date(a.time));
+  const logHtml = sorted.map(l => `<div style="border-left:2px solid var(--border); padding-left:12px; margin-bottom:12px; position:relative;"><div style="position:absolute; left:-6px; top:2px; width:10px; height:10px; border-radius:50%; background:${color(l.action)};"></div><div style="font-size:12px; color:var(--text-sec);">${esc(l.time)} - ${esc(l.person)}</div><div style="font-weight:600;">${esc(l.action)}</div>${l.remark ? `<div style="font-size:13px; color:var(--text-sec); margin-top:4px;">${esc(l.remark)}</div>` : ''}</div>`).join('') || '<div class="empty" style="padding:10px;">暂无记录</div>';
+  $('#logFormBody').innerHTML = `<div style="max-height:200px; overflow-y:auto; margin-bottom:16px;">${logHtml}</div><div style="border-top:1px dashed var(--border); padding-top:16px;"><div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;"><select id="log_action" class="filter-select" style="width:100%;"><option value="借出">借出</option><option value="归还">归还</option><option value="送计量">送计量</option><option value="完成计量">完成计量</option></select><input type="text" id="log_person" class="search-box" style="width:100%; padding:0 12px;" placeholder="操作人"></div><input type="text" id="log_remark" class="search-box" style="width:100%; padding:0 12px; margin-bottom:12px;" placeholder="备注"><button class="primary" style="width:100%;" onclick="addEqLog('${id}')">添加记录</button></div>`;
+  $('#logModalTitle').textContent = eq.name + ' - 流转记录';
+  $('#modalLog').classList.remove('hidden');
+}
+function addEqLog(id) {
+  const eq = testDb.equipments.find(x => x.id === id); if (!eq) return;
+  const action = $('#log_action').value;
+  const person = $('#log_person').value || '未知';
+  const remark = $('#log_remark').value;
+  const now = new Date();
+  const timeStr = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+  if (!eq.logs) eq.logs = [];
+  eq.logs.push({ time: timeStr, action, person, remark });
+  if (action === '借出') eq.status = '实验中';
+  else if (action === '归还') eq.status = '归还';
+  else if (action === '送计量') eq.status = '计量';
+  else if (action === '完成计量') eq.status = '正常';
+  save(); renderEquipments(); openLogModal(id);
+}
+
+/* ========== Excel 底层 ========== */
+let CRC_TABLE = null;
+function crc32(u8){ if (!CRC_TABLE) { CRC_TABLE = new Uint32Array(256); for (let i = 0; i < 256; i++) { let c = i; for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); CRC_TABLE[i] = c >>> 0; } } let crc = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) crc = CRC_TABLE[(crc ^ u8[i]) & 0xFF] ^ (crc >>> 8); return (crc ^ 0xFFFFFFFF) >>> 0; }
+async function unzipAll(buf){
+  const dv = new DataView(buf); let eocd = -1; const start = Math.max(0, buf.byteLength - 22 - 65535);
+  for (let i = buf.byteLength - 22; i >= start; i--) { if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; } }
+  if (eocd < 0) throw new Error('不是有效的 xlsx');
+  const count = dv.getUint16(eocd + 10, true); let p = dv.getUint32(eocd + 16, true);
+  const out = {}; const dec = new TextDecoder('utf-8');
+  for (let i = 0; i < count; i++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true); const compSize = dv.getUint32(p + 20, true);
+    const nameLen = dv.getUint16(p + 28, true); const extraLen = dv.getUint16(p + 30, true); const commentLen = dv.getUint16(p + 32, true);
+    const localOff = dv.getUint32(p + 42, true);
+    const name = dec.decode(new Uint8Array(buf, p + 46, nameLen));
+    if (dv.getUint32(localOff, true) === 0x04034b50) {
+      const nl = dv.getUint16(localOff + 26, true); const el = dv.getUint16(localOff + 28, true);
+      const dataStart = localOff + 30 + nl + el; const data = new Uint8Array(buf, dataStart, compSize);
+      if (method === 0) out[name] = dec.decode(data);
+      else if (method === 8) { if (typeof DecompressionStream === 'undefined') throw new Error('浏览器版本过低'); const ds = new DecompressionStream('deflate-raw'); const stream = new Blob([data]).stream().pipeThrough(ds); const raw = await new Response(stream).arrayBuffer(); out[name] = dec.decode(new Uint8Array(raw)); }
+    }
+    p += 46 + nameLen + extraLen + commentLen;
+  }
+  return out;
+}
+function makeZip(files){
+  const enc = new TextEncoder(); const chunks = []; const central = []; let offset = 0;
+  for (const f of files) {
+    const nameBytes = enc.encode(f.name); const data = f.data instanceof Uint8Array ? f.data : enc.encode(f.data); const crc = crc32(data);
+    const local = new Uint8Array(30 + nameBytes.length); const dv = new DataView(local.buffer);
+    dv.setUint32(0, 0x04034b50, true); dv.setUint16(4, 20, true); dv.setUint16(6, 0x0800, true); dv.setUint16(8, 0, true); dv.setUint16(10, 0, true); dv.setUint16(12, 0, true); dv.setUint32(14, crc, true); dv.setUint32(18, data.length, true); dv.setUint32(22, data.length, true); dv.setUint16(26, nameBytes.length, true); dv.setUint16(28, 0, true);
+    local.set(nameBytes, 30); chunks.push(local, data);
+    const cd = new Uint8Array(46 + nameBytes.length); const cv = new DataView(cd.buffer);
+    cv.setUint32(0, 0x02014b50, true); cv.setUint16(4, 20, true); cv.setUint16(6, 20, true); cv.setUint16(8, 0x0800, true); cv.setUint16(10, 0, true); cv.setUint16(12, 0, true); cv.setUint16(14, 0, true); cv.setUint32(16, crc, true); cv.setUint32(20, data.length, true); cv.setUint32(24, data.length, true); cv.setUint16(28, nameBytes.length, true); cv.setUint16(30, 0, true); cv.setUint16(32, 0, true); cv.setUint16(34, 0, true); cv.setUint16(36, 0, true); cv.setUint32(38, 0, true); cv.setUint32(42, offset, true);
+    cd.set(nameBytes, 46); central.push(cd); offset += local.length + data.length;
+  }
+  let cdSize = 0; for (const c of central) cdSize += c.length;
+  const eocd = new Uint8Array(22); const ev = new DataView(eocd.buffer);
+  ev.setUint32(0, 0x06054b50, true); ev.setUint16(8, central.length, true); ev.setUint16(10, central.length, true); ev.setUint32(12, cdSize, true); ev.setUint32(16, offset, true);
+  return new Blob([...chunks, ...central, eocd], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+function parseSharedStrings(xml){ if (!xml) return []; const doc = new DOMParser().parseFromString(xml, 'application/xml'); const out = []; for (const si of doc.getElementsByTagNameNS('*', 'si')) { let s = ''; for (const t of si.getElementsByTagNameNS('*', 't')) s += t.textContent; out.push(s); } return out; }
+function colToIndex(ref){ let n = 0; for (let i = 0; i < ref.length; i++) { const c = ref.charCodeAt(i); if (c >= 65 && c <= 90) n = n * 26 + (c - 64); else if (c >= 97 && c <= 122) n = n * 26 + (c - 96); else break; } return n - 1; }
+function parseSheetXml(xml, shared){
+  const doc = new DOMParser().parseFromString(xml, 'application/xml'); const rows = [];
+  for (const rowEl of doc.getElementsByTagNameNS('*', 'row')) {
+    const cells = []; let maxIdx = -1;
+    for (const c of rowEl.getElementsByTagNameNS('*', 'c')) {
+      const ref = c.getAttribute('r') || ''; const idx = ref ? colToIndex(ref) : cells.length;
+      const t = c.getAttribute('t'); let val = '';
+      if (t === 's') { const v = c.getElementsByTagNameNS('*', 'v')[0]; if (v) val = shared[parseInt(v.textContent, 10)] ?? ''; }
+      else if (t === 'inlineStr') { for (const x of c.getElementsByTagNameNS('*', 't')) val += x.textContent; }
+      else { const v = c.getElementsByTagNameNS('*', 'v')[0]; if (v) val = v.textContent; }
+      cells[idx] = val; if (idx > maxIdx) maxIdx = idx;
+    }
+    const arr = []; for (let i = 0; i <= maxIdx; i++) arr.push(cells[i] ?? ''); rows.push(arr);
+  }
+  return rows;
+}
+function parseWorkbookXml(wbXml, relsXml){
+  const doc = new DOMParser().parseFromString(wbXml, 'application/xml'); const rels = {};
+  if (relsXml) { const rdoc = new DOMParser().parseFromString(relsXml, 'application/xml'); for (const rel of rdoc.getElementsByTagNameNS('*', 'Relationship')) { const id = rel.getAttribute('Id'); const target = rel.getAttribute('Target') || ''; if (id) rels[id] = target; } }
+  const relNs = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'; const out = []; let i = 0;
+  for (const sh of doc.getElementsByTagNameNS('*', 'sheet')) {
+    i++;
+    const name = sh.getAttribute('name') || ('Sheet' + i);
+    let rid = sh.getAttributeNS(relNs, 'id');
+    if (!rid) { for (const a of sh.attributes) { if (a.localName === 'id') { rid = a.value; break; } } }
+    const target = rid ? rels[rid] : null;
+    let path;
+    if (target) path = target.startsWith('/') ? target.slice(1) : 'xl/' + target.replace(/^\.\//, '');
+    else path = 'xl/worksheets/sheet' + i + '.xml';
+    out.push({ name, path });
+  }
+  return out;
+}
+function xmlEsc(s){ return String(s ?? '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c])); }
+function indexToCol(i){ let s = ''; i++; while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; }
+function safeSheetName(n){ return String(n || 'Sheet1').replace(/[:\\/?*\[\]]/g, '_').slice(0, 31) || 'Sheet1'; }
+function sheetXml(header, rows){ const all = [header, ...rows]; let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'; all.forEach((r, ri) => { xml += `<row r="${ri + 1}">`; r.forEach((v, ci) => { const ref = indexToCol(ci) + (ri + 1); if (ri === 0) xml += `<c r="${ref}" t="inlineStr" s="1"><is><t xml:space="preserve">${xmlEsc(v)}</t></is></c>`; else if (typeof v === 'number' && isFinite(v)) xml += `<c r="${ref}"><v>${v}</v></c>`; else { const s = String(v ?? ''); if (s === '') xml += `<c r="${ref}"/>`; else xml += `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${xmlEsc(s)}</t></is></c>`; } }); xml += '</row>'; }); xml += '</sheetData></worksheet>'; return xml; }
+function buildXlsx(header, rows, sheetName){
+  const name = safeSheetName(sheetName);
+  const ct = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>';
+  const rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
+  const wb = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="' + xmlEsc(name) + '" sheetId="1" r:id="rId1"/></sheets></workbook>';
+  const wbRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>';
+  const styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf/></cellStyleXfs><cellXfs count="2"><xf xfId="0"/><xf fontId="1" xfId="0" applyFont="1"/></cellXfs></styleSheet>';
+  return makeZip([{name:'[Content_Types].xml', data: ct},{name:'_rels/.rels', data: rels},{name:'xl/workbook.xml', data: wb},{name:'xl/_rels/workbook.xml.rels', data: wbRels},{name:'xl/styles.xml', data: styles},{name:'xl/worksheets/sheet1.xml', data: sheetXml(header, rows)}]);
+}
+
+function exportJSON() {
+  forceSave();
+  const allData = { version: '1.7', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
+  const blob = new Blob([JSON.stringify(allData, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `综合系统备份_${dateStr()}.json`; a.click();
+  setTimeout(() => alert(`导出完成：元器件 ${(materialDb.components||[]).length} 条，主题 ${(testDb.batches||[]).length} 个，卡片 ${(testDb.cards||[]).length} 条，设备 ${(testDb.equipments||[]).length} 台`), 100);
+}
+function importJSON(input) {
+  const f = input.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const d = JSON.parse(e.target.result);
+      if (!confirm('导入将覆盖当前所有数据，确定继续？')) { input.value=''; return; }
+      applyImportedData(d);
+      alert(`导入成功：元器件 ${(materialDb.components||[]).length} 条，主题 ${(testDb.batches||[]).length} 个`);
+    } catch(err) { alert('导入失败：' + err.message); }
+    input.value = '';
+  };
+  r.readAsText(f, 'utf-8');
+}
+function openMatImportModal() { alert('暂不支持直接导入台账 Excel。'); }
+function exportXlsx() {
+  if (!materialDb.components.length) { alert('没有元器件可导出'); return; }
+  const rows = materialDb.components.map(c => [c.name, c.spec, c.pkg, c.rating, c.auto, c.tol, c.temp, c.note, Number(c.qty)]);
+  const blob = buildXlsx(['物料名','规格值','封装','耐压/功率','是否车规','精度','工作温度','备注','实时量'], rows, '元器件台账');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `元器件台账_${dateStr()}.xlsx`; a.click();
+}
+function exportShortageXlsx() {
+  const demand = computeDemand();
+  const cids = Object.keys(demand);
+  if (!cids.length) { alert('当前没有核算数据'); return; }
+  const rows = [];
+  cids.forEach(cid => {
+    const c = materialDb.components.find(x => x.id === cid); if (!c) return;
+    const need = demand[cid].total; const have = Number(c.qty) || 0; const gap = Math.max(0, need - have);
+    if (gap > 0) rows.push([c.name, c.spec, c.pkg, c.rating, c.auto, c.tol, c.temp, need, have, gap, demand[cid].sources.join(' / ')]);
+  });
+  if (!rows.length) { alert('所有物料库存充足'); return; }
+  const header = ['物料名','规格值','封装','耐压/功率','是否车规','精度','工作温度','总需求','实时量','缺口','需求来源'];
+  const blob = buildXlsx(header, rows, '采购清单');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `采购清单_${dateStr()}.xlsx`; a.click();
+}
+
+loadAll();
+</script>
+</body>
+</html>
