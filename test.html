@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>可靠性综合管理中心 V2.4</title>
+<title>可靠性综合管理中心 V2.5</title>
 <style>
 :root { --bg:#f4f6f8;--surface:#fff;--border:#e2e8f0;--text:#1e293b;--text-sec:#64748b;--primary:#2563eb;--primary-bg:#eff6ff;--success:#10b981;--success-bg:#ecfdf5;--warning:#f59e0b;--warning-bg:#fffbeb;--danger:#dc2626;--danger-bg:#fef2f2; }
 * { box-sizing: border-box; }
@@ -61,6 +61,12 @@ tr:last-child td { border-bottom: none; }
 .chip-btn { height: 34px; padding: 0 14px; background: #fff; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; color: var(--text); font-family: inherit; }
 .chip-btn.active { background: var(--danger-bg); border-color: #fca5a5; color: var(--danger); font-weight: 600; }
 tr.group-row td { background: #eef2f7; cursor: pointer; font-weight: 600; user-select: none; }
+tr.group-row:hover td { background: #e6ecf5; }
+tr.comp-row[draggable="true"] { cursor: grab; }
+tr.comp-row.dragging td { opacity: .45; }
+tr.comp-row.drop-before td { box-shadow: inset 0 3px 0 var(--primary); }
+tr.comp-row.drop-after td { box-shadow: inset 0 -3px 0 var(--primary); }
+tr.sort-hint td { background: var(--primary-bg); color: var(--primary); font-size: 12px; padding: 9px 14px; }
 .group-arrow { display: inline-block; width: 16px; font-size: 11px; color: var(--text-sec); }
 .group-count { font-weight: 400; font-size: 12px; color: var(--text-sec); margin-left: 8px; }
 .drag-handle { color: #94a3b8; font-size: 13px; margin-right: 6px; letter-spacing: -2px; user-select: none; }
@@ -326,7 +332,7 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
 <body>
 
 <aside class="app-sidebar">
-  <div class="app-brand"><span class="brand-mark">◈</span><div>可靠性管理<span class="brand-sub">综合管理中心 · V2.4</span></div></div>
+  <div class="app-brand"><span class="brand-mark">◈</span><div>可靠性管理<span class="brand-sub">综合管理中心 · V2.5</span></div></div>
   <nav class="nav-tabs" aria-label="工作模块">
     <button type="button" class="nav-tab active" onclick="switchPage('components')"><span class="nav-number">01</span>元器件台账</button>
     <button type="button" class="nav-tab" onclick="switchPage('chips')"><span class="nav-number">02</span>芯片 / BOM</button>
@@ -478,7 +484,11 @@ const BOARD_KEYS = ['base','hast','top'];
 const BOARD_NAMES = {base:'可靠性底板', hast:'可靠性HAST板', top:'可靠性顶板'};
 const BOARD_SHORT = {base:'底板', hast:'HAST板', top:'顶板'};
 const FOLD_GROUPS = [{key:'电容', patterns:['电容']},{key:'电阻', patterns:['电阻']},{key:'保险丝', patterns:['保险丝','熔断器']},{key:'螺丝', patterns:['螺丝','螺钉']},{key:'散热片', patterns:['散热片','散热器']}];
-let sortMode = false, collapsedGroups = {};
+const GROUP_STATE_KEY = 'reliability_collapsed_groups_v1';
+let sortMode = false, dragCompId = null;
+let collapsedGroups = (() => { try { return JSON.parse(localStorage.getItem(GROUP_STATE_KEY)) || {}; } catch (_) { return {}; } })();
+function saveCollapsedGroups() { try { localStorage.setItem(GROUP_STATE_KEY, JSON.stringify(collapsedGroups)); } catch (_) {} }
+function toggleGroup(key) { if (!key) return; collapsedGroups[key] = !collapsedGroups[key]; saveCollapsedGroups(); renderComponents(); }
 let editingComp = null, editLogs = [];
 let copyBomTarget = null;
 let currentElfrCardId = null;
@@ -664,6 +674,9 @@ function normalizeImportedState(d, currentMaterial = materialDb, currentTest = t
       const b = ch.boards[key] || (ch.boards[key] = {qty:0,bom:[],shipped:0});
       b.qty = stockInteger(b.qty == null ? 0 : b.qty, '计划板数');
       b.shipped = stockInteger(b.shipped == null ? 0 : b.shipped, '已出板数');
+      // 2.4 及更早的数据没有 shipments 字段：补空数组即可，旧字段与旧行为全部保留。
+      if (!Array.isArray(b.shipments)) b.shipments = [];
+      b.shipments = b.shipments.filter(s => s && typeof s === 'object').map(s => ({id:String(s.id || ('sp_' + uid())),at:Number(s.at) || 0,qty:Math.max(0, Number(s.qty) || 0),note:String(s.note || '')}));
       if (b.bom == null) b.bom = [];
       if (!Array.isArray(b.bom)) throw new Error('BOM 必须是数组');
       b.bom.forEach(item => {
@@ -896,7 +909,7 @@ window.addEventListener('dragover', e => { e.preventDefault(); });
 window.addEventListener('drop', e => { e.preventDefault(); dragCounter = 0; document.getElementById('dropOverlay')?.classList.remove('on'); const f = e.dataTransfer && e.dataTransfer.files[0]; if (f) handleJsonFile(f); });
 function exportServerJson() {
   forceSave();
-  const allData = { version: '2.4', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
+  const allData = { version: '2.5', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
   const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = DATA_FILE_NAME; a.click();
   setTimeout(() => alert('已导出 ' + DATA_FILE_NAME + '。\n\n请覆盖到共享目录：\n' + SHARE_UNC), 100);
@@ -935,7 +948,8 @@ function renderComponents() {
   });
   const tb = $('#compBody');
   if (!list.length) { tb.innerHTML = '<tr><td colspan="13" class="empty">没有符合条件的物料</td></tr>'; return; }
-  if (kw || typeFilter || showWarn || sortMode) { tb.innerHTML = list.map(c => renderCompRow(c, null)).join(''); return; }
+  if (kw || typeFilter || showWarn) { tb.innerHTML = list.map(c => renderCompRow(c, null)).join(''); return; }
+  if (sortMode) { tb.innerHTML = '<tr class="sort-hint"><td colspan="13">拖动行调整顺序，退出排序后按新顺序展示（分组会自动跟随）</td></tr>' + list.map(c => renderCompRow(c, null)).join(''); return; }
   const seen = new Set(); const blocks = [];
   materialDb.components.forEach(c => {
     const g = matchFoldGroup(c.name);
@@ -947,7 +961,7 @@ function renderComponents() {
     if (b.type === 'single') { html += renderCompRow(b.item, null); return; }
     const collapsed = !!collapsedGroups[b.key];
     const handle = sortMode ? '<span class="drag-handle">⋮⋮</span>' : '';
-    html += `<tr class="group-row" data-group="${esc(b.key)}"><td colspan="13">${handle}<span class="group-arrow">${collapsed ? '▶' : '▼'}</span>${esc(b.key)}<span class="group-count">${b.items.length} 项</span></td></tr>`;
+    html += `<tr class="group-row" data-group="${esc(b.key)}" role="button" tabindex="0" aria-expanded="${!collapsed}"><td colspan="13">${handle}<span class="group-arrow">${collapsed ? '▶' : '▼'}</span>${esc(b.key)}<span class="group-count">${b.items.length} 项</span></td></tr>`;
     if (!collapsed) b.items.forEach(c => { html += renderCompRow(c, b.key); });
   });
   tb.innerHTML = html;
@@ -956,7 +970,7 @@ function renderCompRow(c, groupKey) {
   const st = compStatus(c);
   const q = Number(c.qty) || 0;
   const handle = sortMode ? '<span class="drag-handle">⋮⋮</span>' : '';
-  return `<tr data-id="${c.id}"><td><strong>${handle}${esc(c.name)}</strong></td><td class="mono">${esc(c.spec) || '-'}</td><td class="mono">${esc(c.pkg) || '-'}</td><td class="mono">${esc(c.rating) || '-'}</td><td>${c.auto === '是' ? '<span class="badge st-ok">车规</span>' : (c.auto === '否' ? '<span class="badge st-muted">非车规</span>' : '-')}</td><td class="mono">${esc(c.tol) || '-'}</td><td class="mono">${esc(c.temp) || '-'}</td><td class="note" style="max-width:150px; overflow:hidden; text-overflow:ellipsis;" title="${esc(c.note)}">${esc(c.note) || '-'}</td><td class="num ${q <= 0 ? 'text-danger' : ''}">${q}</td><td class="num">${Number(c.safety) || 0}</td><td>${esc(c.location) || '-'}</td><td><span class="badge ${st==='缺货'?'st-danger':(st==='低库存'?'st-warn':'st-ok')}">${st}</span></td><td><button class="link" onclick="editComp('${c.id}')">编辑</button><button class="link" onclick="showLogs('${c.id}')">流水</button><button class="link danger" onclick="delComp('${c.id}')">删除</button></td></tr>`;
+  return `<tr class="comp-row" data-id="${esc(c.id)}"${sortMode ? ' draggable="true"' : ''}><td><strong>${handle}${esc(c.name)}</strong></td><td class="mono">${esc(c.spec) || '-'}</td><td class="mono">${esc(c.pkg) || '-'}</td><td class="mono">${esc(c.rating) || '-'}</td><td>${c.auto === '是' ? '<span class="badge st-ok">车规</span>' : (c.auto === '否' ? '<span class="badge st-muted">非车规</span>' : '-')}</td><td class="mono">${esc(c.tol) || '-'}</td><td class="mono">${esc(c.temp) || '-'}</td><td class="note" style="max-width:150px; overflow:hidden; text-overflow:ellipsis;" title="${esc(c.note)}">${esc(c.note) || '-'}</td><td class="num ${q <= 0 ? 'text-danger' : ''}">${q}</td><td class="num">${Number(c.safety) || 0}</td><td>${esc(c.location) || '-'}</td><td><span class="badge ${st==='缺货'?'st-danger':(st==='低库存'?'st-warn':'st-ok')}">${st}</span></td><td><button class="link" onclick="editComp('${c.id}')">编辑</button><button class="link" onclick="showLogs('${c.id}')">流水</button><button class="link danger" onclick="delComp('${c.id}')">删除</button></td></tr>`;
 }
 function editComp(id) {
   const isNew = !id;
@@ -1035,10 +1049,75 @@ function showLogs(id) {
 function toggleSortMode() {
   sortMode = !sortMode;
   const btn = $('#btnSortMode');
-  btn.textContent = sortMode ? '退出排序' : '拖拽排序';
+  btn.textContent = sortMode ? '完成排序' : '拖拽排序';
   btn.style.background = sortMode ? 'var(--primary)' : '#fff';
   btn.style.color = sortMode ? '#fff' : 'var(--text)';
+  if (!sortMode) dragCompId = null;
   renderComponents();
+}
+/* 纯函数：把 dragId 移动到 targetId 前/后，返回新顺序的 id 数组；无效移动返回 null */
+function reorderIds(list, dragId, targetId, after) {
+  const ids = list.map(item => item.id);
+  const from = ids.indexOf(dragId);
+  if (from < 0 || dragId === targetId || ids.indexOf(targetId) < 0) return null;
+  const next = ids.slice();
+  next.splice(from, 1);
+  const to = next.indexOf(targetId);
+  next.splice(after ? to + 1 : to, 0, dragId);
+  return next;
+}
+function applyComponentOrder(dragId, targetId, after) {
+  const order = reorderIds(materialDb.components, dragId, targetId, after);
+  if (!order) return;
+  const next = materialClone();
+  const byId = new Map(next.components.map(c => [c.id, c]));
+  next.components = order.map(id => byId.get(id)).filter(Boolean);
+  if (!commitMaterialChange(next)) return;
+  renderComponents(); renderChips(); renderShortage(); renderCalc();
+}
+function bindComponentDrag() {
+  const tb = $('#compBody');
+  if (!tb || tb.dataset.dragBound) return;
+  tb.dataset.dragBound = '1';
+  const clearMarks = () => tb.querySelectorAll('tr.dragging,tr.drop-before,tr.drop-after').forEach(tr => tr.classList.remove('dragging', 'drop-before', 'drop-after'));
+  tb.addEventListener('dragstart', e => {
+    const tr = e.target.closest('tr.comp-row');
+    if (!tr || !sortMode) return;
+    dragCompId = tr.dataset.id;
+    tr.classList.add('dragging');
+    if (e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', dragCompId); } catch (_) {} }
+  });
+  tb.addEventListener('dragover', e => {
+    const tr = e.target.closest('tr.comp-row');
+    if (!sortMode || !dragCompId || !tr || tr.dataset.id === dragCompId) return;
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+    const rect = tr.getBoundingClientRect();
+    const after = e.clientY - rect.top > rect.height / 2;
+    tb.querySelectorAll('tr.drop-before,tr.drop-after').forEach(x => x.classList.remove('drop-before', 'drop-after'));
+    tr.classList.add(after ? 'drop-after' : 'drop-before');
+  });
+  tb.addEventListener('dragleave', e => { const tr = e.target.closest('tr.comp-row'); if (tr) tr.classList.remove('drop-before', 'drop-after'); });
+  tb.addEventListener('drop', e => {
+    const tr = e.target.closest('tr.comp-row');
+    if (!sortMode || !dragCompId || !tr) return;
+    e.preventDefault();
+    const after = tr.classList.contains('drop-after');
+    const moving = dragCompId;
+    dragCompId = null;
+    applyComponentOrder(moving, tr.dataset.id, after);
+    clearMarks();
+  });
+  tb.addEventListener('dragend', () => { dragCompId = null; clearMarks(); });
+  // 分组折叠：事件委托，点行或键盘 Enter/空格都生效（折叠状态存 localStorage，不进 data.json）
+  tb.addEventListener('click', e => {
+    const row = e.target.closest('tr.group-row');
+    if (row) toggleGroup(row.dataset.group);
+  });
+  tb.addEventListener('keydown', e => {
+    const row = e.target.closest('tr.group-row');
+    if (row && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggleGroup(row.dataset.group); }
+  });
 }
 
 /* ========== 芯片 BOM ========== */
@@ -1061,7 +1140,7 @@ function renderChipDetail(chipId) {
       const c = materialDb.components.find(x => x.id === item.cid); if (!c) return '';
       return `<tr><td><strong>${esc(c.name)}</strong></td><td class="mono">${esc(c.spec)}</td><td class="num">${c.qty}</td><td class="num">${item.qty}</td><td><button class="link danger" onclick="delBom('${k}','${item.cid}')">移除</button></td></tr>`;
     }).join('');
-    return `<div class="board-block"><div class="board-head"><div style="font-weight:600;">${BOARD_NAMES[k]} (计划 ${b.qty}, 已出 ${b.shipped})</div><div style="display:flex; gap:8px; align-items:center;"><input type="number" min="0" value="${b.qty}" onchange="setBoardQty('${ch.id}','${k}',this.value)"><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="shipBoard('${k}')">一键出货</button><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="openBomImport('${ch.id}','${k}')">导入</button><button class="ghost" style="padding:4px 8px;font-size:12px;" onclick="downloadBomTemplate()">模板</button><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="openCopyBom('${ch.id}','${k}')">复制</button><button class="primary" style="padding:4px 8px; font-size:12px;" onclick="addBom('${k}')">+ 添加</button></div></div><table><thead><tr style="background:#f8fafc; font-size:12px;"><th>物料名</th><th>规格</th><th class="num">库存</th><th class="num">用量</th><th>操作</th></tr></thead><tbody>${rows || '<tr><td colspan="5" class="empty">暂无 BOM</td></tr>'}</tbody></table></div>`;
+    return `<div class="board-block"><div class="board-head"><div style="font-weight:600;">${BOARD_NAMES[k]} <span style="font-weight:400;color:var(--text-sec);font-size:12px;">计划 ${b.qty} · 已出 <b style="color:${Number(b.shipped) > Number(b.qty) ? 'var(--danger)' : 'inherit'}">${Number(b.shipped) || 0}</b></span></div><div style="display:flex; gap:8px; align-items:center;"><input type="number" min="0" value="${b.qty}" title="计划板数只用于需求核算，不限制出货" onchange="setBoardQty('${ch.id}','${k}',this.value)"><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="shipBoard('${k}')">一键出货</button><button class="ghost" style="padding:4px 8px; font-size:12px;" title="查看出货记录 / 撤销最近一次" onclick="openShipments(${esc(JSON.stringify(String(ch.id)))},'${k}')">记录 ${(b.shipments || []).length}</button><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="openBomImport('${ch.id}','${k}')">导入</button><button class="ghost" style="padding:4px 8px;font-size:12px;" onclick="downloadBomTemplate()">模板</button><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="openCopyBom('${ch.id}','${k}')">复制</button><button class="primary" style="padding:4px 8px; font-size:12px;" onclick="addBom('${k}')">+ 添加</button></div></div><table><thead><tr style="background:#f8fafc; font-size:12px;"><th>物料名</th><th>规格</th><th class="num">库存</th><th class="num">用量</th><th>操作</th></tr></thead><tbody>${rows || '<tr><td colspan="5" class="empty">暂无 BOM</td></tr>'}</tbody></table></div>`;
   }).join('');
   box.innerHTML = `<div style="padding:16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between;"><div><h3 style="margin:0;">${esc(ch.name)}</h3></div><div><button class="ghost" onclick="editChip('${ch.id}')">编辑</button><button class="ghost" style="color:var(--danger);" onclick="delChip('${ch.id}')">删除</button></div></div>${sections}`;
 }
@@ -1083,7 +1162,6 @@ function setBoardQty(chipId, key, v) {
   let qty;
   try { qty = stockInteger(v, '计划板数'); }
   catch (err) { alert(err.message); return; }
-  if (qty < Number(ch.boards[key].shipped || 0)) { alert('计划板数不能小于已出板数。已出库数量请通过物料台账核对。'); return; }
   const next = materialClone(); next.chips.find(c => c.id === chipId).boards[key].qty = qty;
   if (commitMaterialChange(next)) { renderChips(); renderCalc(); }
 }
@@ -1105,19 +1183,21 @@ function addBom(boardKey) {
   });
 }
 function delBom(k, cid) { const ch = materialDb.chips.find(c=>c.id===$('#chipList').dataset.activeId); if (ch) { ch.boards[k].bom = ch.boards[k].bom.filter(b=>b.cid!==cid); save(); renderChips(); renderCalc(); } }
+/* 出货只做两件事：按 BOM 扣库存、记一条出货记录。
+   计划板数（qty）只服务需求核算，不再限制出货次数和数量。 */
 function shipBoard(boardKey) {
   const ch = materialDb.chips.find(c => c.id === $('#chipList').dataset.activeId);
   if (!ch || !ch.boards[boardKey] || !ch.boards[boardKey].bom.length) return alert('无 BOM');
   const b = ch.boards[boardKey], boardSnapshot = JSON.stringify(ch.boards[boardKey]);
-  const remaining = Math.max(0, Number(b.qty) - Number(b.shipped || 0));
-  if (!remaining) return alert('计划板数已全部出货。如需追加，请先增加计划板数。');
-  openInputModal('一键出货', [{id:'n',label:`出货板数（计划 ${b.qty}，已出 ${b.shipped || 0}，待出 ${remaining}）`,type:'number',value:remaining}], ({n}) => {
+  openInputModal('一键出货', [
+    { id: 'n', label: `出货板数（按 BOM 扣库存；计划 ${b.qty}，累计已出 ${Number(b.shipped) || 0}）`, type: 'number', value: 1 },
+    { id: 'by', label: '经手人 / 备注（选填）', placeholder: '例如：张三 / 客户 A 样品' }
+  ], ({ n, by }) => {
     let num, bom;
     try { num = stockInteger(n, '出货板数', true); bom = aggregateBoardBom(b); }
     catch (err) { alert(err.message); return false; }
     const live = materialDb.chips.find(c => c.id === ch.id)?.boards[boardKey];
-    if (!live || JSON.stringify(live) !== boardSnapshot) { alert('计划或 BOM 已变化，请重新打开出货窗口'); return false; }
-    if (num > Math.max(0, Number(b.qty) - Number(b.shipped || 0))) { alert('出货板数超过待出数量，请先调整计划。'); return false; }
+    if (!live || JSON.stringify(live) !== boardSnapshot) { alert('BOM 已变化，请重新打开出货窗口'); return false; }
     const changes = [];
     try {
       bom.forEach((perBoard, cid) => {
@@ -1128,20 +1208,62 @@ function shipBoard(boardKey) {
         changes.push({cid,need});
       });
     } catch (err) { alert('本次未扣任何库存。\n' + err.message); return false; }
-    const next = materialClone(), txId = 'ship_' + uid(), now = Date.now();
+    const next = materialClone(), now = Date.now();
+    const shipment = { id: 'sp_' + uid(), at: now, qty: num, note: String(by || '').trim() };
     changes.forEach(({cid,need}) => {
       const c = next.components.find(x => x.id === cid);
       c.qty -= need;
       if (!Array.isArray(c.logs)) c.logs = [];
-      c.logs.push({t:now,type:'out',qty:need,after:c.qty,txId,source:`${ch.name}·${BOARD_NAMES[boardKey]} ${num} 板`});
+      c.logs.push({t:now,type:'out',qty:need,after:c.qty,txId:shipment.id,source:`${ch.name}·${BOARD_NAMES[boardKey]} ${num} 板`});
     });
     const target = next.chips.find(c => c.id === ch.id).boards[boardKey];
     target.shipped = stockInteger(Number(target.shipped || 0) + num, '已出板数');
+    if (!Array.isArray(target.shipments)) target.shipments = [];
+    target.shipments.push(shipment);
     if (!commitMaterialChange(next)) return false;
     renderChips(); renderComponents(); renderShortage(); renderCalc();
-    setTimeout(() => alert('出货成功，全部物料已按 BOM 扣减并保存。'), 50);
+    setTimeout(() => alert(`已出货 ${num} 板：库存已按 BOM 扣减，并记入「出货记录」。`), 50);
     return true;
   });
+}
+function openShipments(chipId, boardKey) {
+  const ch = materialDb.chips.find(c => c.id === chipId);
+  if (!ch || !ch.boards[boardKey]) return;
+  const b = ch.boards[boardKey];
+  const list = (Array.isArray(b.shipments) ? b.shipments : []).slice().reverse();
+  const rows = list.map(s => `<tr><td>${new Date(Number(s.at) || 0).toLocaleString('zh-CN', {hour12:false})}</td><td class="num">${Number(s.qty) || 0} 板</td><td>${esc(s.note) || '—'}</td></tr>`).join('');
+  const idArg = esc(JSON.stringify(String(chipId)));
+  const html = `<div style="margin-bottom:12px;color:var(--text-sec);font-size:12px;">${esc(ch.name)} · ${BOARD_NAMES[boardKey]} · 计划 ${Number(b.qty) || 0} · 累计已出 ${Number(b.shipped) || 0}</div>`
+    + (list.length
+      ? `<div class="table-container"><table><thead><tr><th>时间</th><th class="num">数量</th><th>经手人 / 备注</th></tr></thead><tbody>${rows}</tbody></table></div><div style="margin-top:12px;"><button class="ghost" onclick="undoLastShipment(${idArg},'${boardKey}')">撤销最近一次</button></div>`
+      : '<div class="empty">暂无出货记录</div>');
+  openMatModal('出货记录', html, () => true);
+}
+function undoLastShipment(chipId, boardKey) {
+  const ch = materialDb.chips.find(c => c.id === chipId);
+  const b = ch && ch.boards[boardKey];
+  const list = Array.isArray(b?.shipments) ? b.shipments : [];
+  const last = list[list.length - 1];
+  if (!last) return alert('没有可撤销的出货记录');
+  if (!confirm(`撤销最近一次出货（${last.qty} 板），并把物料库存加回？`)) return;
+  let bom;
+  try { bom = aggregateBoardBom(b); } catch (err) { return alert('BOM 已变化，无法自动加回：' + err.message); }
+  const next = materialClone(), now = Date.now();
+  try {
+    bom.forEach((perBoard, cid) => {
+      const c = next.components.find(x => x.id === cid); if (!c) return;
+      const back = stockInteger(perBoard * last.qty, '撤销数量', true);
+      c.qty = stockInteger(c.qty + back, '库存');
+      if (!Array.isArray(c.logs)) c.logs = [];
+      c.logs.push({t:now,type:'in',qty:back,after:c.qty,txId:last.id,source:`撤销出货：${ch.name}·${BOARD_NAMES[boardKey]} ${last.qty} 板`});
+    });
+  } catch (err) { return alert('无法撤销：' + err.message); }
+  const target = next.chips.find(c => c.id === chipId).boards[boardKey];
+  target.shipped = Math.max(0, Number(target.shipped || 0) - Number(last.qty || 0));
+  target.shipments = (Array.isArray(target.shipments) ? target.shipments : []).slice(0, -1);
+  if (!commitMaterialChange(next)) return;
+  renderChips(); renderComponents(); renderShortage(); renderCalc();
+  openShipments(chipId, boardKey);
 }
 function openCopyBom(chipId, boardKey) {
   copyBomTarget = { chipId, boardKey };
@@ -2712,7 +2834,7 @@ function buildXlsx(header, rows, sheetName){
 
 function exportJSON() {
   try { forceSave(); } catch (err) { setStatus('导出本页快照：' + err.message, 'var(--warning)'); }
-  const allData = { version: '2.4', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
+  const allData = { version: '2.5', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
   const blob = new Blob([JSON.stringify(allData, null, 2)], {type:'application/json'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `综合系统备份_${dateStr()}.json`; a.click();
   setTimeout(() => alert(`导出完成：元器件 ${(materialDb.components||[]).length} 条，主题 ${(testDb.batches||[]).length} 个，卡片 ${(testDb.cards||[]).length} 条，设备 ${(testDb.equipments||[]).length} 台`), 100);
@@ -2862,6 +2984,7 @@ function exportShortageXlsx() {
 
 
   
+bindComponentDrag();
 loadAll();
 </script>
 </body>
