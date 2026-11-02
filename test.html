@@ -84,6 +84,8 @@ tr.sort-hint td { background: var(--primary-bg); color: var(--primary); font-siz
 .calc-chips { padding: 16px; background: #fff; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 16px; }
 .calc-chip-block { padding: 12px 0; border-bottom: 1px dashed var(--border); }
 .calc-chip-block:last-child { border-bottom: none; }
+.calc-tip { margin-bottom: 12px; padding: 9px 12px; background: var(--primary-bg); color: var(--text-sec); font-size: 12px; line-height: 1.7; border-radius: 6px; }
+.calc-tip b { color: var(--primary); font-weight: 600; }
 .calc-summary { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
 .imp-box { border: 2px dashed var(--border); border-radius: 8px; padding: 22px; text-align: center; cursor: pointer; background: #fafbfc; }
 .imp-box:hover { border-color: var(--primary); background: var(--primary-bg); }
@@ -395,7 +397,7 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
     <div class="table-container"><table><thead><tr><th>物料名</th><th>规格值</th><th>封装</th><th class="num">实时量</th><th class="num">安全库存</th><th class="num">缺口</th><th>操作</th></tr></thead><tbody id="lowBody"></tbody></table></div>
   </div>
   <div class="page" id="page-calc">
-    <div class="module-heading"><h1>需求核算</h1><p>按剩余板卡计划核算待备物料。</p></div>
+    <div class="module-heading"><h1>需求核算</h1><p>填这次要做多少块板，直接算要买多少元器件；与历史出货无关。</p></div>
     <div class="calc-chips" id="calcChips"></div>
     <div style="display:flex; justify-content:space-between; margin-bottom:12px;"><h2 style="margin:0; font-size:18px;">物料需求汇总</h2><button class="ghost" onclick="exportShortageXlsx()">导出采购清单</button></div>
     <div id="calcSummary" class="calc-summary"></div>
@@ -1379,17 +1381,19 @@ function saveBomImport() {
   setTimeout(() => alert(`成功导入 ${count} 行，合并为 ${totals.size} 种物料。未修改库存。`),50);
 }
 /* ========== 需求核算 ========== */
+/* 只按「本次计划板数 × BOM 单板用量」算，再和当前库存比较。
+   历史出货（shipped）不参与计算：看一眼要买多少，不需要把上次数量加上去。 */
 function computeDemand() {
   const demand = Object.create(null);
   materialDb.chips.forEach(ch => BOARD_KEYS.forEach(key => {
     const b = ch.boards[key];
-    const remaining = Math.max(0, Number(b.qty || 0) - Number(b.shipped || 0));
-    if (!remaining) return;
+    const planQty = Math.max(0, Number(b.qty || 0));
+    if (!planQty) return;
     aggregateBoardBom(b).forEach((qty,cid) => {
       if (!demand[cid]) demand[cid] = {total:0,sources:[]};
-      const need = stockInteger(qty * remaining,'需求数量',true);
+      const need = stockInteger(qty * planQty,'需求数量',true);
       demand[cid].total = stockInteger(demand[cid].total + need,'需求汇总');
-      demand[cid].sources.push(`${ch.name}·${BOARD_SHORT[key]} 待出 ${remaining}×${qty}`);
+      demand[cid].sources.push(`${ch.name}·${BOARD_SHORT[key]} ${planQty}×${qty}`);
     });
   }));
   return demand;
@@ -1403,7 +1407,8 @@ function renderShortage() {
 function renderCalc() {
   const wrap = $('#calcChips');
   if (!materialDb.chips.length) { wrap.innerHTML = '<div class="empty">请先添加芯片</div>'; return; }
-  wrap.innerHTML = materialDb.chips.map(ch => `<div class="calc-chip-block"><div style="font-weight:600; margin-bottom:8px;">${esc(ch.name)}</div><div style="display:flex; gap:16px;">${BOARD_KEYS.map(k => `<div style="display:flex; align-items:center; gap:8px; font-size:13px;"><span style="color:var(--text-sec);">${BOARD_NAMES[k]}</span><input type="number" min="0" value="${ch.boards[k].qty}" onchange="setBoardQty('${ch.id}','${k}',this.value)"></div>`).join('')}</div></div>`).join('');
+  const tip = '<div class="calc-tip">填这次要做多少块板，下面直接算要采购多少。<b>不扣历史出货，也不用把上次的数量加上去</b>；改了数字只影响这次核算。</div>';
+  wrap.innerHTML = tip + materialDb.chips.map(ch => `<div class="calc-chip-block"><div style="font-weight:600; margin-bottom:8px;">${esc(ch.name)}</div><div style="display:flex; gap:16px; flex-wrap:wrap;">${BOARD_KEYS.map(k => `<div style="display:flex; align-items:center; gap:8px; font-size:13px;"><span style="color:var(--text-sec);">${BOARD_NAMES[k]}</span><input type="number" min="0" value="${ch.boards[k].qty}" onchange="setBoardQty('${ch.id}','${k}',this.value)"><span style="color:var(--text-sec); font-size:12px;">块</span></div>`).join('')}</div></div>`).join('');
   renderCalcResult();
 }
 function renderCalcResult() {
