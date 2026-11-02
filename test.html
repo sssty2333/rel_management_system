@@ -106,6 +106,14 @@ aside.board-aside { width: 270px; background: #fff; border: 1px solid var(--bord
 .tc-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
 .tc-title { font-size: 15px; font-weight: 600; margin: 0; }
 .tc-sub { font-size: 12px; color: var(--text-sec); margin-top: 4px; }
+.card-status-select { border: 0; border-radius: 4px; padding: 4px 6px; font: inherit; font-size: 11px; font-weight: 500; cursor: pointer; max-width: 120px; }
+.card-status-select:focus-visible { outline: 2px solid #719cf2; outline-offset: 2px; }
+.bom-qty { width: 64px; height: 28px; padding: 0 6px; border: 1px solid var(--border); border-radius: 5px; font-size: 12px; font-family: inherit; text-align: right; }
+.bom-qty:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); outline: none; }
+.ship-preview { margin-top: 12px; padding: 10px 12px; border-radius: 6px; font-size: 12px; line-height: 1.8; }
+.ship-preview.ok { background: var(--success-bg); color: #065f46; }
+.ship-preview.bad { background: var(--danger-bg); color: #991b1b; }
+.ship-preview b { font-weight: 600; }
 .tc-body { padding: 16px; flex: 1; }
 .remark-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 10px; font-size: 13px; margin-bottom: 16px; line-height: 1.5; }
 .remark-box::before { content: '当前进展'; display: block; font-size: 11px; font-weight: 600; color: var(--primary); margin-bottom: 4px; }
@@ -820,25 +828,32 @@ function openMatModal(title, body, onOk) {
   $('#modalMatOk').textContent = '确定';
   $('#modalMatOk').onclick = () => { if(onOk() !== false) closeMatModal(); };
 }
-function openInputModal(title, fields, onOk) {
+function openInputModal(title, fields, onOk, onInput) {
   $('#inputModalTitle').textContent = title;
   $('#inputModalBody').innerHTML = fields.map(f => {
     let inputHtml;
     if (f.type === 'select') {
       const opts = (f.options || []).map(o => `<option value="${esc(o)}" ${o === f.value ? 'selected' : ''}>${esc(o)}</option>`).join('');
       inputHtml = `<select id="im_${f.id}">${opts}</select>`;
+    } else if (f.type === 'textarea') {
+      inputHtml = `<textarea id="im_${f.id}" rows="${f.rows || 2}" placeholder="${esc(f.placeholder || '')}">${esc(f.value ?? '')}</textarea>`;
     } else {
       inputHtml = `<input id="im_${f.id}" type="${f.type || 'text'}" value="${esc(f.value ?? '')}" placeholder="${esc(f.placeholder || '')}">`;
     }
     return `<div class="form-group"><label>${esc(f.label)}</label>${inputHtml}</div>`;
-  }).join('');
+  }).join('') + '<div id="inputModalExtra"></div>';
   showModalOnTop('modalInput');
-  $('#inputModalOk').onclick = () => {
+  const readValues = () => {
     const values = {};
-    fields.forEach(f => { values[f.id] = $(`#im_${f.id}`).value; });
-    if (onOk(values) !== false) closeInputModal();
+    fields.forEach(f => { const el = $(`#im_${f.id}`); if (el) values[f.id] = el.value; });
+    return values;
   };
-  setTimeout(() => { const first = $('#inputModalBody input, #inputModalBody select'); if (first) { first.focus(); if (first.select && first.tagName === 'INPUT') first.select(); } }, 30);
+  $('#inputModalOk').onclick = () => { if (onOk(readValues()) !== false) closeInputModal(); };
+  // 实时预览钩子：每次输入都回调一次，用于「这批要扣什么、够不够」
+  const body = $('#inputModalBody');
+  body.oninput = onInput ? () => onInput(readValues()) : null;
+  if (onInput) setTimeout(() => onInput(readValues()), 0);
+  setTimeout(() => { const first = $('#inputModalBody input, #inputModalBody select, #inputModalBody textarea'); if (first) { first.focus(); if (first.select && first.tagName === 'INPUT') first.select(); } }, 30);
 }
 
 function applyImportedData(d) {
@@ -1145,7 +1160,7 @@ function renderChipDetail(chipId) {
       const perBoard = Number(item.qty) || 0;
       const need = plan * perBoard;
       const gap = plan ? Math.max(0, need - (Number(c.qty) || 0)) : 0;
-      return `<tr><td><strong>${esc(c.name)}</strong></td><td class="mono">${esc(c.spec)}</td><td class="num">${perBoard}</td><td class="num">${plan ? need : '-'}</td><td class="num ${(Number(c.qty) || 0) <= 0 ? 'text-danger' : ''}">${c.qty}</td><td class="num ${gap ? 'text-danger' : ''}">${plan ? (gap || '够') : '-'}</td><td><button class="link danger" onclick="delBom('${k}','${item.cid}')">移除</button></td></tr>`;
+      return `<tr><td><strong>${esc(c.name)}</strong></td><td class="mono">${esc(c.spec)}</td><td class="num"><input class="bom-qty" type="number" min="1" step="1" value="${perBoard}" title="单板用量，改完回车立即生效" onchange="setBomQty('${k}',${esc(JSON.stringify(String(item.cid)))},this.value)"></td><td class="num">${plan ? need : '-'}</td><td class="num ${(Number(c.qty) || 0) <= 0 ? 'text-danger' : ''}">${c.qty}</td><td class="num ${gap ? 'text-danger' : ''}">${plan ? (gap || '够') : '-'}</td><td><button class="link danger" onclick="delBom('${k}','${item.cid}')">移除</button></td></tr>`;
     }).join('');
     return `<div class="board-block"><div class="board-head"><div style="font-weight:600;">${BOARD_NAMES[k]} <span style="font-weight:400;color:var(--text-sec);font-size:12px;">计划 ${b.qty} · 已出 <b style="color:${Number(b.shipped) > Number(b.qty) ? 'var(--danger)' : 'inherit'}">${Number(b.shipped) || 0}</b></span></div><div style="display:flex; gap:8px; align-items:center;"><input type="number" min="0" value="${b.qty}" title="计划板数：改了以后下面的本批需求和缺口会立刻重算" onchange="setBoardQty('${ch.id}','${k}',this.value)"><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="shipBoard('${k}')">一键出货</button><button class="ghost" style="padding:4px 8px; font-size:12px;" title="查看出货记录 / 撤销最近一次" onclick="openShipments(${esc(JSON.stringify(String(ch.id)))},'${k}')">记录 ${(b.shipments || []).length}</button><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="openBomImport('${ch.id}','${k}')">导入</button><button class="ghost" style="padding:4px 8px;font-size:12px;" onclick="downloadBomTemplate()">模板</button><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="openCopyBom('${ch.id}','${k}')">复制</button><button class="primary" style="padding:4px 8px; font-size:12px;" onclick="addBom('${k}')">+ 添加</button></div></div><table><thead><tr style="background:#f8fafc; font-size:12px;"><th>物料名</th><th>规格</th><th class="num">单板</th><th class="num">本批需求</th><th class="num">库存</th><th class="num">缺口</th><th>操作</th></tr></thead><tbody>${rows || '<tr><td colspan="7" class="empty">暂无 BOM</td></tr>'}</tbody></table></div>`;
   }).join('');
@@ -1190,9 +1205,39 @@ function addBom(boardKey) {
   });
 }
 function delBom(k, cid) { const ch = materialDb.chips.find(c=>c.id===$('#chipList').dataset.activeId); if (ch) { ch.boards[k].bom = ch.boards[k].bom.filter(b=>b.cid!==cid); save(); renderChips(); renderDemandSummary(); } }
+/* 行内改单板用量：不再需要「删掉这一行再重新添加」 */
+function setBomQty(boardKey, cid, v) {
+  const ch = materialDb.chips.find(c => c.id === $('#chipList').dataset.activeId);
+  if (!ch || !ch.boards[boardKey]) return;
+  let qty;
+  try { qty = stockInteger(v, '单板用量', true); }
+  catch (err) { alert(err.message); renderChips(); return; }
+  const next = materialClone();
+  const board = next.chips.find(c => c.id === ch.id).boards[boardKey];
+  const item = (board.bom || []).find(x => String(x.cid) === String(cid));
+  if (!item) { renderChips(); return; }
+  if (Number(item.qty) === qty) return;
+  item.qty = qty;
+  if (!commitMaterialChange(next)) { renderChips(); return; }
+  renderChips();
+}
 /* 出货只做两件事：按 BOM 扣库存、记一条出货记录。
    计划板数（qty）只服务需求核算，不再限制出货次数和数量。
    库存不够时不直接拦死：列出缺料明细，让用户选择「强制出货」或「本次不出」。 */
+/* 算出这批出货要扣什么、缺什么。预览和真正扣减共用同一份计算，避免两套口径。 */
+function computeShipmentNeeds(board, num) {
+  const bom = aggregateBoardBom(board);
+  const changes = [], shortages = [];
+  bom.forEach((perBoard, cid) => {
+    const c = materialDb.components.find(x => x.id === cid);
+    const need = stockInteger(perBoard * num, '出库用量', true);
+    const have = stockInteger(c.qty, '库存');
+    const take = Math.min(need, have);
+    if (need > have) shortages.push({ cid, name: c.name, spec: c.spec || '', need, have, short: need - have });
+    changes.push({ cid, need, take });
+  });
+  return { changes, shortages };
+}
 function shipBoard(boardKey) {
   const ch = materialDb.chips.find(c => c.id === $('#chipList').dataset.activeId);
   if (!ch || !ch.boards[boardKey] || !ch.boards[boardKey].bom.length) return alert('无 BOM');
@@ -1201,23 +1246,15 @@ function shipBoard(boardKey) {
     { id: 'n', label: `出货板数（按 BOM 扣库存；计划 ${b.qty}，累计已出 ${Number(b.shipped) || 0}）`, type: 'number', value: 1 },
     { id: 'by', label: '经手人 / 备注（选填）', placeholder: '例如：张三 / 客户 A 样品' }
   ], ({ n, by }) => {
-    let num, bom;
-    try { num = stockInteger(n, '出货板数', true); bom = aggregateBoardBom(b); }
+    let num;
+    try { num = stockInteger(n, '出货板数', true); }
     catch (err) { alert(err.message); return false; }
     const live = materialDb.chips.find(c => c.id === ch.id)?.boards[boardKey];
     if (!live || JSON.stringify(live) !== boardSnapshot) { alert('BOM 已变化，请重新打开出货窗口'); return false; }
 
-    const changes = [], shortages = [];
-    try {
-      bom.forEach((perBoard, cid) => {
-        const c = materialDb.components.find(x => x.id === cid);
-        const need = stockInteger(perBoard * num, '出库用量', true);
-        const have = stockInteger(c.qty, '库存');
-        const take = Math.min(need, have);
-        if (need > have) shortages.push({ cid, name: c.name, spec: c.spec || '', need, have, short: need - have });
-        changes.push({ cid, need, take });
-      });
-    } catch (err) { alert('本次未扣任何库存。\n' + err.message); return false; }
+    let changes, shortages;
+    try { ({ changes, shortages } = computeShipmentNeeds(b, num)); }
+    catch (err) { alert('本次未扣任何库存。\n' + err.message); return false; }
 
     if (shortages.length) {
       const lines = shortages.map(s => `· ${s.name}${s.spec ? ' ' + s.spec : ''}：需要 ${s.need}，库存 ${s.have}，缺 ${s.short}`).join('\n');
@@ -1246,6 +1283,19 @@ function shipBoard(boardKey) {
       ? `已强制出货 ${num} 板：${shortages.length} 种物料库存记到 0，缺料明细已记入出货记录。`
       : `已出货 ${num} 板：库存已按 BOM 扣减，并记入「出货记录」。`), 50);
     return true;
+  }, (values) => {
+    const box = $('#inputModalExtra'); if (!box) return;
+    let num;
+    try { num = stockInteger(values.n, '出货板数', true); } catch (_) { box.innerHTML = ''; return; }
+    let need;
+    try { need = computeShipmentNeeds(b, num); }
+    catch (err) { box.innerHTML = `<div class="ship-preview bad">${esc(err.message)}</div>`; return; }
+    if (!need.shortages.length) {
+      box.innerHTML = `<div class="ship-preview ok">库存充足，可以直接出货（共 ${need.changes.length} 种物料）</div>`;
+      return;
+    }
+    const lines = need.shortages.slice(0, 6).map(s => `<div>· ${esc(s.name)}${s.spec ? ' ' + esc(s.spec) : ''}：需 ${s.need}，有 ${s.have}，缺 <b>${s.short}</b></div>`).join('');
+    box.innerHTML = `<div class="ship-preview bad"><b>${need.shortages.length} 种物料不足，点确定会强制出货</b>${lines}${need.shortages.length > 6 ? `<div>…另 ${need.shortages.length - 6} 种</div>` : ''}</div>`;
   });
 }
 function openShipments(chipId, boardKey) {
@@ -1903,6 +1953,10 @@ function renderBoard() {
     const progress = Math.max(0, Math.min(100, Number(typeof getCardProgress === 'function' ? getCardProgress(c) : finished ? 100 : timeData.progress) || 0));
     const attention=getManualExperimentAttention(c);
     const idArg = esc(JSON.stringify(String(c.id || '')));
+    // 非 ELFR 卡片直接把状态下拉放在卡片上，点一下就能改；ELFR 的状态由分批记录推导，不在这里改
+    const statusControl = hasElfrBatches(c)
+      ? `<span class="badge ${statusClass(status)}">${esc(experimentStatusLabel(status))}</span>`
+      : `<select class="card-status-select ${statusClass(status)}" aria-label="直接修改实验状态" onchange="quickSetCardStatus(${idArg}, this.value)">${CARD_STATUSES.map(s => `<option value="${s}" ${c.status === s ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select>`;
     let elfrHtml = '';
     if (hasElfrBatches(c) || /ELFR|早期失效/i.test(c.name || '')) {
       const batches = c.elfrBatches || [];
@@ -1916,7 +1970,7 @@ function renderBoard() {
     const actionHtml=c.nextAction || c.nextDate?`<div class="next-action"><b>下一步</b> ${esc(c.nextAction) || '待确认'}${c.nextDate?`<br><span>下一步日期 ${esc(c.nextDate)}</span>`:''}</div>`:'';
     const alertBadges=(attention.status==='normal'?'<span class="badge st-ok">正常</span>':'')+(attention.overdue?'<span class="badge st-danger">手动标记逾期</span>':'')+(attention.coordination?'<span class="badge st-warn">手动标记需协调</span>':'');
     const blockerHtml=!finished && (alertBadges || c.blocker)?`<div class="${attention.overdue||attention.coordination?'blocker-note':'followup-note'}">${alertBadges}${c.blocker?`<div>跟进说明：${esc(c.blocker)}</div>`:''}</div>`:'';
-    return `<article class="tc-card"><div class="tc-header"><div><h3 class="tc-title">${esc(c.name)}</h3><div class="tc-sub">样品 ${esc(c.qty)} pcs</div></div><span class="badge ${statusClass(status)}">${esc(experimentStatusLabel(status))}</span></div><div class="tc-body">${c.remark ? `<div class="remark-box">${esc(c.remark)}</div>` : '<div class="remark-box empty">当前进展待更新</div>'}${elfrHtml}<div class="info-row"><div class="info-label">试验条件</div><div class="info-val">${esc(c.note) || '未设置'}</div></div><div class="info-row"><div class="info-label">预计完成</div><div class="info-val" style="color:var(--text-sec)">${timeData.endDate || '未设置'}</div></div>${actionHtml}${blockerHtml}<div class="progress-wrap"><div class="progress-bar" style="width:${progress}%"></div></div><div style="display:flex;justify-content:space-between;gap:8px;font-size:10px;margin-top:6px;color:var(--text-sec)"><span>${finished?'实验已完成':`${typeof getCardProgress === 'function'?'执行':'时间'}进度 ${progress}%`}</span><span>更新 ${esc(c.updatedAt) || '未记录'}</span></div></div><div class="tc-footer"><div class="person"><div class="person-avatar">${esc(c.person ? c.person.slice(-1) : '?')}</div>${esc(c.person || '未分配')}</div><div><button class="link" onclick="openBoardModal(${idArg})">更新进展</button><button class="link danger" onclick="delCard(${idArg})">删除</button></div></div></article>`;
+    return `<article class="tc-card"><div class="tc-header"><div><h3 class="tc-title">${esc(c.name)}</h3><div class="tc-sub">样品 ${esc(c.qty)} pcs</div></div>${statusControl}</div><div class="tc-body">${c.remark ? `<div class="remark-box">${esc(c.remark)}</div>` : '<div class="remark-box empty">当前进展待更新</div>'}${elfrHtml}<div class="info-row"><div class="info-label">试验条件</div><div class="info-val">${esc(c.note) || '未设置'}</div></div><div class="info-row"><div class="info-label">预计完成</div><div class="info-val" style="color:var(--text-sec)">${timeData.endDate || '未设置'}</div></div>${actionHtml}${blockerHtml}<div class="progress-wrap"><div class="progress-bar" style="width:${progress}%"></div></div><div style="display:flex;justify-content:space-between;gap:8px;font-size:10px;margin-top:6px;color:var(--text-sec)"><span>${finished?'实验已完成':`${typeof getCardProgress === 'function'?'执行':'时间'}进度 ${progress}%`}</span><span>更新 ${esc(c.updatedAt) || '未记录'}</span></div></div><div class="tc-footer"><div class="person"><div class="person-avatar">${esc(c.person ? c.person.slice(-1) : '?')}</div>${esc(c.person || '未分配')}</div><div><button class="link" onclick="openQuickUpdate(${idArg})">快速更新</button><button class="link" onclick="openBoardModal(${idArg})">全部编辑</button><button class="link danger" onclick="delCard(${idArg})">删除</button></div></div></article>`;
   };
   const order = ['待准备','已送样','实验中','已取回','已FT'];
   const otherStatuses = [...new Set(cards.map(displayStatus).filter(s => !order.includes(s)))];
@@ -1994,6 +2048,43 @@ function delCard(id) {
   if (!confirm(`确定删除「${c.name}」？`)) return;
   testDb.cards = testDb.cards.filter(x => x.id !== id); save();
   renderBoard(); renderBatches();
+}
+/* 卡片上的状态下拉：点一下直接改，不用打开大表单 */
+function quickSetCardStatus(cardId, status) {
+  const c = testDb.cards.find(x => x.id === cardId);
+  if (!c) { alert('实验项已不存在'); renderBoard(); return; }
+  if (!CARD_STATUSES.includes(status)) { renderBoard(); return; }
+  if (hasElfrBatches(c)) { renderBoard(); return alert('这个实验项由 ELFR 分批管理，请在「管理安排」里改批次状态'); }
+  const now = new Date();
+  c.status = status;
+  c.updatedAt = `${getLocalToday()} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+  save(); renderBoard(); renderBatches();
+}
+/* 快速更新：只改 状态 / 当前进展 / 下一步，其余字段不用碰 */
+function openQuickUpdate(cardId) {
+  const card = testDb.cards.find(x => x.id === cardId);
+  if (!card) return alert('实验项已不存在');
+  openInputModal('快速更新', [
+    { id: 'status', label: '状态', type: 'select', options: CARD_STATUSES, value: card.status },
+    { id: 'remark', label: '当前进展', type: 'textarea', rows: 2, value: card.remark || '' },
+    { id: 'nextAction', label: '下一步（最近的一件事）', value: card.nextAction || '', placeholder: '例如：确认实验室档期' },
+    { id: 'nextDate', label: '下一步日期（选填）', type: 'date', value: card.nextDate || '' }
+  ], values => {
+    const live = testDb.cards.find(x => x.id === cardId);
+    if (!live) { alert('实验项已不存在，请刷新'); return false; }
+    if (!CARD_STATUSES.includes(values.status)) { alert('状态无效，请重选'); return false; }
+    if (values.status === '已FT' && hasElfrBatches(live) && !live.elfrBatches.every(isElfrBatchFtComplete)) { alert('仍有 ELFR 批次未完成 FT，请先核对各批记录'); return false; }
+    const nextDate = String(values.nextDate || '').trim();
+    if (nextDate && !isValidDateOnly(nextDate)) { alert('请填写有效的下一步日期'); return false; }
+    live.status = values.status;
+    live.remark = String(values.remark || '').trim();
+    live.nextAction = String(values.nextAction || '').trim();
+    live.nextDate = nextDate;
+    const now = new Date();
+    live.updatedAt = `${getLocalToday()} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+    save(); renderBoard(); renderBatches();
+    return true;
+  });
 }
 
 /* ========== ELFR 弹窗 ========== */
