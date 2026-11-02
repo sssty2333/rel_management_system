@@ -106,8 +106,6 @@ aside.board-aside { width: 270px; background: #fff; border: 1px solid var(--bord
 .tc-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
 .tc-title { font-size: 15px; font-weight: 600; margin: 0; }
 .tc-sub { font-size: 12px; color: var(--text-sec); margin-top: 4px; }
-.card-status-select { border: 0; border-radius: 4px; padding: 4px 6px; font: inherit; font-size: 11px; font-weight: 500; cursor: pointer; max-width: 120px; }
-.card-status-select:focus-visible { outline: 2px solid #719cf2; outline-offset: 2px; }
 .bom-qty { width: 64px; height: 28px; padding: 0 6px; border: 1px solid var(--border); border-radius: 5px; font-size: 12px; font-family: inherit; text-align: right; }
 .bom-qty:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); outline: none; }
 .ship-preview { margin-top: 12px; padding: 10px 12px; border-radius: 6px; font-size: 12px; line-height: 1.8; }
@@ -323,6 +321,9 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
 .theme-detail-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:22px;}.theme-detail-title{min-width:0;flex:1;}.theme-detail-title h2{font-size:25px;line-height:1.5;margin:9px 0 0;overflow-wrap:anywhere;}.theme-detail-label{display:block;font-size:11px;color:var(--text-sec);margin-top:17px;}.theme-detail-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding-top:4px;}.theme-detail-menu{position:relative;}.theme-detail-menu summary{font:inherit;font-size:12px;cursor:pointer;background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 11px;list-style:none;}.theme-detail-menu summary::after{content:' ▾';}.theme-detail-menu .data-popover{width:160px;top:39px;}.theme-detail-menu .data-popover button{width:100%;font:inherit;font-size:12px;cursor:pointer;}.theme-detail-menu .data-popover button.theme-delete{color:var(--danger);}
 .theme-progress-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px;margin-bottom:22px;}.theme-progress-top{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;}.theme-progress-top h3{font-size:14px;margin:0 0 9px;}.theme-completion-value{font-size:35px;color:var(--primary);font-weight:600;letter-spacing:-.8px;}.theme-completion-value small{font-size:12px;font-weight:400;color:var(--text-sec);letter-spacing:0;margin-left:10px;}.theme-progress-context{font-size:11px;color:var(--text-sec);line-height:1.9;}.theme-progress-panel .board-phase-legend{padding-top:18px;border-top:1px solid #edf0f5;margin-top:20px;}.theme-progress-stats{display:flex;gap:18px;flex-wrap:wrap;margin-top:15px;font-size:12px;color:var(--text-sec);}.theme-progress-stats b{font-weight:600;color:var(--text);margin-left:5px;}.theme-progress-stats .risk b{color:var(--danger);}
 .theme-work-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px;}.theme-work-toolbar .toolbar-left,.theme-work-toolbar .toolbar-right{gap:8px;}.theme-work-toolbar .filter-select{font-size:12px;}.theme-card-caption{font-size:13px;font-weight:600;margin:24px 0 17px;}
+.theme-cards-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:24px 0 17px;}
+.theme-cards-head .theme-card-caption{margin:0;}
+.theme-cards-head .primary{flex-shrink:0;}
 #boardOverview[hidden],#boardThemeDetails[hidden]{display:none!important;}
 @media(max-width:1150px){#page-board aside.board-aside{width:180px;}.leader-metrics{grid-template-columns:repeat(2,minmax(0,1fr));}.leader-metric{padding:18px;}.leader-table th,.leader-table td{padding-left:12px;padding-right:12px;}}
 @media(max-width:850px){#page-board .experiment-workspace{display:block;overflow:visible;height:auto;}#page-board{overflow-y:auto;}#page-board aside.board-aside{width:100%;max-height:205px;margin-bottom:22px;}.board-main{overflow:visible;}.theme-nav-actions{display:flex;align-items:center;gap:8px;}.theme-nav-actions>*{flex:1;}.theme-nav-title{display:none;}.theme-nav-item{padding:10px;}.theme-nav-item .batch-name{display:inline;}.theme-nav-item .batch-meta{display:inline;margin-left:10px;}.theme-detail-header{gap:14px;}.theme-progress-panel{padding:18px;}}
@@ -420,7 +421,6 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
               <h2 id="currentBatchTitle">请选择试验主题</h2>
             </div>
             <div class="theme-detail-actions">
-              <button class="primary" id="btnThemeAddCard" onclick="openBoardModal()">＋ 新增试验项</button>
               <details class="theme-detail-menu"><summary>主题管理</summary><div class="data-popover">
                 <button onclick="this.closest('details').removeAttribute('open'); editBatchName()">编辑主题信息</button>
                 <button onclick="this.closest('details').removeAttribute('open'); copyBatch(currentBatchId)">复制主题</button>
@@ -435,7 +435,7 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
             <div class="toolbar-right"><button class="ghost" onclick="exportExperimentSchedule()" title="导出当前主题全部安排，不受责任人筛选影响">导出实验安排</button></div>
           </div>
           <div id="executionAgenda"></div>
-          <h3 class="theme-card-caption">试验项与执行进展</h3>
+          <div class="theme-cards-head"><h3 class="theme-card-caption">试验项与执行进展</h3><button class="primary" onclick="openBoardModal()">＋ 新增试验项</button></div>
           <div class="board-state-groups" id="cardGrid"></div>
         </section>
       </div>
@@ -1953,10 +1953,6 @@ function renderBoard() {
     const progress = Math.max(0, Math.min(100, Number(typeof getCardProgress === 'function' ? getCardProgress(c) : finished ? 100 : timeData.progress) || 0));
     const attention=getManualExperimentAttention(c);
     const idArg = esc(JSON.stringify(String(c.id || '')));
-    // 非 ELFR 卡片直接把状态下拉放在卡片上，点一下就能改；ELFR 的状态由分批记录推导，不在这里改
-    const statusControl = hasElfrBatches(c)
-      ? `<span class="badge ${statusClass(status)}">${esc(experimentStatusLabel(status))}</span>`
-      : `<select class="card-status-select ${statusClass(status)}" aria-label="直接修改实验状态" onchange="quickSetCardStatus(${idArg}, this.value)">${CARD_STATUSES.map(s => `<option value="${s}" ${c.status === s ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select>`;
     let elfrHtml = '';
     if (hasElfrBatches(c) || /ELFR|早期失效/i.test(c.name || '')) {
       const batches = c.elfrBatches || [];
@@ -1970,7 +1966,7 @@ function renderBoard() {
     const actionHtml=c.nextAction || c.nextDate?`<div class="next-action"><b>下一步</b> ${esc(c.nextAction) || '待确认'}${c.nextDate?`<br><span>下一步日期 ${esc(c.nextDate)}</span>`:''}</div>`:'';
     const alertBadges=(attention.status==='normal'?'<span class="badge st-ok">正常</span>':'')+(attention.overdue?'<span class="badge st-danger">手动标记逾期</span>':'')+(attention.coordination?'<span class="badge st-warn">手动标记需协调</span>':'');
     const blockerHtml=!finished && (alertBadges || c.blocker)?`<div class="${attention.overdue||attention.coordination?'blocker-note':'followup-note'}">${alertBadges}${c.blocker?`<div>跟进说明：${esc(c.blocker)}</div>`:''}</div>`:'';
-    return `<article class="tc-card"><div class="tc-header"><div><h3 class="tc-title">${esc(c.name)}</h3><div class="tc-sub">样品 ${esc(c.qty)} pcs</div></div>${statusControl}</div><div class="tc-body">${c.remark ? `<div class="remark-box">${esc(c.remark)}</div>` : '<div class="remark-box empty">当前进展待更新</div>'}${elfrHtml}<div class="info-row"><div class="info-label">试验条件</div><div class="info-val">${esc(c.note) || '未设置'}</div></div><div class="info-row"><div class="info-label">预计完成</div><div class="info-val" style="color:var(--text-sec)">${timeData.endDate || '未设置'}</div></div>${actionHtml}${blockerHtml}<div class="progress-wrap"><div class="progress-bar" style="width:${progress}%"></div></div><div style="display:flex;justify-content:space-between;gap:8px;font-size:10px;margin-top:6px;color:var(--text-sec)"><span>${finished?'实验已完成':`${typeof getCardProgress === 'function'?'执行':'时间'}进度 ${progress}%`}</span><span>更新 ${esc(c.updatedAt) || '未记录'}</span></div></div><div class="tc-footer"><div class="person"><div class="person-avatar">${esc(c.person ? c.person.slice(-1) : '?')}</div>${esc(c.person || '未分配')}</div><div><button class="link" onclick="openQuickUpdate(${idArg})">快速更新</button><button class="link" onclick="openBoardModal(${idArg})">全部编辑</button><button class="link danger" onclick="delCard(${idArg})">删除</button></div></div></article>`;
+    return `<article class="tc-card"><div class="tc-header"><div><h3 class="tc-title">${esc(c.name)}</h3><div class="tc-sub">样品 ${esc(c.qty)} pcs</div></div><span class="badge ${statusClass(status)}">${esc(experimentStatusLabel(status))}</span></div><div class="tc-body">${c.remark ? `<div class="remark-box">${esc(c.remark)}</div>` : '<div class="remark-box empty">当前进展待更新</div>'}${elfrHtml}<div class="info-row"><div class="info-label">试验条件</div><div class="info-val">${esc(c.note) || '未设置'}</div></div><div class="info-row"><div class="info-label">预计完成</div><div class="info-val" style="color:var(--text-sec)">${timeData.endDate || '未设置'}</div></div>${actionHtml}${blockerHtml}<div class="progress-wrap"><div class="progress-bar" style="width:${progress}%"></div></div><div style="display:flex;justify-content:space-between;gap:8px;font-size:10px;margin-top:6px;color:var(--text-sec)"><span>${finished?'实验已完成':`${typeof getCardProgress === 'function'?'执行':'时间'}进度 ${progress}%`}</span><span>更新 ${esc(c.updatedAt) || '未记录'}</span></div></div><div class="tc-footer"><div class="person"><div class="person-avatar">${esc(c.person ? c.person.slice(-1) : '?')}</div>${esc(c.person || '未分配')}</div><div><button class="link" onclick="openQuickUpdate(${idArg})">快速更新</button><button class="link" onclick="openBoardModal(${idArg})">全部编辑</button><button class="link danger" onclick="delCard(${idArg})">删除</button></div></div></article>`;
   };
   const order = ['待准备','已送样','实验中','已取回','已FT'];
   const otherStatuses = [...new Set(cards.map(displayStatus).filter(s => !order.includes(s)))];
@@ -2048,17 +2044,6 @@ function delCard(id) {
   if (!confirm(`确定删除「${c.name}」？`)) return;
   testDb.cards = testDb.cards.filter(x => x.id !== id); save();
   renderBoard(); renderBatches();
-}
-/* 卡片上的状态下拉：点一下直接改，不用打开大表单 */
-function quickSetCardStatus(cardId, status) {
-  const c = testDb.cards.find(x => x.id === cardId);
-  if (!c) { alert('实验项已不存在'); renderBoard(); return; }
-  if (!CARD_STATUSES.includes(status)) { renderBoard(); return; }
-  if (hasElfrBatches(c)) { renderBoard(); return alert('这个实验项由 ELFR 分批管理，请在「管理安排」里改批次状态'); }
-  const now = new Date();
-  c.status = status;
-  c.updatedAt = `${getLocalToday()} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
-  save(); renderBoard(); renderBatches();
 }
 /* 快速更新：只改 状态 / 当前进展 / 下一步，其余字段不用碰 */
 function openQuickUpdate(cardId) {
