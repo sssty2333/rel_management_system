@@ -106,6 +106,11 @@ aside.board-aside { width: 270px; background: #fff; border: 1px solid var(--bord
 .tc-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
 .tc-title { font-size: 15px; font-weight: 600; margin: 0; }
 .tc-sub { font-size: 12px; color: var(--text-sec); margin-top: 4px; }
+.tc-devices { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 12px 0 2px; font-size: 12px; }
+.tc-devices-label { color: var(--text-sec); font-size: 11px; }
+.tc-devices .badge { white-space: nowrap; }
+.tc-devices-none { color: var(--text-sec); font-size: 11px; }
+#modalMatBody table input, #modalMatBody table select { width: 100%; height: 32px; padding: 0 8px; border: 1px solid var(--border); border-radius: 5px; font: inherit; font-size: 12px; }
 .bom-qty { width: 64px; height: 28px; padding: 0 6px; border: 1px solid var(--border); border-radius: 5px; font-size: 12px; font-family: inherit; text-align: right; }
 .bom-qty:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); outline: none; }
 .ship-preview { margin-top: 12px; padding: 10px 12px; border-radius: 6px; font-size: 12px; line-height: 1.8; }
@@ -428,13 +433,13 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
               </div></details>
             </div>
           </div>
+          <div id="executionAgenda"></div>
           <div id="preparationPanel"></div>
           <div id="batchProgress"></div>
           <div class="theme-work-toolbar">
             <div class="toolbar-left"><select id="filterPerson" onchange="renderBoard()" class="filter-select" aria-label="筛选当前主题责任人"><option value="">全部责任人</option></select></div>
             <div class="toolbar-right"><button class="ghost" onclick="exportExperimentSchedule()" title="导出当前主题全部安排，不受责任人筛选影响">导出实验安排</button></div>
           </div>
-          <div id="executionAgenda"></div>
           <div class="theme-cards-head"><h3 class="theme-card-caption">试验项与执行进展</h3><button class="primary" onclick="openBoardModal()">＋ 新增试验项</button></div>
           <div class="board-state-groups" id="cardGrid"></div>
         </section>
@@ -507,6 +512,13 @@ const SCORE_INJ_PER_PILL = 0.25;
 const SCORE_FT_PER_PILL = 5/60;
 
 const CARD_STATUSES = ['待准备', '已送样', '实验中', '已取回', '已FT'];
+/* 实验设备：不引用资产台账，就在卡片里记一笔。三档状态，够用就行。 */
+const DEVICE_STATUSES = ['待准备', '实验中', '已归还'];
+function deviceStatusClass(s) {
+  if (s === '已归还') return 'st-ok';
+  if (s === '实验中') return 'st-info';
+  return 'st-muted';
+}
 function statusClass(s) {
   if (s === '已FT') return 'st-ok';
   if (s === '已取回') return 'st-warn';
@@ -708,6 +720,15 @@ function normalizeImportedState(d, currentMaterial = materialDb, currentTest = t
   });
   tests.cards.forEach(card => {
     if (card.batchId != null) card.batchId = String(card.batchId);
+    // 2.4 卡片没有 devices：补空数组；脏数据清洗掉，不影响旧字段
+    if (!Array.isArray(card.devices)) card.devices = [];
+    card.devices = card.devices.filter(d => d && typeof d === 'object').map(d => ({
+      id: String(d.id || ('dv_' + uid())),
+      name: String(d.name || '').trim(),
+      status: DEVICE_STATUSES.includes(d.status) ? d.status : '待准备',
+      dueDate: isValidDateOnly(String(d.dueDate || '')) ? String(d.dueDate) : '',
+      note: String(d.note || '')
+    })).filter(d => d.name);
     if (card.elfrBatches == null) card.elfrBatches = [];
     else if (!Array.isArray(card.elfrBatches)) throw new Error('ELFR 分批记录必须是数组，已取消加载');
     card.elfrBatches.forEach(batch => {
@@ -1593,6 +1614,8 @@ function copyBatch(sourceBatchId) {
       const newCard = JSON.parse(JSON.stringify(c));
       newCard.id = 'c_' + Date.now() + Math.random().toString(36).slice(2,5);
       newCard.batchId = newBatchId;
+      // 复制的卡片设备清回「待准备」，不继承上一轮的借还状态
+      if (Array.isArray(newCard.devices)) newCard.devices = newCard.devices.map(d => ({ ...d, id: 'dv_' + uid(), status: '待准备', dueDate: '' }));
       if (newCard.elfrBatches) newCard.elfrBatches.forEach(b => { b.id = 'eb_' + uid(); (b.ftTests||[]).forEach(t => { t.id = 'ft_' + uid(); }); });
       testDb.cards.push(newCard);
     });
@@ -1867,11 +1890,26 @@ function getCardProgress(c) {
 function getExecutionTasks(cards,today=getLocalToday(),person='',preparationBatch=null) {
   const tasks=[];
   cards.forEach(c=>{
-    if(isCardFinished(c))return;
-    const status=getCardDisplayStatus(c),flags=getManualExperimentAttention(c);
+    const flags=getManualExperimentAttention(c);
     const common={cardId:c.id,overdue:flags.overdue,coordination:flags.coordination,attentionStatus:flags.status,blocker:c.blocker || ''};
+    const finished=isCardFinished(c);
+    const devices=Array.isArray(c.devices)?c.devices:[];
+    const openDevices=devices.filter(d=>d.status!=='已归还');
+    const devOverdue=openDevices.some(d=>d.dueDate && isValidDateOnly(d.dueDate) && d.dueDate < today);
+    // 设备：还没借到的、逾期的、以及实验做完但没还的，都进待办
+    if(openDevices.length && (finished || devOverdue || openDevices.some(d=>d.status==='待准备'))){
+      const names=openDevices.map(d=>d.name).join('、');
+      const dueDates=openDevices.map(d=>d.dueDate).filter(isValidDateOnly).sort();
+      tasks.push({...common,overdue:devOverdue,coordination:false,title:c.name,
+        action:(finished||devOverdue)?`归还设备：${names}`:`准备设备：${names}`,
+        date:dueDates[0] || '',owner:c.person || '',kind:'device'});
+    }
+    if(finished)return;
+    const status=getCardDisplayStatus(c);
     const fallback={'待准备':'确认物料、治具与送样安排','已送样':'确认实验室接收与开测时间','实验中':'确认实验进展与取回安排','已取回':'安排结项测试并记录实际执行人'};
-    tasks.push({...common,title:c.name,action:c.nextAction || fallback[status] || '核对实验进展',date:c.nextDate || '',owner:c.person || '',kind:'card'});
+    // 待准备的卡片用「送样时间」当待办日期，避免只在准备清单里看到日期
+    const cardDate=c.nextDate || ((status === '待准备' && isValidDateOnly(String(c.startDate || ''))) ? c.startDate : '');
+    tasks.push({...common,title:c.name,action:c.nextAction || fallback[status] || '核对实验进展',date:cardDate,owner:c.person || '',kind:'card'});
     (c.elfrBatches || []).forEach(b=>{
       const pending=(b.ftTests || []).filter(t=>!t.done);
       pending.forEach(t=>{const owners=[...new Set((t.actualTesters || []).map(p=>String(p || '').trim()).filter(Boolean))];tasks.push({...common,title:`${c.name} · ${b.name || '未命名批次'}`,action:`FT ${Number(t.qty)||0} 颗`,date:t.date || '',owner:owners.join(' / '),owners,kind:'ft'});});
@@ -1887,13 +1925,13 @@ function renderExecutionAgenda() {
   let host=$('#executionAgenda');if(!host){host=document.createElement('div');host.id='executionAgenda';grid.parentNode.insertBefore(host,grid);}
   const batch=testDb.batches.find(b=>b.id===currentBatchId);
   const tasks=getExecutionTasks(testDb.cards.filter(c=>c.batchId===currentBatchId),getLocalToday(),$('#filterPerson')?.value || '',batch);
-  const preparations=tasks.filter(t=>t.kind==='prep'),overdue=new Set(tasks.filter(t=>t.overdue).map(t=>t.cardId)).size,coordination=new Set(tasks.filter(t=>t.coordination).map(t=>t.cardId)).size;
+  const preparations=tasks.filter(t=>t.kind==='prep'),overdue=new Set(tasks.filter(t=>t.overdue && t.kind!=='device').map(t=>t.cardId)).size,coordination=new Set(tasks.filter(t=>t.coordination).map(t=>t.cardId)).size,deviceLate=tasks.filter(t=>t.kind==='device' && t.overdue).length;
   const styles='padding:10px 12px;border-bottom:1px solid var(--border);white-space:normal;';
-  const attention=t=>t.kind==='prep'?`<span class="badge st-info">${esc(t.stage)}</span>`:(t.overdue?'<span class="badge st-danger">标记逾期</span>':'')+(t.coordination?'<span class="badge st-warn">标记需协调</span>':'')+(!t.overdue&&!t.coordination?(t.attentionStatus==='normal'?'<span class="badge st-ok">正常</span>':'未设置'):'');
+  const attention=t=>t.kind==='prep'?`<span class="badge st-info">${esc(t.stage)}</span>`:t.kind==='device'?(t.overdue?'<span class="badge st-danger">设备逾期</span>':'<span class="badge st-warn">设备</span>'):(t.overdue?'<span class="badge st-danger">标记逾期</span>':'')+(t.coordination?'<span class="badge st-warn">标记需协调</span>':'')+(!t.overdue&&!t.coordination?(t.attentionStatus==='normal'?'<span class="badge st-ok">正常</span>':'未设置'):'');
   const sorted=tasks.slice().sort((a,b)=>Number(b.kind==='prep')-Number(a.kind==='prep'));
-  host.innerHTML=`<details ${preparations.length || overdue || coordination?'open':''} style="margin-bottom:18px;background:var(--surface);border:1px solid var(--border);border-radius:9px"><summary style="padding:13px 15px;cursor:pointer;font-weight:600">待执行事项 · ${tasks.length} 项（实验准备 ${preparations.length} 项）${overdue?` · 手动标记逾期 ${overdue} 项实验`:''}${coordination?` · 手动标记需协调 ${coordination} 项实验`:''}</summary>${tasks.length?`<div style="overflow-x:auto"><table><thead><tr><th>类别 / 事项</th><th>责任人</th><th>计划日期</th><th>状态 / 提醒</th><th>跟进说明</th><th></th></tr></thead><tbody>${sorted.map(t=>{
-    const action=t.kind==='prep'?`openPrepItemEditor(${JSON.stringify(String(t.prepId))},${JSON.stringify(String(t.batchId))})`:`${t.kind==='ft'?'openElfrModal':'openBoardModal'}(${JSON.stringify(String(t.cardId))})`;
-    return `<tr><td style="${styles}"><span class="badge ${t.kind==='prep'?'st-info':'st-muted'}">${t.kind==='prep'?'实验准备':t.kind==='ft'?'测试安排':'实验推进'}</span><strong style="display:block;margin-top:4px">${esc(t.title)}</strong><div style="font-size:12px;color:var(--text-sec)">${esc(t.action)}</div></td><td style="${styles}">${esc(t.owner || (t.shared?'共同准备':'待确认'))}</td><td style="${styles}">${esc(t.date || '待排期')}${t.today?' · 今天':''}</td><td style="${styles}">${attention(t)}</td><td style="${styles}">${esc([t.blocker,t.note].filter(Boolean).join('；') || '—')}</td><td style="${styles}"><button class="link" onclick="${esc(action)}">处理</button></td></tr>`;
+  host.innerHTML=`<details ${preparations.length || overdue || coordination || deviceLate?'open':''} style="margin-bottom:18px;background:var(--surface);border:1px solid var(--border);border-radius:9px"><summary style="padding:13px 15px;cursor:pointer;font-weight:600">待执行事项 · ${tasks.length} 项（实验准备 ${preparations.length} 项）${overdue?` · 手动标记逾期 ${overdue} 项实验`:''}${coordination?` · 手动标记需协调 ${coordination} 项实验`:''}${deviceLate?` · 设备逾期 ${deviceLate} 项`:''}</summary>${tasks.length?`<div style="overflow-x:auto"><table><thead><tr><th>类别 / 事项</th><th>责任人</th><th>计划日期</th><th>状态 / 提醒</th><th>跟进说明</th><th></th></tr></thead><tbody>${sorted.map(t=>{
+    const action=t.kind==='prep'?`openPrepItemEditor(${JSON.stringify(String(t.prepId))},${JSON.stringify(String(t.batchId))})`:t.kind==='device'?`openDeviceEditor(${JSON.stringify(String(t.cardId))})`:`${t.kind==='ft'?'openElfrModal':'openBoardModal'}(${JSON.stringify(String(t.cardId))})`;
+    return `<tr><td style="${styles}"><span class="badge ${t.kind==='prep'?'st-info':t.kind==='device'?'st-warn':'st-muted'}">${t.kind==='prep'?'实验准备':t.kind==='device'?'设备借还':t.kind==='ft'?'测试安排':'实验推进'}</span><strong style="display:block;margin-top:4px">${esc(t.title)}</strong><div style="font-size:12px;color:var(--text-sec)">${esc(t.action)}</div></td><td style="${styles}">${esc(t.owner || (t.shared?'共同准备':'待确认'))}</td><td style="${styles}">${esc(t.date || '待排期')}${t.today?' · 今天':''}</td><td style="${styles}">${attention(t)}</td><td style="${styles}">${esc([t.blocker,t.note].filter(Boolean).join('；') || '—')}</td><td style="${styles}"><button class="link" onclick="${esc(action)}">处理</button></td></tr>`;
   }).join('')}</tbody></table></div>`:'<div style="padding:0 15px 15px;color:var(--text-sec)">当前没有待执行事项。</div>'}</details>`;
 }
 
@@ -1966,7 +2004,18 @@ function renderBoard() {
     const actionHtml=c.nextAction || c.nextDate?`<div class="next-action"><b>下一步</b> ${esc(c.nextAction) || '待确认'}${c.nextDate?`<br><span>下一步日期 ${esc(c.nextDate)}</span>`:''}</div>`:'';
     const alertBadges=(attention.status==='normal'?'<span class="badge st-ok">正常</span>':'')+(attention.overdue?'<span class="badge st-danger">手动标记逾期</span>':'')+(attention.coordination?'<span class="badge st-warn">手动标记需协调</span>':'');
     const blockerHtml=!finished && (alertBadges || c.blocker)?`<div class="${attention.overdue||attention.coordination?'blocker-note':'followup-note'}">${alertBadges}${c.blocker?`<div>跟进说明：${esc(c.blocker)}</div>`:''}</div>`:'';
-    return `<article class="tc-card"><div class="tc-header"><div><h3 class="tc-title">${esc(c.name)}</h3><div class="tc-sub">样品 ${esc(c.qty)} pcs</div></div><span class="badge ${statusClass(status)}">${esc(experimentStatusLabel(status))}</span></div><div class="tc-body">${c.remark ? `<div class="remark-box">${esc(c.remark)}</div>` : '<div class="remark-box empty">当前进展待更新</div>'}${elfrHtml}<div class="info-row"><div class="info-label">试验条件</div><div class="info-val">${esc(c.note) || '未设置'}</div></div><div class="info-row"><div class="info-label">预计完成</div><div class="info-val" style="color:var(--text-sec)">${timeData.endDate || '未设置'}</div></div>${actionHtml}${blockerHtml}<div class="progress-wrap"><div class="progress-bar" style="width:${progress}%"></div></div><div style="display:flex;justify-content:space-between;gap:8px;font-size:10px;margin-top:6px;color:var(--text-sec)"><span>${finished?'实验已完成':`${typeof getCardProgress === 'function'?'执行':'时间'}进度 ${progress}%`}</span><span>更新 ${esc(c.updatedAt) || '未记录'}</span></div></div><div class="tc-footer"><div class="person"><div class="person-avatar">${esc(c.person ? c.person.slice(-1) : '?')}</div>${esc(c.person || '未分配')}</div><div><button class="link" onclick="openQuickUpdate(${idArg})">快速更新</button><button class="link" onclick="openBoardModal(${idArg})">全部编辑</button><button class="link danger" onclick="delCard(${idArg})">删除</button></div></div></article>`;
+    const devList = Array.isArray(c.devices) ? c.devices : [];
+    const devOpen = devList.filter(d => d.status !== '已归还');
+    const devChips = devList.length
+      ? devList.map(d => {
+          const late = d.status !== '已归还' && d.dueDate && d.dueDate < today;
+          const tip = [d.note, d.dueDate ? '应还 ' + d.dueDate : ''].filter(Boolean).join(' · ');
+          return `<span class="badge ${late ? 'st-danger' : deviceStatusClass(d.status)}" title="${esc(tip)}">${esc(d.name)} · ${esc(d.status)}${late ? ' ⚠' : ''}</span>`;
+        }).join('')
+      : '<span class="tc-devices-none">未登记</span>';
+    const devicesHtml = `<div class="tc-devices"><span class="tc-devices-label">设备</span>${devChips}<button class="link" onclick="openDeviceEditor(${idArg})">管理</button></div>`;
+    const deviceWarn = (finished && devOpen.length) ? `<div class="blocker-note">⚠ 实验已完成，还有 ${devOpen.length} 台设备未归还</div>` : '';
+    return `<article class="tc-card"><div class="tc-header"><div><h3 class="tc-title">${esc(c.name)}</h3><div class="tc-sub">样品 ${esc(c.qty)} pcs</div></div><span class="badge ${statusClass(status)}">${esc(experimentStatusLabel(status))}</span></div><div class="tc-body">${c.remark ? `<div class="remark-box">${esc(c.remark)}</div>` : '<div class="remark-box empty">当前进展待更新</div>'}${elfrHtml}<div class="info-row"><div class="info-label">试验条件</div><div class="info-val">${esc(c.note) || '未设置'}</div></div><div class="info-row"><div class="info-label">预计完成</div><div class="info-val" style="color:var(--text-sec)">${timeData.endDate || '未设置'}</div></div>${devicesHtml}${deviceWarn}${actionHtml}${blockerHtml}<div class="progress-wrap"><div class="progress-bar" style="width:${progress}%"></div></div><div style="display:flex;justify-content:space-between;gap:8px;font-size:10px;margin-top:6px;color:var(--text-sec)"><span>${finished?'实验已完成':`${typeof getCardProgress === 'function'?'执行':'时间'}进度 ${progress}%`}</span><span>更新 ${esc(c.updatedAt) || '未记录'}</span></div></div><div class="tc-footer"><div class="person"><div class="person-avatar">${esc(c.person ? c.person.slice(-1) : '?')}</div>${esc(c.person || '未分配')}</div><div><button class="link" onclick="openQuickUpdate(${idArg})">快速更新</button><button class="link" onclick="openBoardModal(${idArg})">全部编辑</button><button class="link danger" onclick="delCard(${idArg})">删除</button></div></div></article>`;
   };
   const order = ['待准备','已送样','实验中','已取回','已FT'];
   const otherStatuses = [...new Set(cards.map(displayStatus).filter(s => !order.includes(s)))];
@@ -2044,6 +2093,62 @@ function delCard(id) {
   if (!confirm(`确定删除「${c.name}」？`)) return;
   testDb.cards = testDb.cards.filter(x => x.id !== id); save();
   renderBoard(); renderBatches();
+}
+/* ===== 实验设备（卡片自带，不关联资产台账） ===== */
+let deviceDraft = null;
+function openDeviceEditor(cardId) {
+  const card = testDb.cards.find(c => c.id === cardId);
+  if (!card) return alert('实验项已不存在');
+  deviceDraft = { cardId, rows: (Array.isArray(card.devices) ? card.devices : []).map(d => ({ ...d })) };
+  renderDeviceEditor();
+}
+function renderDeviceEditor() {
+  if (!deviceDraft) return;
+  const rows = deviceDraft.rows;
+  const table = rows.length
+    ? `<div class="table-container"><table><thead><tr><th>名称</th><th>状态</th><th>应还日期</th><th>备注</th><th></th></tr></thead><tbody>${rows.map((d, i) => `<tr>
+        <td><input id="dv_name_${i}" value="${esc(d.name)}" placeholder="电脑 / CAN 盒 / 恒温箱" oninput="setDeviceField(${i},'name',this.value)"></td>
+        <td><select id="dv_status_${i}" onchange="setDeviceField(${i},'status',this.value)">${DEVICE_STATUSES.map(s => `<option ${d.status === s ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select></td>
+        <td><input id="dv_due_${i}" type="date" value="${esc(d.dueDate || '')}" onchange="setDeviceField(${i},'dueDate',this.value)"></td>
+        <td><input id="dv_note_${i}" value="${esc(d.note || '')}" placeholder="选填" oninput="setDeviceField(${i},'note',this.value)"></td>
+        <td><button class="link danger" onclick="removeDeviceRow(${i})">删除</button></td>
+      </tr>`).join('')}</tbody></table></div>`
+    : '<div class="empty">还没有登记设备</div>';
+  openMatModal('实验设备', `<div style="margin-bottom:12px;color:var(--text-sec);font-size:12px;line-height:1.7;">记录这次实验用到/借到的设备，实验结束把状态改成「已归还」。<br>不填应还日期就不会标逾期，凭记录即可。</div>${table}<div style="margin-top:12px;"><button class="ghost" onclick="addDeviceRow()">＋ 添加设备</button></div>`, () => saveDeviceRows());
+}
+function setDeviceField(index, field, value) {
+  if (!deviceDraft || !deviceDraft.rows[index]) return;
+  deviceDraft.rows[index][field] = value;
+}
+function addDeviceRow() {
+  if (!deviceDraft) return;
+  deviceDraft.rows.push({ id: 'dv_' + uid(), name: '', status: '待准备', dueDate: '', note: '' });
+  renderDeviceEditor();
+}
+function removeDeviceRow(index) {
+  if (!deviceDraft) return;
+  deviceDraft.rows.splice(index, 1);
+  renderDeviceEditor();
+}
+function saveDeviceRows() {
+  if (!deviceDraft) return true;
+  const card = testDb.cards.find(c => c.id === deviceDraft.cardId);
+  if (!card) { alert('实验项已不存在'); deviceDraft = null; return true; }
+  const rows = deviceDraft.rows.map(d => ({
+    id: d.id || ('dv_' + uid()),
+    name: String(d.name || '').trim(),
+    status: DEVICE_STATUSES.includes(d.status) ? d.status : '待准备',
+    dueDate: String(d.dueDate || ''),
+    note: String(d.note || '').trim()
+  })).filter(d => d.name);
+  const bad = rows.find(d => d.dueDate && !isValidDateOnly(d.dueDate));
+  if (bad) { alert('设备「' + bad.name + '」的应还日期无效，请重新选择'); return false; }
+  card.devices = rows;
+  const now = new Date();
+  card.updatedAt = `${getLocalToday()} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+  save(); renderBoard(); renderBatches();
+  deviceDraft = null;
+  return true;
 }
 /* 快速更新：只改 状态 / 当前进展 / 下一步，其余字段不用碰 */
 function openQuickUpdate(cardId) {
