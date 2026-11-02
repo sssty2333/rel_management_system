@@ -81,11 +81,12 @@ tr.sort-hint td { background: var(--primary-bg); color: var(--primary); font-siz
 .board-block:last-child { border-bottom: none; }
 .board-head { padding: 12px 16px; background: #f8fafc; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
 .board-head input { width: 80px; height: 28px; }
-.calc-chips { padding: 16px; background: #fff; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 16px; }
-.calc-chip-block { padding: 12px 0; border-bottom: 1px dashed var(--border); }
-.calc-chip-block:last-child { border-bottom: none; }
-.calc-tip { margin-bottom: 12px; padding: 9px 12px; background: var(--primary-bg); color: var(--text-sec); font-size: 12px; line-height: 1.7; border-radius: 6px; }
-.calc-tip b { color: var(--primary); font-weight: 600; }
+.demand-card { background: #fff; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; }
+.demand-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.demand-head h3 { margin: 0 0 5px; font-size: 15px; }
+.demand-head p { margin: 0; font-size: 12px; color: var(--text-sec); line-height: 1.6; }
+.demand-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.demand-card .table-container { border: 0; border-radius: 0; }
 .calc-summary { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
 .imp-box { border: 2px dashed var(--border); border-radius: 8px; padding: 22px; text-align: center; cursor: pointer; background: #fafbfc; }
 .imp-box:hover { border-color: var(--primary); background: var(--primary-bg); }
@@ -339,9 +340,8 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
     <button type="button" class="nav-tab active" onclick="switchPage('components')"><span class="nav-number">01</span>元器件台账</button>
     <button type="button" class="nav-tab" onclick="switchPage('chips')"><span class="nav-number">02</span>芯片 / BOM</button>
     <button type="button" class="nav-tab" onclick="switchPage('shortage')"><span class="nav-number">03</span>缺货预警</button>
-    <button type="button" class="nav-tab" onclick="switchPage('calc')"><span class="nav-number">04</span>需求核算</button>
-    <button type="button" class="nav-tab" onclick="switchPage('board')"><span class="nav-number">05</span>实验看板</button>
-    <button type="button" class="nav-tab" onclick="switchPage('equipment')"><span class="nav-number">06</span>资产设备</button>
+    <button type="button" class="nav-tab" onclick="switchPage('board')"><span class="nav-number">04</span>实验看板</button>
+    <button type="button" class="nav-tab" onclick="switchPage('equipment')"><span class="nav-number">05</span>资产设备</button>
   </nav>
   <div class="sidebar-foot">本地工作空间<br>物料 · 实验 · 设备</div>
 </aside>
@@ -383,10 +383,13 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
     <div class="table-container"><table><thead><tr><th>物料名</th><th>规格值</th><th>封装</th><th>耐压/功率</th><th>是否车规</th><th>精度</th><th>工作温度</th><th>备注</th><th class="num">实时量</th><th class="num">安全库存</th><th>位置</th><th>状态</th><th>操作</th></tr></thead><tbody id="compBody"></tbody></table></div>
   </div>
   <div class="page" id="page-chips">
-    <div class="module-heading"><h1>芯片 / BOM</h1><p>维护板卡用料与计划，按实际出货扣减库存。</p></div>
+    <div class="module-heading"><h1>芯片 / BOM</h1><p>维护板卡用料与计划；改完计划板数，表里会直接显示本批需求和缺口，底部是全部芯片的采购汇总。</p></div>
     <div class="split">
       <aside><div style="padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background:#fff; border-radius: 8px 8px 0 0;"><span style="font-weight: 600;">芯片列表</span><button class="primary" style="padding:4px 10px; font-size:12px;" onclick="editChip()">新增</button></div><div id="chipList" class="chip-list"></div></aside>
-      <div id="chipDetail" style="background:#fff; border:1px solid var(--border); border-radius:8px; overflow:hidden;"></div>
+      <div>
+        <div id="chipDetail" style="background:#fff; border:1px solid var(--border); border-radius:8px; overflow:hidden;"></div>
+        <div id="demandSummary" style="margin-top:16px;"></div>
+      </div>
     </div>
   </div>
   <div class="page" id="page-shortage">
@@ -395,13 +398,6 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
     <div class="table-container" style="margin-bottom: 24px;"><table><thead><tr><th>物料名</th><th>规格值</th><th>封装</th><th class="num">实时量</th><th>备注</th><th>操作</th></tr></thead><tbody id="shortageBody"></tbody></table></div>
     <h2>低库存物料</h2>
     <div class="table-container"><table><thead><tr><th>物料名</th><th>规格值</th><th>封装</th><th class="num">实时量</th><th class="num">安全库存</th><th class="num">缺口</th><th>操作</th></tr></thead><tbody id="lowBody"></tbody></table></div>
-  </div>
-  <div class="page" id="page-calc">
-    <div class="module-heading"><h1>需求核算</h1><p>填这次要做多少块板，直接算要买多少元器件；与历史出货无关。</p></div>
-    <div class="calc-chips" id="calcChips"></div>
-    <div style="display:flex; justify-content:space-between; margin-bottom:12px;"><h2 style="margin:0; font-size:18px;">物料需求汇总</h2><button class="ghost" onclick="exportShortageXlsx()">导出采购清单</button></div>
-    <div id="calcSummary" class="calc-summary"></div>
-    <div class="table-container"><table><thead><tr><th>物料名</th><th>规格值</th><th class="num">总需求</th><th class="num">实时量</th><th class="num">缺口</th><th>状态</th><th>需求来源</th></tr></thead><tbody id="calcBody"></tbody></table></div>
   </div>
   <div class="page flex-layout" id="page-board">
     <div class="layout-board experiment-workspace">
@@ -678,7 +674,12 @@ function normalizeImportedState(d, currentMaterial = materialDb, currentTest = t
       b.shipped = stockInteger(b.shipped == null ? 0 : b.shipped, '已出板数');
       // 2.4 及更早的数据没有 shipments 字段：补空数组即可，旧字段与旧行为全部保留。
       if (!Array.isArray(b.shipments)) b.shipments = [];
-      b.shipments = b.shipments.filter(s => s && typeof s === 'object').map(s => ({id:String(s.id || ('sp_' + uid())),at:Number(s.at) || 0,qty:Math.max(0, Number(s.qty) || 0),note:String(s.note || '')}));
+      b.shipments = b.shipments.filter(s => s && typeof s === 'object').map(s => {
+        const out = {id:String(s.id || ('sp_' + uid())),at:Number(s.at) || 0,qty:Math.max(0, Number(s.qty) || 0),note:String(s.note || '')};
+        if (Array.isArray(s.shortages) && s.shortages.length) out.shortages = s.shortages.filter(x => x && typeof x === 'object').map(x => ({cid:String(x.cid || ''),name:String(x.name || ''),spec:String(x.spec || ''),need:Math.max(0, Number(x.need) || 0),have:Math.max(0, Number(x.have) || 0),short:Math.max(0, Number(x.short) || 0)}));
+        if (Array.isArray(s.items) && s.items.length) out.items = s.items.filter(x => x && typeof x === 'object').map(x => ({cid:String(x.cid || ''),take:Math.max(0, Number(x.take) || 0)}));
+        return out;
+      });
       if (b.bom == null) b.bom = [];
       if (!Array.isArray(b.bom)) throw new Error('BOM 必须是数组');
       b.bom.forEach(item => {
@@ -760,7 +761,7 @@ function loadAll() {
   if (!testDb.batches.length) currentBatchId = null;
   else if (!testDb.batches.some(b => b.id === currentBatchId)) currentBatchId = testDb.batches[0].id;
   memorySnapshot = statePayload();
-  renderComponents(); renderChips(); renderShortage(); renderCalc();
+  renderComponents(); renderChips(); renderShortage(); renderDemandSummary();
   renderBatches(); renderBoard(); renderEquipments();
   setStatus('数据已就绪', 'var(--success)');
 }
@@ -791,7 +792,7 @@ function switchPage(page) {
   currentPage = page;
   document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
-  const tabs = { components:0, chips:1, shortage:2, calc:3, board:4, equipment:5 };
+  const tabs = { components:0, chips:1, shortage:2, board:3, equipment:4 };
   document.querySelectorAll('.nav-tab')[tabs[page]].classList.add('active');
   $(`#page-${page}`).classList.add('active');
   const btnAdd = $('#btnGlobalAdd');
@@ -803,7 +804,6 @@ function switchPage(page) {
   if(page === 'components') renderComponents();
   if(page === 'chips') renderChips();
   if(page === 'shortage') renderShortage();
-  if(page === 'calc') renderCalc();
   if(page === 'board') renderBoard();
   if(page === 'equipment') renderEquipments();
 }
@@ -995,7 +995,7 @@ function editComp(id) {
     if (isNew) next.components.push(record);
     if (!commitMaterialChange(next)) return false;
     editingComp = null; editLogs = [];
-    renderComponents(); renderChips(); renderShortage(); renderCalc();
+    renderComponents(); renderChips(); renderShortage(); renderDemandSummary();
     return true;
   });
   renderEditLogPreview();
@@ -1034,7 +1034,7 @@ function delComp(id) {
   if (used.length) return alert('该物料仍被 BOM 引用，不能直接删除：\n' + used.join('\n') + '\n请先核对并修改对应 BOM，避免少扣物料。');
   if (!confirm('确定删除该物料？')) return;
   const next = materialClone(); next.components = next.components.filter(x => x.id !== id);
-  if (commitMaterialChange(next)) { renderComponents(); renderChips(); renderShortage(); renderCalc(); }
+  if (commitMaterialChange(next)) { renderComponents(); renderChips(); renderShortage(); renderDemandSummary(); }
 }
 function showLogs(id) {
   const c = materialDb.components.find(x => x.id === id);
@@ -1075,7 +1075,7 @@ function applyComponentOrder(dragId, targetId, after) {
   const byId = new Map(next.components.map(c => [c.id, c]));
   next.components = order.map(id => byId.get(id)).filter(Boolean);
   if (!commitMaterialChange(next)) return;
-  renderComponents(); renderChips(); renderShortage(); renderCalc();
+  renderComponents(); renderChips(); renderShortage(); renderDemandSummary();
 }
 function bindComponentDrag() {
   const tb = $('#compBody');
@@ -1125,12 +1125,13 @@ function bindComponentDrag() {
 /* ========== 芯片 BOM ========== */
 function renderChips() {
   const list = $('#chipList');
-  if (!materialDb.chips.length) { list.innerHTML = '<div class="empty">暂无芯片</div>'; $('#chipDetail').innerHTML = ''; return; }
+  if (!materialDb.chips.length) { list.innerHTML = '<div class="empty">暂无芯片</div>'; $('#chipDetail').innerHTML = ''; renderDemandSummary(); return; }
   let activeId = list.dataset.activeId;
   if (!activeId || !materialDb.chips.some(c => c.id === activeId)) activeId = materialDb.chips[0].id;
   list.dataset.activeId = activeId;
   list.innerHTML = materialDb.chips.map(c => { const bomLen = BOARD_KEYS.reduce((s,k)=>s+c.boards[k].bom.length,0); return `<div class="chip-item ${c.id===activeId?'active':''}" onclick="selectChip('${c.id}')"><div class="chip-name">${esc(c.name)}</div><div class="chip-sub">${bomLen} 种物料</div></div>`; }).join('');
   renderChipDetail(activeId);
+  renderDemandSummary();
 }
 function selectChip(id) { $('#chipList').dataset.activeId = id; renderChips(); }
 function renderChipDetail(chipId) {
@@ -1138,11 +1139,15 @@ function renderChipDetail(chipId) {
   const box = $('#chipDetail');
   const sections = BOARD_KEYS.map(k => {
     const b = ch.boards[k];
+    const plan = Math.max(0, Number(b.qty) || 0);
     const rows = b.bom.map(item => {
       const c = materialDb.components.find(x => x.id === item.cid); if (!c) return '';
-      return `<tr><td><strong>${esc(c.name)}</strong></td><td class="mono">${esc(c.spec)}</td><td class="num">${c.qty}</td><td class="num">${item.qty}</td><td><button class="link danger" onclick="delBom('${k}','${item.cid}')">移除</button></td></tr>`;
+      const perBoard = Number(item.qty) || 0;
+      const need = plan * perBoard;
+      const gap = plan ? Math.max(0, need - (Number(c.qty) || 0)) : 0;
+      return `<tr><td><strong>${esc(c.name)}</strong></td><td class="mono">${esc(c.spec)}</td><td class="num">${perBoard}</td><td class="num">${plan ? need : '-'}</td><td class="num ${(Number(c.qty) || 0) <= 0 ? 'text-danger' : ''}">${c.qty}</td><td class="num ${gap ? 'text-danger' : ''}">${plan ? (gap || '够') : '-'}</td><td><button class="link danger" onclick="delBom('${k}','${item.cid}')">移除</button></td></tr>`;
     }).join('');
-    return `<div class="board-block"><div class="board-head"><div style="font-weight:600;">${BOARD_NAMES[k]} <span style="font-weight:400;color:var(--text-sec);font-size:12px;">计划 ${b.qty} · 已出 <b style="color:${Number(b.shipped) > Number(b.qty) ? 'var(--danger)' : 'inherit'}">${Number(b.shipped) || 0}</b></span></div><div style="display:flex; gap:8px; align-items:center;"><input type="number" min="0" value="${b.qty}" title="计划板数只用于需求核算，不限制出货" onchange="setBoardQty('${ch.id}','${k}',this.value)"><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="shipBoard('${k}')">一键出货</button><button class="ghost" style="padding:4px 8px; font-size:12px;" title="查看出货记录 / 撤销最近一次" onclick="openShipments(${esc(JSON.stringify(String(ch.id)))},'${k}')">记录 ${(b.shipments || []).length}</button><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="openBomImport('${ch.id}','${k}')">导入</button><button class="ghost" style="padding:4px 8px;font-size:12px;" onclick="downloadBomTemplate()">模板</button><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="openCopyBom('${ch.id}','${k}')">复制</button><button class="primary" style="padding:4px 8px; font-size:12px;" onclick="addBom('${k}')">+ 添加</button></div></div><table><thead><tr style="background:#f8fafc; font-size:12px;"><th>物料名</th><th>规格</th><th class="num">库存</th><th class="num">用量</th><th>操作</th></tr></thead><tbody>${rows || '<tr><td colspan="5" class="empty">暂无 BOM</td></tr>'}</tbody></table></div>`;
+    return `<div class="board-block"><div class="board-head"><div style="font-weight:600;">${BOARD_NAMES[k]} <span style="font-weight:400;color:var(--text-sec);font-size:12px;">计划 ${b.qty} · 已出 <b style="color:${Number(b.shipped) > Number(b.qty) ? 'var(--danger)' : 'inherit'}">${Number(b.shipped) || 0}</b></span></div><div style="display:flex; gap:8px; align-items:center;"><input type="number" min="0" value="${b.qty}" title="计划板数：改了以后下面的本批需求和缺口会立刻重算" onchange="setBoardQty('${ch.id}','${k}',this.value)"><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="shipBoard('${k}')">一键出货</button><button class="ghost" style="padding:4px 8px; font-size:12px;" title="查看出货记录 / 撤销最近一次" onclick="openShipments(${esc(JSON.stringify(String(ch.id)))},'${k}')">记录 ${(b.shipments || []).length}</button><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="openBomImport('${ch.id}','${k}')">导入</button><button class="ghost" style="padding:4px 8px;font-size:12px;" onclick="downloadBomTemplate()">模板</button><button class="ghost" style="padding:4px 8px; font-size:12px;" onclick="openCopyBom('${ch.id}','${k}')">复制</button><button class="primary" style="padding:4px 8px; font-size:12px;" onclick="addBom('${k}')">+ 添加</button></div></div><table><thead><tr style="background:#f8fafc; font-size:12px;"><th>物料名</th><th>规格</th><th class="num">单板</th><th class="num">本批需求</th><th class="num">库存</th><th class="num">缺口</th><th>操作</th></tr></thead><tbody>${rows || '<tr><td colspan="7" class="empty">暂无 BOM</td></tr>'}</tbody></table></div>`;
   }).join('');
   box.innerHTML = `<div style="padding:16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between;"><div><h3 style="margin:0;">${esc(ch.name)}</h3></div><div><button class="ghost" onclick="editChip('${ch.id}')">编辑</button><button class="ghost" style="color:var(--danger);" onclick="delChip('${ch.id}')">删除</button></div></div>${sections}`;
 }
@@ -1165,7 +1170,7 @@ function setBoardQty(chipId, key, v) {
   try { qty = stockInteger(v, '计划板数'); }
   catch (err) { alert(err.message); return; }
   const next = materialClone(); next.chips.find(c => c.id === chipId).boards[key].qty = qty;
-  if (commitMaterialChange(next)) { renderChips(); renderCalc(); }
+  if (commitMaterialChange(next)) { renderChips(); renderDemandSummary(); }
 }
 function addBom(boardKey) {
   const ch = materialDb.chips.find(c => c.id === $('#chipList').dataset.activeId); if (!ch) return;
@@ -1181,12 +1186,13 @@ function addBom(boardKey) {
     rest.splice(first < 0 ? rest.length : Math.min(first, rest.length), 0, {cid, qty});
     next.chips.find(c => c.id === ch.id).boards[boardKey].bom = rest;
     if (!commitMaterialChange(next)) return false;
-    renderChips(); renderCalc(); return true;
+    renderChips(); renderDemandSummary(); return true;
   });
 }
-function delBom(k, cid) { const ch = materialDb.chips.find(c=>c.id===$('#chipList').dataset.activeId); if (ch) { ch.boards[k].bom = ch.boards[k].bom.filter(b=>b.cid!==cid); save(); renderChips(); renderCalc(); } }
+function delBom(k, cid) { const ch = materialDb.chips.find(c=>c.id===$('#chipList').dataset.activeId); if (ch) { ch.boards[k].bom = ch.boards[k].bom.filter(b=>b.cid!==cid); save(); renderChips(); renderDemandSummary(); } }
 /* 出货只做两件事：按 BOM 扣库存、记一条出货记录。
-   计划板数（qty）只服务需求核算，不再限制出货次数和数量。 */
+   计划板数（qty）只服务需求核算，不再限制出货次数和数量。
+   库存不够时不直接拦死：列出缺料明细，让用户选择「强制出货」或「本次不出」。 */
 function shipBoard(boardKey) {
   const ch = materialDb.chips.find(c => c.id === $('#chipList').dataset.activeId);
   if (!ch || !ch.boards[boardKey] || !ch.boards[boardKey].bom.length) return alert('无 BOM');
@@ -1200,31 +1206,45 @@ function shipBoard(boardKey) {
     catch (err) { alert(err.message); return false; }
     const live = materialDb.chips.find(c => c.id === ch.id)?.boards[boardKey];
     if (!live || JSON.stringify(live) !== boardSnapshot) { alert('BOM 已变化，请重新打开出货窗口'); return false; }
-    const changes = [];
+
+    const changes = [], shortages = [];
     try {
       bom.forEach((perBoard, cid) => {
         const c = materialDb.components.find(x => x.id === cid);
         const need = stockInteger(perBoard * num, '出库用量', true);
         const have = stockInteger(c.qty, '库存');
-        if (have < need) throw new Error(`${c.name} ${c.spec || ''}：需要 ${need}，库存 ${have}，缺 ${need-have}`);
-        changes.push({cid,need});
+        const take = Math.min(need, have);
+        if (need > have) shortages.push({ cid, name: c.name, spec: c.spec || '', need, have, short: need - have });
+        changes.push({ cid, need, take });
       });
     } catch (err) { alert('本次未扣任何库存。\n' + err.message); return false; }
+
+    if (shortages.length) {
+      const lines = shortages.map(s => `· ${s.name}${s.spec ? ' ' + s.spec : ''}：需要 ${s.need}，库存 ${s.have}，缺 ${s.short}`).join('\n');
+      const ok = confirm(`有 ${shortages.length} 种物料库存不足：\n\n${lines}\n\n选择「确定」= 强制出货：库存扣到 0，缺的数量记进本次出货记录（不影响其他物料）。\n选择「取消」= 本次不出货，所有库存保持不变。`);
+      if (!ok) return false;
+    }
+
     const next = materialClone(), now = Date.now();
     const shipment = { id: 'sp_' + uid(), at: now, qty: num, note: String(by || '').trim() };
-    changes.forEach(({cid,need}) => {
+    if (shortages.length) shipment.shortages = shortages;
+    changes.forEach(({ cid, take }) => {
+      if (!take) return;
       const c = next.components.find(x => x.id === cid);
-      c.qty -= need;
+      c.qty -= take;
       if (!Array.isArray(c.logs)) c.logs = [];
-      c.logs.push({t:now,type:'out',qty:need,after:c.qty,txId:shipment.id,source:`${ch.name}·${BOARD_NAMES[boardKey]} ${num} 板`});
+      c.logs.push({ t: now, type: 'out', qty: take, after: c.qty, txId: shipment.id, source: `${ch.name}·${BOARD_NAMES[boardKey]} ${num} 板` });
     });
+    shipment.items = changes.map(({ cid, take }) => ({ cid, take }));
     const target = next.chips.find(c => c.id === ch.id).boards[boardKey];
     target.shipped = stockInteger(Number(target.shipped || 0) + num, '已出板数');
     if (!Array.isArray(target.shipments)) target.shipments = [];
     target.shipments.push(shipment);
     if (!commitMaterialChange(next)) return false;
-    renderChips(); renderComponents(); renderShortage(); renderCalc();
-    setTimeout(() => alert(`已出货 ${num} 板：库存已按 BOM 扣减，并记入「出货记录」。`), 50);
+    renderChips(); renderComponents(); renderShortage(); renderDemandSummary();
+    setTimeout(() => alert(shortages.length
+      ? `已强制出货 ${num} 板：${shortages.length} 种物料库存记到 0，缺料明细已记入出货记录。`
+      : `已出货 ${num} 板：库存已按 BOM 扣减，并记入「出货记录」。`), 50);
     return true;
   });
 }
@@ -1233,11 +1253,16 @@ function openShipments(chipId, boardKey) {
   if (!ch || !ch.boards[boardKey]) return;
   const b = ch.boards[boardKey];
   const list = (Array.isArray(b.shipments) ? b.shipments : []).slice().reverse();
-  const rows = list.map(s => `<tr><td>${new Date(Number(s.at) || 0).toLocaleString('zh-CN', {hour12:false})}</td><td class="num">${Number(s.qty) || 0} 板</td><td>${esc(s.note) || '—'}</td></tr>`).join('');
+  const rows = list.map(s => {
+    const shortTag = Array.isArray(s.shortages) && s.shortages.length
+      ? `<span class="badge st-danger" title="${esc(s.shortages.map(x => `${x.name} 缺 ${x.short}`).join('；'))}">缺料 ${s.shortages.length} 种</span>`
+      : '<span class="badge st-ok">正常</span>';
+    return `<tr><td>${new Date(Number(s.at) || 0).toLocaleString('zh-CN', {hour12:false})}</td><td class="num">${Number(s.qty) || 0} 板</td><td>${esc(s.note) || '—'}</td><td>${shortTag}</td></tr>`;
+  }).join('');
   const idArg = esc(JSON.stringify(String(chipId)));
   const html = `<div style="margin-bottom:12px;color:var(--text-sec);font-size:12px;">${esc(ch.name)} · ${BOARD_NAMES[boardKey]} · 计划 ${Number(b.qty) || 0} · 累计已出 ${Number(b.shipped) || 0}</div>`
     + (list.length
-      ? `<div class="table-container"><table><thead><tr><th>时间</th><th class="num">数量</th><th>经手人 / 备注</th></tr></thead><tbody>${rows}</tbody></table></div><div style="margin-top:12px;"><button class="ghost" onclick="undoLastShipment(${idArg},'${boardKey}')">撤销最近一次</button></div>`
+      ? `<div class="table-container"><table><thead><tr><th>时间</th><th class="num">数量</th><th>经手人 / 备注</th><th>库存</th></tr></thead><tbody>${rows}</tbody></table></div><div style="margin-top:12px;"><button class="ghost" onclick="undoLastShipment(${idArg},'${boardKey}')">撤销最近一次</button></div>`
       : '<div class="empty">暂无出货记录</div>');
   openMatModal('出货记录', html, () => true);
 }
@@ -1248,13 +1273,21 @@ function undoLastShipment(chipId, boardKey) {
   const last = list[list.length - 1];
   if (!last) return alert('没有可撤销的出货记录');
   if (!confirm(`撤销最近一次出货（${last.qty} 板），并把物料库存加回？`)) return;
-  let bom;
-  try { bom = aggregateBoardBom(b); } catch (err) { return alert('BOM 已变化，无法自动加回：' + err.message); }
+  let restore;
+  if (Array.isArray(last.items) && last.items.length) {
+    // 新记录带实际扣减量：缺料出货只加回真正扣掉的部分
+    restore = last.items.map(({ cid, take }) => ({ cid, take: Number(take) || 0 }));
+  } else {
+    let bom;
+    try { bom = aggregateBoardBom(b); } catch (err) { return alert('BOM 已变化，无法自动加回：' + err.message); }
+    restore = [...bom].map(([cid, perBoard]) => ({ cid, take: perBoard * (Number(last.qty) || 0) }));
+  }
   const next = materialClone(), now = Date.now();
   try {
-    bom.forEach((perBoard, cid) => {
+    restore.forEach(({ cid, take }) => {
+      if (!take) return;
       const c = next.components.find(x => x.id === cid); if (!c) return;
-      const back = stockInteger(perBoard * last.qty, '撤销数量', true);
+      const back = stockInteger(take, '撤销数量', true);
       c.qty = stockInteger(c.qty + back, '库存');
       if (!Array.isArray(c.logs)) c.logs = [];
       c.logs.push({t:now,type:'in',qty:back,after:c.qty,txId:last.id,source:`撤销出货：${ch.name}·${BOARD_NAMES[boardKey]} ${last.qty} 板`});
@@ -1264,7 +1297,7 @@ function undoLastShipment(chipId, boardKey) {
   target.shipped = Math.max(0, Number(target.shipped || 0) - Number(last.qty || 0));
   target.shipments = (Array.isArray(target.shipments) ? target.shipments : []).slice(0, -1);
   if (!commitMaterialChange(next)) return;
-  renderChips(); renderComponents(); renderShortage(); renderCalc();
+  renderChips(); renderComponents(); renderShortage(); renderDemandSummary();
   openShipments(chipId, boardKey);
 }
 function openCopyBom(chipId, boardKey) {
@@ -1282,7 +1315,7 @@ function saveCopyBom() {
   const srcChip = materialDb.chips.find(c => c.id === srcChipId); if (!srcChip) return;
   const targetChip = materialDb.chips.find(c => c.id === copyBomTarget.chipId);
   targetChip.boards[copyBomTarget.boardKey].bom = JSON.parse(JSON.stringify(srcChip.boards[srcBoardKey].bom));
-  save(); renderChips(); renderCalc();
+  save(); renderChips(); renderDemandSummary();
   $('#modalCopyBom').classList.add('hidden');
   alert('BOM 复制成功！');
 }
@@ -1377,7 +1410,7 @@ function saveBomImport() {
   // 同文件中映射到同一物料的多行相加；已存在物料的单板用量以本次汇总覆盖。
   b.bom = b.bom.filter(item => !totals.has(item.cid)).concat(Array.from(totals,([cid,qty]) => ({cid,qty})));
   if (!commitMaterialChange(next)) return;
-  renderChips(); renderCalc(); $('#modalBomImp').classList.add('hidden');
+  renderChips(); renderDemandSummary(); $('#modalBomImp').classList.add('hidden');
   setTimeout(() => alert(`成功导入 ${count} 行，合并为 ${totals.size} 种物料。未修改库存。`),50);
 }
 /* ========== 需求核算 ========== */
@@ -1404,26 +1437,22 @@ function renderShortage() {
   $('#shortageBody').innerHTML = shortage.length ? shortage.map(c => `<tr><td><strong>${esc(c.name)}</strong></td><td class="mono">${esc(c.spec)}</td><td class="mono">${esc(c.pkg)}</td><td class="num text-danger">${c.qty}</td><td>${esc(c.note)}</td><td><button class="link" onclick="editComp('${c.id}')">补货</button></td></tr>`).join('') : '<tr><td colspan="6" class="empty">无缺货</td></tr>';
   $('#lowBody').innerHTML = low.length ? low.map(c => `<tr><td><strong>${esc(c.name)}</strong></td><td class="mono">${esc(c.spec)}</td><td class="mono">${esc(c.pkg)}</td><td class="num">${c.qty}</td><td class="num">${c.safety}</td><td class="num text-warn">${c.safety - c.qty}</td><td><button class="link" onclick="editComp('${c.id}')">补货</button></td></tr>`).join('') : '<tr><td colspan="7" class="empty">无低库存</td></tr>';
 }
-function renderCalc() {
-  const wrap = $('#calcChips');
-  if (!materialDb.chips.length) { wrap.innerHTML = '<div class="empty">请先添加芯片</div>'; return; }
-  const tip = '<div class="calc-tip">填这次要做多少块板，下面直接算要采购多少。<b>不扣历史出货，也不用把上次的数量加上去</b>；改了数字只影响这次核算。</div>';
-  wrap.innerHTML = tip + materialDb.chips.map(ch => `<div class="calc-chip-block"><div style="font-weight:600; margin-bottom:8px;">${esc(ch.name)}</div><div style="display:flex; gap:16px; flex-wrap:wrap;">${BOARD_KEYS.map(k => `<div style="display:flex; align-items:center; gap:8px; font-size:13px;"><span style="color:var(--text-sec);">${BOARD_NAMES[k]}</span><input type="number" min="0" value="${ch.boards[k].qty}" onchange="setBoardQty('${ch.id}','${k}',this.value)"><span style="color:var(--text-sec); font-size:12px;">块</span></div>`).join('')}</div></div>`).join('');
-  renderCalcResult();
-}
-function renderCalcResult() {
+/* 需求汇总：放在 BOM 页底部，按全部芯片的计划板数 × 单板用量核算 */
+function renderDemandSummary() {
+  const host = $('#demandSummary');
+  if (!host) return;
+  if (!materialDb.chips.length) { host.innerHTML = '<div class="demand-card"><div class="demand-head"><div><h3>需求汇总</h3><p>先添加芯片和 BOM，这里会按计划板数算出要采购多少。</p></div></div></div>'; return; }
   const demand = computeDemand();
   const cids = Object.keys(demand);
   let shortage = 0;
   const rows = cids.map(cid => {
-    const c = materialDb.components.find(x=>x.id===cid); if (!c) return '';
+    const c = materialDb.components.find(x => x.id === cid); if (!c) return '';
     const d = demand[cid];
-    const gap = Math.max(0, d.total - c.qty);
+    const gap = Math.max(0, d.total - Number(c.qty || 0));
     if (gap > 0) shortage++;
-    return `<tr><td><strong>${esc(c.name)}</strong></td><td class="mono">${esc(c.spec)}</td><td class="num">${d.total}</td><td class="num">${c.qty}</td><td class="num ${gap>0?'text-danger':''}">${gap||'-'}</td><td><span class="badge ${gap>0?'st-danger':'st-ok'}">${gap>0?'缺货':'充足'}</span></td><td style="font-size:11px; color:var(--text-sec);">${d.sources.slice(0,3).join('; ')}${d.sources.length>3?'...':''}</td></tr>`;
+    return `<tr><td><strong>${esc(c.name)}</strong></td><td class="mono">${esc(c.spec) || '-'}</td><td class="mono">${esc(c.pkg) || '-'}</td><td class="num">${d.total}</td><td class="num">${Number(c.qty) || 0}</td><td class="num ${gap > 0 ? 'text-danger' : ''}">${gap || '-'}</td><td><span class="badge ${gap > 0 ? 'st-danger' : 'st-ok'}">${gap > 0 ? '需采购' : '够用'}</span></td><td style="font-size:11px;color:var(--text-sec);">${esc(d.sources.slice(0, 3).join('；'))}${d.sources.length > 3 ? '…' : ''}</td></tr>`;
   }).join('');
-  $('#calcSummary').innerHTML = cids.length ? `<span class="badge st-info">涉及 ${cids.length} 种物料</span> <span class="badge ${shortage?'st-danger':'st-ok'}">${shortage?'缺货 '+shortage+' 种':'全部充足'}</span>` : '';
-  $('#calcBody').innerHTML = rows || '<tr><td colspan="7" class="empty">暂无数据</td></tr>';
+  host.innerHTML = `<div class="demand-card"><div class="demand-head"><div><h3>需求汇总（全部芯片）</h3><p>计划板数 × 单板用量，再对比当前库存；与历史出货无关。</p></div><div class="demand-actions">${cids.length ? `<span class="badge st-info">${cids.length} 种物料</span><span class="badge ${shortage ? 'st-danger' : 'st-ok'}">${shortage ? '需采购 ' + shortage + ' 种' : '全部够用'}</span>` : ''}<button class="ghost" onclick="exportShortageXlsx()">导出采购清单</button></div></div>${rows ? `<div class="table-container"><table><thead><tr><th>物料名</th><th>规格</th><th>封装</th><th class="num">总需求</th><th class="num">库存</th><th class="num">缺口</th><th>状态</th><th>需求来源</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="empty">还没有填计划板数，或 BOM 为空</div>'}</div>`;
 }
 
 /* ========== 实验看板 ========== */
@@ -2958,7 +2987,7 @@ function saveMaterialImport() {
     const result=mergeMaterialImport(materialDb,materialImportState.records);
     if(!commitMaterialChange(result.material)) return;
     materialImportState.records=[];$('#modalMaterialImport').classList.add('hidden');
-    renderComponents();renderChips();renderShortage();renderCalc();
+    renderComponents();renderChips();renderShortage();renderDemandSummary();
     alert('台账导入完成，库存变化已记录盘点流水。');
   } catch(err) {alert('未导入：'+err.message);}
 }
