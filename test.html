@@ -114,6 +114,11 @@ aside.board-aside { width: 270px; background: #fff; border: 1px solid var(--bord
 .tc-code-label { font-size: 11px; color: var(--text-sec); }
 .tc-code-ver { font-weight: 600; color: var(--primary); font-family: Consolas, monospace; }
 .tc-code-note { color: var(--text-sec); overflow-wrap: anywhere; }
+.chip-tabs { display: flex; gap: 8px; margin: 0 0 14px; }
+.chip-tab { padding: 8px 16px; border: 1px solid var(--border); border-radius: 6px; background: #fff; cursor: pointer; font-size: 13px; color: var(--text-sec); font-family: inherit; }
+.chip-tab:hover { background: #f6f8fc; }
+.chip-tab.active { background: var(--primary-bg); color: var(--primary); border-color: #b9cff8; font-weight: 600; }
+.chip-filter-bar { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 8px 12px; background: var(--primary-bg); border-radius: 6px; font-size: 12px; color: #4e678d; }
 #modalMatBody table input, #modalMatBody table select { width: 100%; height: 32px; padding: 0 8px; border: 1px solid var(--border); border-radius: 5px; font: inherit; font-size: 12px; }
 .bom-qty { width: 64px; height: 28px; padding: 0 6px; border: 1px solid var(--border); border-radius: 5px; font-size: 12px; font-family: inherit; text-align: right; }
 .bom-qty:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); outline: none; }
@@ -356,7 +361,7 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
   <div class="app-brand"><span class="brand-mark">◈</span><div>可靠性管理<span class="brand-sub">综合管理中心 · V3.0</span></div></div>
   <nav class="nav-tabs" aria-label="工作模块">
     <button type="button" class="nav-tab active" onclick="switchPage('components')"><span class="nav-number">01</span>元器件台账</button>
-    <button type="button" class="nav-tab" onclick="switchPage('chips')"><span class="nav-number">02</span>芯片 / BOM</button>
+    <button type="button" class="nav-tab" onclick="switchPage('chips')"><span class="nav-number">02</span>BOM</button>
     <button type="button" class="nav-tab" onclick="switchPage('shortage')"><span class="nav-number">03</span>缺货预警</button>
     <button type="button" class="nav-tab" onclick="switchPage('board')"><span class="nav-number">04</span>实验看板</button>
     <button type="button" class="nav-tab" onclick="switchPage('equipment')"><span class="nav-number">05</span>资产设备</button>
@@ -402,7 +407,7 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
     <div class="table-container"><table><thead><tr><th>物料名</th><th>规格值</th><th>封装</th><th>耐压/功率</th><th>是否车规</th><th>精度</th><th>工作温度</th><th>备注</th><th class="num">实时量</th><th class="num">安全库存</th><th>位置</th><th>状态</th><th>操作</th></tr></thead><tbody id="compBody"></tbody></table></div>
   </div>
   <div class="page" id="page-chips">
-    <div class="module-heading"><h1>芯片 / BOM</h1><p>维护板卡用料与计划；改完计划板数，表里会直接显示本批需求和缺口，底部是全部芯片的采购汇总。</p></div>
+    <div class="module-heading"><h1>BOM</h1><p>维护板卡用料与计划；改完计划板数，表里会直接显示本批需求和缺口，底部是全部芯片的采购汇总。</p></div>
     <div class="split">
       <aside><div style="padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background:#fff; border-radius: 8px 8px 0 0;"><span style="font-weight: 600;">芯片列表</span><button class="primary" style="padding:4px 10px; font-size:12px;" onclick="editChip()">新增</button></div><div id="chipList" class="chip-list"></div></aside>
       <div>
@@ -469,15 +474,26 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
         <button class="ghost" onclick="openChipStockImport()">导入 Excel</button>
         <button class="ghost" onclick="exportChipStockXlsx()">导出 Excel</button>
       </div>
-      <div class="toolbar-right">
+    </div>
+    <div class="chip-tabs">
+      <button type="button" class="chip-tab active" id="chipTabStock" onclick="switchChipStockTab('stock')">芯片数量</button>
+      <button type="button" class="chip-tab" id="chipTabMove" onclick="switchChipStockTab('move')">芯片变动情况</button>
+    </div>
+    <div id="chipStockPanel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:0 0 12px;">
+        <h2 style="margin:0;">芯片数量</h2>
         <button class="ghost" onclick="openChipStockModal()">＋ 新增库存</button>
+      </div>
+      <div class="table-container"><table><thead><tr><th>序号</th><th>型号</th><th>来源</th><th>入库日期</th><th>批号</th><th class="num">入库数量</th><th class="num">现有数量</th><th>更新日期</th><th>备注</th><th>变动记录</th><th>操作</th></tr></thead><tbody id="chipStockBody"></tbody></table></div>
+    </div>
+    <div id="chipMovePanel" hidden>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:0 0 12px;">
+        <h2 style="margin:0;">芯片变动情况</h2>
         <button class="primary" onclick="openChipMoveModal()">＋ 新增变动记录</button>
       </div>
+      <div id="chipMoveFilterBar"></div>
+      <div class="table-container"><table><thead><tr><th>记录编号</th><th>变动日期</th><th>申请人</th><th>地区</th><th>客户</th><th>类型</th><th>项目</th><th>产品型号</th><th class="num">样品数量</th><th>批号</th><th>记录人</th><th>用途</th><th>备注</th><th>操作</th></tr></thead><tbody id="chipMoveBody"></tbody></table></div>
     </div>
-    <h2 style="margin:0 0 12px;">芯片数量</h2>
-    <div class="table-container" style="margin-bottom:24px;"><table><thead><tr><th>序号</th><th>型号</th><th>来源</th><th>入库日期</th><th>批号</th><th class="num">入库数量</th><th class="num">现有数量</th><th>更新日期</th><th>备注</th><th>变动记录</th><th>操作</th></tr></thead><tbody id="chipStockBody"></tbody></table></div>
-    <h2 style="margin:0 0 12px;">芯片变动情况</h2>
-    <div class="table-container"><table><thead><tr><th>记录编号</th><th>变动日期</th><th>申请人</th><th>地区</th><th>客户</th><th>类型</th><th>项目</th><th>产品型号</th><th class="num">样品数量</th><th>批号</th><th>记录人</th><th>用途</th><th>备注</th><th>操作</th></tr></thead><tbody id="chipMoveBody"></tbody></table></div>
   </div>
 </div>
 
@@ -3374,7 +3390,26 @@ const CHIP_MOVE_HEADERS = ['记录编号','变动日期','申请人','地区','�
 
 function chipStocks() { return materialDb.chipStocks || []; }
 function chipMoves() { return materialDb.chipMovements || []; }
-function renderChipStockPage() { renderChipStockTable(); renderChipMoveTable(); }
+let chipStockTab = 'stock';
+let chipMoveFilter = null;
+function switchChipStockTab(tab) {
+  chipStockTab = tab === 'move' ? 'move' : 'stock';
+  if (chipStockTab === 'stock') chipMoveFilter = null;
+  renderChipStockPage();
+}
+function viewChipMoves(id) { chipMoveFilter = id; chipStockTab = 'move'; renderChipStockPage(); }
+function clearChipMoveFilter() { chipMoveFilter = null; renderChipStockPage(); }
+function renderChipStockPage() {
+  const stockCount = chipStocks().length, moveCount = chipMoves().length;
+  const tabStock = $('#chipTabStock'), tabMove = $('#chipTabMove');
+  if (tabStock) { tabStock.classList.toggle('active', chipStockTab === 'stock'); tabStock.textContent = `芯片数量${stockCount ? ` (${stockCount})` : ''}`; }
+  if (tabMove) { tabMove.classList.toggle('active', chipStockTab === 'move'); tabMove.textContent = `芯片变动情况${moveCount ? ` (${moveCount})` : ''}`; }
+  const sp = $('#chipStockPanel'), mp = $('#chipMovePanel');
+  if (sp) sp.hidden = chipStockTab !== 'stock';
+  if (mp) mp.hidden = chipStockTab !== 'move';
+  renderChipStockTable();
+  renderChipMoveTable();
+}
 
 function linkedChipMoves(s) {
   const recs = new Set((s.records || []).map(String));
@@ -3398,23 +3433,23 @@ function renderChipStockTable() {
   tb.innerHTML = list.map(s => {
     const idArg = esc(JSON.stringify(String(s.id)));
     const linked = linkedChipMoves(s).length;
-    return `<tr><td>${esc(s.seq) || '—'}</td><td><strong>${esc(s.model) || '—'}</strong></td><td>${esc(s.source) || '—'}</td><td>${esc(s.inDate) || '—'}</td><td class="mono">${esc(s.batchNo) || '—'}</td><td class="num">${Number(s.inQty) || 0}</td><td class="num ${Number(s.qty) <= 0 ? 'text-danger' : ''}">${Number(s.qty) || 0}</td><td>${esc(s.updatedAt) || '—'}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(s.note)}">${esc(s.note) || '—'}</td><td>${linked ? `<span class="badge st-info">${linked} 条</span>` : '—'}</td><td><button class="link" onclick="showChipMoves(${idArg})">记录</button><button class="link" onclick="openChipStockModal(${idArg})">编辑</button><button class="link danger" onclick="delChipStock(${idArg})">删除</button></td></tr>`;
+    return `<tr><td>${esc(s.seq) || '—'}</td><td><strong>${esc(s.model) || '—'}</strong></td><td>${esc(s.source) || '—'}</td><td>${esc(s.inDate) || '—'}</td><td class="mono">${esc(s.batchNo) || '—'}</td><td class="num">${Number(s.inQty) || 0}</td><td class="num ${Number(s.qty) <= 0 ? 'text-danger' : ''}">${Number(s.qty) || 0}</td><td>${esc(s.updatedAt) || '—'}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(s.note)}">${esc(s.note) || '—'}</td><td>${linked ? `<span class="badge st-info">${linked} 条</span>` : '—'}</td><td><button class="link" onclick="viewChipMoves(${idArg})">记录</button><button class="link" onclick="openChipStockModal(${idArg})">编辑</button><button class="link danger" onclick="delChipStock(${idArg})">删除</button></td></tr>`;
   }).join('');
 }
 function renderChipMoveTable() {
+  const bar = $('#chipMoveFilterBar');
   const tb = $('#chipMoveBody');
-  const list = chipMoves();
+  let list = chipMoves();
+  const filterStock = chipMoveFilter ? chipStocks().find(s => s.id === chipMoveFilter) : null;
+  if (filterStock) {
+    list = linkedChipMoves(filterStock);
+    if (bar) bar.innerHTML = `<div class="chip-filter-bar">只看「${esc(filterStock.model)} · ${esc(filterStock.batchNo || '无批号')}」的变动记录（${list.length} 条）<button class="link" onclick="clearChipMoveFilter()">清除筛选</button></div>`;
+  } else if (bar) bar.innerHTML = '';
   if (!list.length) { tb.innerHTML = '<tr><td colspan="14" class="empty">暂无变动记录：点「＋ 新增变动记录」或导入 Excel</td></tr>'; return; }
   tb.innerHTML = list.map(m => {
     const idArg = esc(JSON.stringify(String(m.id)));
     return `<tr><td class="mono">${esc(m.id) || '—'}</td><td>${esc(m.date) || '—'}</td><td>${esc(m.applicant) || '—'}</td><td>${esc(m.region) || '—'}</td><td>${esc(m.customer) || '—'}</td><td>${esc(m.customerType) || '—'}</td><td>${esc(m.project) || '—'}</td><td>${esc(m.model) || '—'}</td><td class="num">${Number(m.qty) || 0}</td><td class="mono">${esc(m.batchNo) || '—'}</td><td>${esc(m.recorder) || '—'}</td><td>${esc(m.purpose) || '—'}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(m.note)}">${esc(m.note) || '—'}</td><td><button class="link" onclick="openChipMoveModal(${idArg})">编辑</button><button class="link danger" onclick="delChipMove(${idArg})">删除</button></td></tr>`;
   }).join('');
-}
-function showChipMoves(id) {
-  const s = chipStocks().find(x => x.id === id); if (!s) return;
-  const list = linkedChipMoves(s);
-  const rows = list.map(m => `<tr><td class="mono">${esc(m.id)||'—'}</td><td>${esc(m.date)||'—'}</td><td>${esc(m.applicant)||'—'}</td><td>${esc(m.customer)||'—'}</td><td>${esc(m.project)||'—'}</td><td class="num">${Number(m.qty)||0}</td><td>${esc(m.purpose)||'—'}</td></tr>`).join('');
-  openMatModal(`${esc(s.model)||'芯片'} · ${esc(s.batchNo)||'无批号'} 的变动记录`, `<div style="margin-bottom:10px;color:var(--text-sec);font-size:12px;">现有数量 ${Number(s.qty)||0}</div>` + (list.length ? `<div class="table-container"><table><thead><tr><th>编号</th><th>日期</th><th>申请人</th><th>客户</th><th>项目</th><th class="num">数量</th><th>用途</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="empty">没有关联的变动记录</div>'), () => true);
 }
 function nextChipStockSeq(stocks) {
   let max = 0;
