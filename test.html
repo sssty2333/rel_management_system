@@ -647,6 +647,9 @@ function normalizePreparationIds(items) {
   const seen=new Set();
   items.forEach(item=>{
     if(!item || typeof item!=='object' || Array.isArray(item))throw new Error('实验准备记录格式错误');
+    // 优先级 1/2/3，老数据没有就按 2（普通）
+    const priority = Number(item.priority);
+    item.priority = [1,2,3].includes(priority) ? priority : 2;
     const original=item.id==null?'':String(item.id);
     let id=original.trim()?original:'';
     if(!id || seen.has(id)){
@@ -1773,17 +1776,23 @@ function preparationTaskRows(batch,person='') {
 function preparationTableRows(items) {
   return items.map(p=>{
     const id=esc(JSON.stringify(String(p.id))),ready=prepReady(p),stage=prepStage(p);
+    const prio=[1,2,3].includes(Number(p.priority))?Number(p.priority):2;
+    const prioClass=prio===1?'st-danger':prio===3?'st-muted':'st-info';
     const mismatch=p.status==='已完成'&&!prepQuantityReady(p)?'<div style="font-size:11px;color:var(--text-sec)">原记录为已完成，请核对数量</div>':'';
-    return `<tr><td><strong>${esc(p.name)}</strong><div><span class="badge ${ready?'st-ok':prepQuantityReady(p)?'st-info':'st-warn'}">${stage}</span></div>${mismatch}</td><td><input type="number" min="0" step="1" aria-label="${esc(p.name)}已备数量" value="${esc(p.done ?? 0)}" style="width:74px" onchange="updatePrepDone(${id},this.value)"> / ${esc(p.qty ?? 0)}</td><td><label style="display:flex;align-items:center;gap:5px;white-space:nowrap"><input type="checkbox" ${prepVerified(p)?'checked':''} onchange="togglePrepVerified(${id},this.checked)">已验收</label></td><td>${esc(p.person || '共同准备')}</td><td>${esc(p.dueDate || '待排期')}</td><td style="white-space:normal;max-width:230px">${esc(p.remark || '—')}</td><td><button class="link" onclick="openPrepItemEditor(${id})">编辑</button><button class="link danger" onclick="delPrepItem(${id})">删除</button></td></tr>`;
+    return `<tr><td><strong>${esc(p.name)}</strong><div><span class="badge ${ready?'st-ok':prepQuantityReady(p)?'st-info':'st-warn'}">${stage}</span></div>${mismatch}</td><td><span class="badge ${prioClass}" title="优先级：1=最优先，3=可延后">P${prio}</span></td><td><input type="number" min="0" step="1" aria-label="${esc(p.name)}已备数量" value="${esc(p.done ?? 0)}" style="width:74px" onchange="updatePrepDone(${id},this.value)"> / ${esc(p.qty ?? 0)}</td><td><label style="display:flex;align-items:center;gap:5px;white-space:nowrap"><input type="checkbox" ${prepVerified(p)?'checked':''} onchange="togglePrepVerified(${id},this.checked)">已验收</label></td><td>${esc(p.person || '共同准备')}</td><td>${esc(p.dueDate || '待排期')}</td><td style="white-space:normal;max-width:230px">${esc(p.remark || '—')}</td><td><button class="link" onclick="openPrepItemEditor(${id})">编辑</button><button class="link danger" onclick="delPrepItem(${id})">删除</button></td></tr>`;
   }).join('');
 }
 function preparationTable(items) {
-  return `<div class="prep-table-wrap"><table><thead><tr><th>准备事项</th><th>已备 / 需要</th><th>验收</th><th>责任人</th><th>计划日期</th><th>跟进说明</th><th></th></tr></thead><tbody>${preparationTableRows(items)}</tbody></table></div>`;
+  return `<div class="prep-table-wrap"><table><thead><tr><th>准备事项</th><th>优先级</th><th>已备 / 需要</th><th>验收</th><th>责任人</th><th>计划日期</th><th>跟进说明</th><th></th></tr></thead><tbody>${preparationTableRows(items)}</tbody></table></div>`;
 }
 function renderPreparationPanel() {
   const host=$('#preparationPanel');if(!host)return;
   const batch=testDb.batches.find(b=>b.id===currentBatchId);if(!batch){host.innerHTML='';return;}
   const items=batch.preparations || [],st=prepStats(batch),pending=items.filter(p=>!prepReady(p)),ready=items.filter(prepReady);
+  // 面板里也按优先级排，1 在最前面；同优先级按计划日期
+  const prepRank = p => [1,2,3].includes(Number(p.priority)) ? Number(p.priority) : 2;
+  const byPriority = (a,b) => prepRank(a)-prepRank(b) || String(a.dueDate||'9999').localeCompare(String(b.dueDate||'9999'));
+  pending.sort(byPriority); ready.sort(byPriority);
   host.innerHTML=`<section class="preparation-panel" aria-label="${esc(batch.name)}实验准备"><div class="preparation-heading"><div><span class="prep-eyebrow">实验开始前的准备与验收</span><h3>实验准备 <span class="badge ${st.total&&st.pending===0?'st-ok':'st-info'}">${st.total?st.pending?'进行中':'已就绪':'尚未建立'}</span></h3></div><div class="prep-actions"><button class="primary" onclick="openPrepItemEditor()">＋ 新增准备事项</button><button class="ghost" onclick="openPrepModal()">管理完整清单</button></div></div><div class="preparation-summary"><span><b>${st.ready}</b> / ${st.total} 项就绪</span><span>未备齐 <b>${st.pendingQuantity}</b> 项</span><span>待验收 <b>${st.pendingVerification}</b> 项</span><span class="prep-explanation">准备待办同步显示在下方待执行清单</span></div><div class="prep-progress-track"><div style="width:${st.percent}%"></div></div>${pending.length?preparationTable(pending):`<div class="prep-empty">${st.total?'所有准备事项已备齐并验收。':'请列出样品、板卡、治具、设备或实验室安排等准备事项。'}</div>`}${ready.length?`<details class="prep-completed"><summary>已就绪 ${ready.length} 项</summary>${preparationTable(ready)}</details>`:''}</section>`;
 }
 function commitPreparationChange(batchId,change) {
@@ -1806,6 +1815,7 @@ function openPrepItemEditor(prepId=null,batchId=currentBatchId) {
   const before=item?JSON.stringify(item):null;
   openInputModal(item?'编辑实验准备':'新增实验准备',[
     {id:'name',label:'准备事项名称',value:item?.name || ''},
+    {id:'priority',label:'优先级（1 最优先，3 可延后）',type:'select',options:['1','2','3'],value:String(item?.priority || 2)},
     {id:'qty',label:'需要数量',type:'number',value:item?.qty ?? 1},
     {id:'done',label:'已备数量',type:'number',value:item?.done ?? 0},
     {id:'verified',label:'验收确认',type:'select',options:['未验收','已验收'],value:prepVerified(item || {})?'已验收':'未验收'},
@@ -1820,7 +1830,7 @@ function openPrepItemEditor(prepId=null,batchId=currentBatchId) {
       const list=next.preparations || (next.preparations=[]),record=item?list.find(p=>p.id===prepId):{id:'p_'+uid()};
       if(item&&(!record||JSON.stringify(record)!==before))throw new Error('准备事项已变化，请重新打开后编辑');
       const quantityChanged=!item || Number(item.qty)!==qty || Number(item.done)!==done;
-      Object.assign(record,{name,qty,done,verified:values.verified==='已验收',person:String(values.person || '').trim(),dueDate,remark:String(values.remark || '').trim()});
+      Object.assign(record,{name,priority:Number(values.priority)===1?1:Number(values.priority)===3?3:2,qty,done,verified:values.verified==='已验收',person:String(values.person || '').trim(),dueDate,remark:String(values.remark || '').trim()});
       if(quantityChanged)autoPrepStatus(record);if(!item)list.push(record);
     });
   });
@@ -2763,11 +2773,14 @@ function showAssignPreview(result, mode) {
 
 /* ========== 当前主题实验安排导出（仅业务安排，不含内部分配权重） ========== */
 function experimentScheduleHeaders() {
-  return ['实验主题','实验名称','试验项目','批次','工作事项','数量（颗）','执行人','安排 / 执行日期','状态','下一步','下一步日期','当前进展','跟进说明','试验条件','Grade','预计完成时间','手动提醒'];
+  return ['实验主题','实验名称','试验项目','批次','工作事项','优先级','数量（颗）','执行人','安排 / 执行日期','状态','下一步','下一步日期','当前进展','跟进说明','试验条件','Grade','预计完成时间','手动提醒'];
 }
 
 function preparationScheduleRows(theme) {
-  return (theme.preparations || []).map(p=>[String(theme.name || ''),'实验准备','',String(p.name || ''),prepReady(p)?'准备已就绪':prepQuantityReady(p)?'验收准备事项':'备齐准备事项',Number(p.qty)||0,String(p.person || ''),String(p.dueDate || ''),prepStage(p),`需要 ${p.qty ?? 0}，已备 ${p.done ?? 0}，${prepVerified(p)?'已验收':'待验收'}`,String(p.dueDate || ''),String(p.remark || ''),'','','',String(p.dueDate || ''),'—']);
+  const prepPriority = p => [1,2,3].includes(Number(p.priority)) ? Number(p.priority) : 2;
+  return [...(theme.preparations || [])]
+    .sort((a,b)=>prepPriority(a)-prepPriority(b)||String(a.dueDate||'9999').localeCompare(String(b.dueDate||'9999')))
+    .map(p=>[String(theme.name || ''),'实验准备','',String(p.name || ''),prepReady(p)?'准备已就绪':prepQuantityReady(p)?'验收准备事项':'备齐准备事项',prepPriority(p),Number(p.qty)||0,String(p.person || ''),String(p.dueDate || ''),prepStage(p),`需要 ${p.qty ?? 0}，已备 ${p.done ?? 0}，${prepVerified(p)?'已验收':'待验收'}`,String(p.dueDate || ''),String(p.remark || ''),'','','',String(p.dueDate || ''),'—']);
 }
 
 /* 没有 ELFR 分批的实验，按阶段给一条可执行的安排 */
@@ -2799,7 +2812,7 @@ function scheduleRowsForCard(theme, c) {
   const prefix = [String(theme.name || ''),String(c.name || ''),String(project || '')];
   const suffix = [String(c.nextAction || ''),String(dueDate),String(c.remark || '')];
   const makeRow = (batch,work,qty,person,date,rowStatus,extra) => prefix.concat([
-    String(batch || ''),work,quantity(qty),String(person || ''),String(date || ''),rowStatus
+    String(batch || ''),work,'',quantity(qty),String(person || ''),String(date || ''),rowStatus
   ],suffix,[joinNotes(c.blocker,extra),String(c.note || ''),gradeText,expectedDate,experimentAttentionLabel(c)]);
   const elfrList = Array.isArray(c.elfrBatches) ? c.elfrBatches : [];
   if (!elfrList.length) {
@@ -2840,10 +2853,10 @@ function collectExperimentScheduleRows(batchId = null) {
 async function buildExperimentScheduleXlsx(rows) {
   const blob = buildXlsx(experimentScheduleHeaders(),rows,'实验安排');
   const files = await unzipAll(await blob.arrayBuffer());
-  const widths = [24,26,12,16,12,12,28,22,22,30,16,38,40,48,12,20,24];
+  const widths = [24,26,12,16,12,12,10,28,22,22,30,16,38,40,48,12,20,24];
   const views = '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A2" sqref="A2"/></sheetView></sheetViews>';
   const cols = '<cols>' + widths.map((width,i)=>`<col min="${i+1}" max="${i+1}" width="${width}" customWidth="1"/>`).join('') + '</cols>';
-  files['xl/worksheets/sheet1.xml'] = files['xl/worksheets/sheet1.xml'].replace('<sheetData>',views+cols+'<sheetData>').replace('</sheetData>',`</sheetData><autoFilter ref="A1:Q${rows.length+1}"/>`);
+  files['xl/worksheets/sheet1.xml'] = files['xl/worksheets/sheet1.xml'].replace('<sheetData>',views+cols+'<sheetData>').replace('</sheetData>',`</sheetData><autoFilter ref="A1:R${rows.length+1}"/>`);
   files['xl/styles.xml'] = files['xl/styles.xml'].replace('<xf xfId="0"/>','<xf xfId="0" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>').replace('<xf fontId="1" xfId="0" applyFont="1"/>','<xf fontId="1" xfId="0" applyFont="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>');
   return makeZip(Object.entries(files).map(([name,data])=>({name,data})));
 }
