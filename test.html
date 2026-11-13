@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>可靠性综合管理中心 V2.5</title>
+<title>可靠性综合管理中心 V3.0</title>
 <style>
 :root { --bg:#f4f6f8;--surface:#fff;--border:#e2e8f0;--text:#1e293b;--text-sec:#64748b;--primary:#2563eb;--primary-bg:#eff6ff;--success:#10b981;--success-bg:#ecfdf5;--warning:#f59e0b;--warning-bg:#fffbeb;--danger:#dc2626;--danger-bg:#fef2f2; }
 * { box-sizing: border-box; }
@@ -353,13 +353,14 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
 <body>
 
 <aside class="app-sidebar">
-  <div class="app-brand"><span class="brand-mark">◈</span><div>可靠性管理<span class="brand-sub">综合管理中心 · V2.5</span></div></div>
+  <div class="app-brand"><span class="brand-mark">◈</span><div>可靠性管理<span class="brand-sub">综合管理中心 · V3.0</span></div></div>
   <nav class="nav-tabs" aria-label="工作模块">
     <button type="button" class="nav-tab active" onclick="switchPage('components')"><span class="nav-number">01</span>元器件台账</button>
     <button type="button" class="nav-tab" onclick="switchPage('chips')"><span class="nav-number">02</span>芯片 / BOM</button>
     <button type="button" class="nav-tab" onclick="switchPage('shortage')"><span class="nav-number">03</span>缺货预警</button>
     <button type="button" class="nav-tab" onclick="switchPage('board')"><span class="nav-number">04</span>实验看板</button>
     <button type="button" class="nav-tab" onclick="switchPage('equipment')"><span class="nav-number">05</span>资产设备</button>
+    <button type="button" class="nav-tab" onclick="switchPage('chipstock')"><span class="nav-number">06</span>芯片库存</button>
   </nav>
   <div class="sidebar-foot">本地工作空间<br>物料 · 实验 · 设备</div>
 </aside>
@@ -461,6 +462,23 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
     </div>
     <div class="table-container" style="flex:1; overflow-y:auto;"><table><thead><tr><th>序号</th><th>设备</th><th>品牌</th><th>编号</th><th>负责人</th><th>更新时间</th><th>设备状态</th><th>分类</th><th>位置</th><th style="text-align:right">操作</th></tr></thead><tbody id="eqBody"></tbody></table></div>
   </div>
+  <div class="page" id="page-chipstock">
+    <div class="module-heading"><h1>芯片库存</h1><p>芯片出入库记录与组内库存；可从 Excel 导入「芯片数量 / 芯片变动情况」两个工作表，也可在这里直接登记。</p></div>
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <button class="ghost" onclick="openChipStockImport()">导入 Excel</button>
+        <button class="ghost" onclick="exportChipStockXlsx()">导出 Excel</button>
+      </div>
+      <div class="toolbar-right">
+        <button class="ghost" onclick="openChipStockModal()">＋ 新增库存</button>
+        <button class="primary" onclick="openChipMoveModal()">＋ 新增变动记录</button>
+      </div>
+    </div>
+    <h2 style="margin:0 0 12px;">芯片数量</h2>
+    <div class="table-container" style="margin-bottom:24px;"><table><thead><tr><th>序号</th><th>型号</th><th>来源</th><th>入库日期</th><th>批号</th><th class="num">入库数量</th><th class="num">现有数量</th><th>更新日期</th><th>备注</th><th>变动记录</th><th>操作</th></tr></thead><tbody id="chipStockBody"></tbody></table></div>
+    <h2 style="margin:0 0 12px;">芯片变动情况</h2>
+    <div class="table-container"><table><thead><tr><th>记录编号</th><th>变动日期</th><th>申请人</th><th>地区</th><th>客户</th><th>类型</th><th>项目</th><th>产品型号</th><th class="num">样品数量</th><th>批号</th><th>记录人</th><th>用途</th><th>备注</th><th>操作</th></tr></thead><tbody id="chipMoveBody"></tbody></table></div>
+  </div>
 </div>
 
 <div id="dropOverlay">松开鼠标加载 data.json</div>
@@ -475,6 +493,7 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
 <div id="modalCopyBom" class="modal hidden"><div class="modal-box"><div class="modal-head">复制 BOM</div><div class="modal-body" id="copyBomFormBody"></div><div class="modal-foot"><button class="ghost" onclick="document.getElementById('modalCopyBom').classList.add('hidden')">取消</button><button class="primary" onclick="saveCopyBom()">确定复制</button></div></div></div>
 <div id="modalBomImp" class="modal hidden"><div class="modal-box" style="width: 800px;"><div class="modal-head">导入 BOM</div><div class="modal-body" id="bomImpFormBody"></div><div class="modal-foot"><button class="ghost" onclick="document.getElementById('modalBomImp').classList.add('hidden')">取消</button><button class="primary" onclick="saveBomImport()">确认导入</button></div></div></div>
 <div id="modalPrep" class="modal hidden"><div class="modal-box" style="width: min(780px, 96vw);"><div class="modal-head">实验准备清单</div><div class="modal-body" id="prepFormBody"></div><div class="modal-foot"><button class="ghost" onclick="document.getElementById('modalPrep').classList.add('hidden')">关闭</button></div></div></div>
+<div id="modalChipImport" class="modal hidden"><div class="modal-box" style="width:min(1100px,98vw);"><div class="modal-head">导入芯片库存 Excel</div><div class="modal-body" id="chipImportBody"></div><div class="modal-foot"><button class="ghost" onclick="document.getElementById('modalChipImport').classList.add('hidden')">取消</button><button class="primary" id="chipImportConfirm" onclick="saveChipStockImport()" disabled>确认导入</button></div></div></div>
 <div id="modalInput" class="modal hidden"><div class="modal-box" style="width: min(440px, 95vw);"><div class="modal-head" id="inputModalTitle">输入</div><div class="modal-body" id="inputModalBody"></div><div class="modal-foot"><button class="ghost" onclick="closeInputModal()">取消</button><button class="primary" id="inputModalOk">确定</button></div></div></div>
 
 <script>
@@ -731,6 +750,40 @@ function normalizeImportedState(d, currentMaterial = materialDb, currentTest = t
     else if (!Array.isArray(batch.preparations)) throw new Error('实验准备记录必须是数组，已取消加载');
     normalizePreparationIds(batch.preparations);
   });
+  // V3.0 芯片库存 / 变动记录：老数据没有这两个数组
+  if (mat.chipStocks === undefined) mat.chipStocks = [];
+  if (!Array.isArray(mat.chipStocks)) throw new Error('芯片库存必须是数组，已取消加载');
+  mat.chipStocks = mat.chipStocks.filter(s => s && typeof s === 'object').map(s => ({
+    id: String(s.id || ('cs_' + uid())),
+    seq: String(s.seq ?? ''),
+    model: String(s.model || '').trim(),
+    source: String(s.source || '').trim(),
+    inDate: String(s.inDate || ''),
+    batchNo: String(s.batchNo || '').trim(),
+    inQty: Math.max(0, Number(s.inQty) || 0),
+    records: Array.isArray(s.records) ? s.records.map(String) : (s.records ? String(s.records).split(/[,，、;；\s]+/).filter(Boolean) : []),
+    qty: Math.max(0, Number(s.qty) || 0),
+    updatedAt: String(s.updatedAt || ''),
+    note: String(s.note || '')
+  })).filter(s => s.model || s.batchNo);
+  if (mat.chipMovements === undefined) mat.chipMovements = [];
+  if (!Array.isArray(mat.chipMovements)) throw new Error('芯片变动记录必须是数组，已取消加载');
+  mat.chipMovements = mat.chipMovements.filter(m => m && typeof m === 'object').map(m => ({
+    id: String(m.id == null ? '' : m.id),
+    date: String(m.date || ''),
+    applicant: String(m.applicant || ''),
+    region: String(m.region || ''),
+    customer: String(m.customer || ''),
+    customerType: String(m.customerType || ''),
+    project: String(m.project || ''),
+    model: String(m.model || ''),
+    qty: Math.max(0, Number(m.qty) || 0),
+    batchNo: String(m.batchNo || ''),
+    recorder: String(m.recorder || ''),
+    purpose: String(m.purpose || ''),
+    note: String(m.note || ''),
+    stockId: m.stockId == null ? null : String(m.stockId)
+  })).filter(m => m.id || m.model || m.batchNo);
   tests.cards.forEach(card => {
     if (card.batchId != null) card.batchId = String(card.batchId);
     // 2.4 卡片没有 devices：补空数组；脏数据清洗掉，不影响旧字段
@@ -837,7 +890,7 @@ function switchPage(page) {
   currentPage = page;
   document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
-  const tabs = { components:0, chips:1, shortage:2, board:3, equipment:4 };
+  const tabs = { components:0, chips:1, shortage:2, board:3, equipment:4, chipstock:5 };
   document.querySelectorAll('.nav-tab')[tabs[page]].classList.add('active');
   $(`#page-${page}`).classList.add('active');
   const btnAdd = $('#btnGlobalAdd');
@@ -845,12 +898,14 @@ function switchPage(page) {
   else if(page === 'chips') { btnAdd.style.display = 'inline-block'; btnAdd.textContent = '+ 新增芯片'; btnAdd.onclick = () => editChip(); }
   else if(page === 'board') { btnAdd.style.display = 'none'; btnAdd.onclick = null; boardViewMode = 'overview'; }
   else if(page === 'equipment') { btnAdd.style.display = 'inline-block'; btnAdd.textContent = '+ 新增设备'; btnAdd.onclick = () => openEqModal(); }
+  else if(page === 'chipstock') { btnAdd.style.display = 'inline-block'; btnAdd.textContent = '+ 新增变动'; btnAdd.onclick = () => openChipMoveModal(); }
   else { btnAdd.style.display = 'none'; }
   if(page === 'components') renderComponents();
   if(page === 'chips') renderChips();
   if(page === 'shortage') renderShortage();
   if(page === 'board') renderBoard();
   if(page === 'equipment') renderEquipments();
+  if(page === 'chipstock') renderChipStockPage();
 }
 function globalAdd() {
   if(currentPage === 'components') editComp();
@@ -963,7 +1018,7 @@ window.addEventListener('dragover', e => { e.preventDefault(); });
 window.addEventListener('drop', e => { e.preventDefault(); dragCounter = 0; document.getElementById('dropOverlay')?.classList.remove('on'); const f = e.dataTransfer && e.dataTransfer.files[0]; if (f) handleJsonFile(f); });
 function exportServerJson() {
   forceSave();
-  const allData = { version: '2.5', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
+  const allData = { version: '3.0', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
   const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = DATA_FILE_NAME; a.click();
   setTimeout(() => alert('已导出 ' + DATA_FILE_NAME + '。\n\n请覆盖到共享目录：\n' + SHARE_UNC), 100);
@@ -3163,7 +3218,7 @@ function buildXlsx(header, rows, sheetName){
 
 function exportJSON() {
   try { forceSave(); } catch (err) { setStatus('导出本页快照：' + err.message, 'var(--warning)'); }
-  const allData = { version: '2.5', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
+  const allData = { version: '3.0', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
   const blob = new Blob([JSON.stringify(allData, null, 2)], {type:'application/json'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `综合系统备份_${dateStr()}.json`; a.click();
   setTimeout(() => alert(`导出完成：元器件 ${(materialDb.components||[]).length} 条，主题 ${(testDb.batches||[]).length} 个，卡片 ${(testDb.cards||[]).length} 条，设备 ${(testDb.equipments||[]).length} 台`), 100);
@@ -3313,6 +3368,292 @@ function exportShortageXlsx() {
 
 
   
+/* ========== 芯片库存（V3.0） ========== */
+const CHIP_STOCK_HEADERS = ['序号','型号','来源','入库日期','批号','包装入库数量','变动情况(对应sheet2变动记录编号)','现有数量','更新日期','备注'];
+const CHIP_MOVE_HEADERS = ['记录编号','变动日期','申请人','地区','客户','客户类型（内部/外部）','项目','产品型号','样品数量','批号','记录人','用途','备注'];
+
+function chipStocks() { return materialDb.chipStocks || []; }
+function chipMoves() { return materialDb.chipMovements || []; }
+function renderChipStockPage() { renderChipStockTable(); renderChipMoveTable(); }
+
+function linkedChipMoves(s) {
+  return chipMoves().filter(m => m.stockId === s.id || (m.batchNo && m.batchNo === s.batchNo && (!m.model || !s.model || m.model === s.model || s.model.indexOf(m.model) >= 0)));
+}
+function renderChipStockTable() {
+  const tb = $('#chipStockBody');
+  const list = chipStocks();
+  if (!list.length) { tb.innerHTML = '<tr><td colspan="11" class="empty">暂无库存：点「导入 Excel」或「＋ 新增库存」</td></tr>'; return; }
+  tb.innerHTML = list.map(s => {
+    const idArg = esc(JSON.stringify(String(s.id)));
+    const linked = linkedChipMoves(s).length;
+    return `<tr><td>${esc(s.seq) || '—'}</td><td><strong>${esc(s.model) || '—'}</strong></td><td>${esc(s.source) || '—'}</td><td>${esc(s.inDate) || '—'}</td><td class="mono">${esc(s.batchNo) || '—'}</td><td class="num">${Number(s.inQty) || 0}</td><td class="num ${Number(s.qty) <= 0 ? 'text-danger' : ''}">${Number(s.qty) || 0}</td><td>${esc(s.updatedAt) || '—'}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(s.note)}">${esc(s.note) || '—'}</td><td>${linked ? `<span class="badge st-info">${linked} 条</span>` : '—'}</td><td><button class="link" onclick="showChipMoves(${idArg})">记录</button><button class="link" onclick="openChipStockModal(${idArg})">编辑</button><button class="link danger" onclick="delChipStock(${idArg})">删除</button></td></tr>`;
+  }).join('');
+}
+function renderChipMoveTable() {
+  const tb = $('#chipMoveBody');
+  const list = chipMoves();
+  if (!list.length) { tb.innerHTML = '<tr><td colspan="14" class="empty">暂无变动记录：点「＋ 新增变动记录」或导入 Excel</td></tr>'; return; }
+  tb.innerHTML = list.map(m => {
+    const idArg = esc(JSON.stringify(String(m.id)));
+    return `<tr><td class="mono">${esc(m.id) || '—'}</td><td>${esc(m.date) || '—'}</td><td>${esc(m.applicant) || '—'}</td><td>${esc(m.region) || '—'}</td><td>${esc(m.customer) || '—'}</td><td>${esc(m.customerType) || '—'}</td><td>${esc(m.project) || '—'}</td><td>${esc(m.model) || '—'}</td><td class="num">${Number(m.qty) || 0}</td><td class="mono">${esc(m.batchNo) || '—'}</td><td>${esc(m.recorder) || '—'}</td><td>${esc(m.purpose) || '—'}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(m.note)}">${esc(m.note) || '—'}</td><td><button class="link" onclick="openChipMoveModal(${idArg})">编辑</button><button class="link danger" onclick="delChipMove(${idArg})">删除</button></td></tr>`;
+  }).join('');
+}
+function showChipMoves(id) {
+  const s = chipStocks().find(x => x.id === id); if (!s) return;
+  const list = linkedChipMoves(s);
+  const rows = list.map(m => `<tr><td class="mono">${esc(m.id)||'—'}</td><td>${esc(m.date)||'—'}</td><td>${esc(m.applicant)||'—'}</td><td>${esc(m.customer)||'—'}</td><td>${esc(m.project)||'—'}</td><td class="num">${Number(m.qty)||0}</td><td>${esc(m.purpose)||'—'}</td></tr>`).join('');
+  openMatModal(`${esc(s.model)||'芯片'} · ${esc(s.batchNo)||'无批号'} 的变动记录`, `<div style="margin-bottom:10px;color:var(--text-sec);font-size:12px;">现有数量 ${Number(s.qty)||0}</div>` + (list.length ? `<div class="table-container"><table><thead><tr><th>编号</th><th>日期</th><th>申请人</th><th>客户</th><th>项目</th><th class="num">数量</th><th>用途</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="empty">没有关联的变动记录</div>'), () => true);
+}
+function openChipStockModal(id) {
+  const s = id ? chipStocks().find(x => x.id === id) : null;
+  if (id && !s) return alert('库存记录不存在');
+  const v = s || { seq:'', model:'', source:'', inDate:'', batchNo:'', inQty:0, qty:0, updatedAt:'', note:'' };
+  const html = `<input type="hidden" id="cs_id" value="${esc(s ? s.id : '')}">
+    <div class="form-grid">
+      <div class="form-group"><label>序号</label><input id="cs_seq" value="${esc(v.seq)}"></div>
+      <div class="form-group"><label>型号 *</label><input id="cs_model" value="${esc(v.model)}"></div>
+      <div class="form-group"><label>来源</label><input id="cs_source" value="${esc(v.source)}"></div>
+      <div class="form-group"><label>批号</label><input id="cs_batch" value="${esc(v.batchNo)}"></div>
+      <div class="form-group"><label>入库日期</label><input id="cs_inDate" type="date" value="${esc(v.inDate)}"></div>
+      <div class="form-group"><label>更新日期</label><input id="cs_updatedAt" type="date" value="${esc(v.updatedAt)}"></div>
+      <div class="form-group"><label>包装入库数量</label><input id="cs_inQty" type="number" min="0" value="${Number(v.inQty)||0}"></div>
+      <div class="form-group"><label>现有数量</label><input id="cs_qty" type="number" min="0" value="${Number(v.qty)||0}"></div>
+      <div class="form-group full"><label>备注</label><input id="cs_note" value="${esc(v.note)}"></div>
+    </div>`;
+  openMatModal(s ? '编辑芯片库存' : '新增芯片库存', html, () => saveChipStock(s ? s.id : null));
+}
+function saveChipStock(origId) {
+  const model = $('#cs_model').value.trim();
+  if (!model) { alert('请填写型号'); return false; }
+  let inQty, qty;
+  try { inQty = stockInteger($('#cs_inQty').value || 0, '入库数量'); qty = stockInteger($('#cs_qty').value || 0, '现有数量'); }
+  catch (err) { alert(err.message); return false; }
+  const next = materialClone();
+  const record = origId ? next.chipStocks.find(s => s.id === origId) : { id: 'cs_' + uid() };
+  if (origId && !record) { alert('库存记录不存在'); return false; }
+  Object.assign(record, {
+    seq: $('#cs_seq').value.trim(), model, source: $('#cs_source').value.trim(),
+    inDate: $('#cs_inDate').value, batchNo: $('#cs_batch').value.trim(),
+    inQty, qty, updatedAt: $('#cs_updatedAt').value || getLocalToday(), note: $('#cs_note').value.trim()
+  });
+  if (!origId) next.chipStocks.push(record);
+  if (!commitMaterialChange(next)) return false;
+  renderChipStockPage();
+  return true;
+}
+function delChipStock(id) {
+  const s = chipStocks().find(x => x.id === id); if (!s) return;
+  const linked = linkedChipMoves(s).length;
+  if (!confirm(`删除「${s.model} ${s.batchNo || ''}」？${linked ? `\n有 ${linked} 条变动记录与它关联（记录会保留，但不再扣这个库存）。` : ''}`)) return;
+  const next = materialClone();
+  next.chipStocks = next.chipStocks.filter(x => x.id !== id);
+  if (commitMaterialChange(next)) renderChipStockPage();
+}
+function openChipMoveModal(id) {
+  const m = id ? chipMoves().find(x => x.id === id) : null;
+  if (id && !m) return alert('变动记录不存在');
+  const v = m || { id:'', date:'', applicant:'', region:'', customer:'', customerType:'', project:'', model:'', qty:0, batchNo:'', recorder:'', purpose:'', note:'' };
+  const stockOpts = chipStocks().map(s => `<option value="${esc(s.id)}" ${m && m.stockId === s.id ? 'selected' : ''}>${esc(s.model)} · ${esc(s.batchNo || '无批号')}（现有 ${Number(s.qty)||0}）</option>`).join('');
+  const html = `<input type="hidden" id="cm_id" value="${esc(m ? m.id : '')}">
+    <div class="form-grid">
+      <div class="form-group"><label>记录编号</label><input id="cm_id_text" value="${esc(v.id)}" placeholder="留空自动编号"></div>
+      <div class="form-group"><label>变动日期 *</label><input id="cm_date" type="date" value="${esc(v.date)}"></div>
+      <div class="form-group"><label>申请人</label><input id="cm_applicant" value="${esc(v.applicant)}"></div>
+      <div class="form-group"><label>地区</label><input id="cm_region" value="${esc(v.region)}"></div>
+      <div class="form-group"><label>客户</label><input id="cm_customer" value="${esc(v.customer)}"></div>
+      <div class="form-group"><label>客户类型</label><select id="cm_customerType"><option value="" ${!v.customerType?'selected':''}>—</option><option value="内部" ${v.customerType==='内部'?'selected':''}>内部</option><option value="外部" ${v.customerType==='外部'?'selected':''}>外部</option></select></div>
+      <div class="form-group"><label>项目</label><input id="cm_project" value="${esc(v.project)}"></div>
+      <div class="form-group"><label>产品型号</label><input id="cm_model" value="${esc(v.model)}"></div>
+      <div class="form-group"><label>样品数量 *</label><input id="cm_qty" type="number" min="0" value="${Number(v.qty)||0}"></div>
+      <div class="form-group"><label>批号</label><input id="cm_batch" value="${esc(v.batchNo)}"></div>
+      <div class="form-group"><label>记录人</label><input id="cm_recorder" value="${esc(v.recorder)}"></div>
+      <div class="form-group"><label>用途</label><input id="cm_purpose" value="${esc(v.purpose)}"></div>
+      <div class="form-group full"><label>关联库存（扣减现有数量，选填）</label><select id="cm_stockId"><option value="">不扣库存</option>${stockOpts}</select></div>
+      <div class="form-group full"><label>备注</label><input id="cm_note" value="${esc(v.note)}"></div>
+    </div>`;
+  openMatModal(m ? '编辑变动记录' : '新增变动记录', html, () => saveChipMove(m ? m.id : null));
+}
+function saveChipMove(origId) {
+  const date = $('#cm_date').value;
+  if (!date || !isValidDateOnly(date)) { alert('请填写有效的变动日期'); return false; }
+  let qty;
+  try { qty = stockInteger($('#cm_qty').value || 0, '样品数量'); }
+  catch (err) { alert(err.message); return false; }
+  const idText = $('#cm_id_text').value.trim();
+  const stockId = $('#cm_stockId').value || null;
+  const next = materialClone();
+  const orig = origId ? next.chipMovements.find(m => m.id === origId) : null;
+  if (origId && !orig) { alert('变动记录不存在'); return false; }
+  // 先撤销旧关联的扣减
+  if (orig && orig.stockId) {
+    const st = next.chipStocks.find(s => s.id === orig.stockId);
+    if (st) { st.qty = stockInteger(Number(st.qty || 0) + Number(orig.qty || 0), '库存回补'); st.records = (st.records || []).filter(r => r !== orig.id); st.updatedAt = getLocalToday(); }
+  }
+  // 新扣减
+  if (stockId) {
+    const st = next.chipStocks.find(s => s.id === stockId);
+    if (!st) { alert('关联的库存不存在'); return false; }
+    if (Number(st.qty || 0) < qty) { alert(`库存不足：「${st.model} ${st.batchNo || ''}」现有 ${Number(st.qty)||0}，本次要扣 ${qty}。请先核对库存或改为不扣库存。`); return false; }
+    st.qty = stockInteger(Number(st.qty || 0) - qty, '扣减后库存');
+    if (!Array.isArray(st.records)) st.records = [];
+    st.updatedAt = getLocalToday();
+  }
+  // 编号：优先手填，否则取现有最大编号 +1
+  let newId = idText;
+  if (!newId) {
+    let max = 0;
+    next.chipMovements.forEach(x => { const n = parseInt(String(x.id), 10); if (Number.isFinite(n) && n > max) max = n; });
+    newId = String(max + 1);
+  }
+  const record = orig || { id: newId };
+  if (orig && idText && idText !== orig.id) {
+    if (next.chipMovements.some(x => x.id === idText)) { alert('记录编号已存在：' + idText); return false; }
+    record.id = idText;
+  }
+  Object.assign(record, {
+    date, applicant: $('#cm_applicant').value.trim(), region: $('#cm_region').value.trim(),
+    customer: $('#cm_customer').value.trim(), customerType: $('#cm_customerType').value,
+    project: $('#cm_project').value.trim(), model: $('#cm_model').value.trim(), qty,
+    batchNo: $('#cm_batch').value.trim(), recorder: $('#cm_recorder').value.trim(),
+    purpose: $('#cm_purpose').value.trim(), note: $('#cm_note').value.trim(), stockId
+  });
+  if (!orig) next.chipMovements.push(record);
+  if (stockId) {
+    const st = next.chipStocks.find(s => s.id === stockId);
+    if (!Array.isArray(st.records)) st.records = [];
+    if (!st.records.includes(record.id)) st.records.push(record.id);
+  }
+  if (!commitMaterialChange(next)) return false;
+  renderChipStockPage();
+  return true;
+}
+function delChipMove(id) {
+  const m = chipMoves().find(x => x.id === id); if (!m) return;
+  const st = m.stockId ? chipStocks().find(s => s.id === m.stockId) : null;
+  if (!confirm(`删除记录 ${id}？${st ? `\n会自动把 ${Number(m.qty)||0} 加回「${st.model} ${st.batchNo || ''}」。` : '\n（该记录没有关联库存，只删除记录本身。）'}`)) return;
+  const next = materialClone();
+  if (st) {
+    const st2 = next.chipStocks.find(s => s.id === st.id);
+    if (st2) { st2.qty = stockInteger(Number(st2.qty || 0) + Number(m.qty || 0), '库存回补'); st2.records = (st2.records || []).filter(r => r !== m.id); st2.updatedAt = getLocalToday(); }
+  }
+  next.chipMovements = next.chipMovements.filter(x => x.id !== id);
+  if (commitMaterialChange(next)) renderChipStockPage();
+}
+
+let chipStockImportState = { stocks: [], moves: [], signature: '', fileName: '' };
+function openChipStockImport() {
+  chipStockImportState = { stocks: [], moves: [], signature: JSON.stringify({ s: materialDb.chipStocks, m: materialDb.chipMovements }), fileName: '' };
+  $('#chipImportBody').innerHTML = `<div style="margin-bottom:12px;color:var(--text-sec);font-size:12px;line-height:1.7;">选择包含「芯片数量」和「芯片变动情况」两个工作表的 Excel（就是桌面上那个模板）。<br>导入会<b>整体替换</b>当前的芯片库存和变动记录，导入前建议先导出备份。</div><div class="imp-box" id="chipImpDrop"><div style="font-size:30px;">Excel</div><div><strong>点击选择或拖拽</strong></div><input type="file" id="chipImportFile" accept=".xlsx" hidden></div><div id="chipImportStatus" style="margin:12px 0;"></div><div id="chipImportPreview"></div>`;
+  $('#chipImportConfirm').disabled = true;
+  showModalOnTop('modalChipImport');
+  const drop = $('#chipImpDrop'), fi = $('#chipImportFile');
+  drop.onclick = () => fi.click();
+  fi.onchange = () => { if (fi.files[0]) handleChipStockExcel(fi.files[0]); };
+  drop.ondragover = e => { e.preventDefault(); drop.style.background = '#eff6ff'; };
+  drop.ondragleave = () => drop.style.background = '#fafbfc';
+  drop.ondrop = e => { e.preventDefault(); drop.style.background = '#fafbfc'; const f = e.dataTransfer.files[0]; if (f) handleChipStockExcel(f); };
+}
+function findHeaderIndex(headers, names) { return headers.findIndex(h => names.some(n => String(h).trim().toLowerCase() === n.toLowerCase())); }
+function parseChipStockRows(rows) {
+  let header = -1;
+  for (let i = 0; i < Math.min(10, rows.length); i++) {
+    if (rows[i].some(c => String(c || '').includes('型号'))) { header = i; break; }
+  }
+  if (header < 0) throw new Error('「芯片数量」表里找不到表头（需要含「型号」列）');
+  const h = rows[header].map(c => String(c ?? '').trim());
+  const cell = (r, name) => { const ci = findHeaderIndex(h, [name]); return ci >= 0 ? String(r[ci] ?? '').trim() : ''; };
+  const stocks = [];
+  rows.slice(header + 1).forEach((r, i) => {
+    const model = cell(r, '型号');
+    if (!model && !cell(r, '批号') && !cell(r, '来源')) return;
+    const rec = cell(r, '变动情况(对应sheet2变动记录编号)') || cell(r, '变动情况');
+    stocks.push({
+      id: 'cs_' + uid(), seq: String(i + 1), model, source: cell(r, '来源'), inDate: cell(r, '入库日期'),
+      batchNo: cell(r, '批号'), inQty: Math.max(0, parseInt(cell(r, '包装入库数量'), 10) || 0),
+      records: rec ? rec.split(/[,，、;；\s]+/).filter(Boolean) : [],
+      qty: Math.max(0, parseInt(cell(r, '现有数量'), 10) || 0), updatedAt: cell(r, '更新日期'), note: cell(r, '备注')
+    });
+  });
+  return stocks;
+}
+function parseChipMoveRows(rows) {
+  let header = -1;
+  for (let i = 0; i < Math.min(10, rows.length); i++) {
+    if (rows[i].some(c => String(c || '').includes('记录编号'))) { header = i; break; }
+  }
+  if (header < 0) throw new Error('「芯片变动情况」表里找不到表头（需要含「记录编号」列）');
+  const h = rows[header].map(c => String(c ?? '').trim());
+  const cell = (r, name) => { const ci = findHeaderIndex(h, [name]); return ci >= 0 ? String(r[ci] ?? '').trim() : ''; };
+  const moves = [];
+  rows.slice(header + 1).forEach(r => {
+    const id = cell(r, '记录编号');
+    if (!id && !cell(r, '产品型号') && !cell(r, '批号')) return;
+    moves.push({
+      id, date: cell(r, '变动日期'), applicant: cell(r, '申请人'), region: cell(r, '地区'),
+      customer: cell(r, '客户'), customerType: cell(r, '客户类型（内部/外部）'), project: cell(r, '项目'),
+      model: cell(r, '产品型号'), qty: Math.max(0, parseInt(cell(r, '样品数量'), 10) || 0),
+      batchNo: cell(r, '批号'), recorder: cell(r, '记录人'), purpose: cell(r, '用途'), note: cell(r, '备注'), stockId: null
+    });
+  });
+  return moves;
+}
+async function handleChipStockExcel(file) {
+  const status = $('#chipImportStatus'), preview = $('#chipImportPreview');
+  if (!/\.xlsx$/i.test(file.name)) { status.textContent = '请选择 .xlsx 文件'; return; }
+  status.textContent = '正在解析…';
+  try {
+    const files = await unzipAll(await file.arrayBuffer());
+    const wb = files['xl/workbook.xml'];
+    if (!wb) throw new Error('不是有效的 Excel 工作簿');
+    const sheets = parseWorkbookXml(wb, files['xl/_rels/workbook.xml.rels'] || '');
+    const shared = parseSharedStrings(files['xl/sharedStrings.xml'] || '');
+    const stockDef = sheets.find(s => s.name === '芯片数量');
+    const moveDef = sheets.find(s => s.name === '芯片变动情况');
+    if (!stockDef || !moveDef) throw new Error('需要「芯片数量」和「芯片变动情况」两个工作表');
+    const stocks = parseChipStockRows(parseSheetXml(files[stockDef.path] || '', shared));
+    const moves = parseChipMoveRows(parseSheetXml(files[moveDef.path] || '', shared));
+    chipStockImportState = { stocks, moves, signature: JSON.stringify({ s: materialDb.chipStocks, m: materialDb.chipMovements }), fileName: file.name };
+    status.textContent = `${file.name}：库存 ${stocks.length} 条，变动记录 ${moves.length} 条。核对后点确认导入（会整体替换当前数据）。`;
+    preview.innerHTML = `<div class="table-container"><table><thead><tr><th>库存序号</th><th>型号</th><th>批号</th><th class="num">入库</th><th class="num">现有</th></tr></thead><tbody>${stocks.map(s => `<tr><td>${esc(s.seq)}</td><td>${esc(s.model)}</td><td>${esc(s.batchNo) || '—'}</td><td class="num">${s.inQty}</td><td class="num">${s.qty}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">库存表没有数据行</td></tr>'}</tbody></table></div><div class="table-container" style="margin-top:12px;"><table><thead><tr><th>编号</th><th>日期</th><th>申请人</th><th>型号</th><th class="num">数量</th><th>批号</th></tr></thead><tbody>${moves.map(m => `<tr><td>${esc(m.id)}</td><td>${esc(m.date)}</td><td>${esc(m.applicant)}</td><td>${esc(m.model)}</td><td class="num">${m.qty}</td><td>${esc(m.batchNo) || '—'}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">变动表没有数据行</td></tr>'}</tbody></table></div>`;
+    $('#chipImportConfirm').disabled = false;
+  } catch (err) { status.textContent = '解析失败：' + err.message; }
+}
+function saveChipStockImport() {
+  if (!chipStockImportState.stocks.length && !chipStockImportState.moves.length) return alert('没有可导入的数据');
+  if (JSON.stringify({ s: materialDb.chipStocks, m: materialDb.chipMovements }) !== chipStockImportState.signature) return alert('库存数据已变化，请重新选择文件核对后再导入');
+  const next = materialClone();
+  next.chipStocks = JSON.parse(JSON.stringify(chipStockImportState.stocks));
+  next.chipMovements = JSON.parse(JSON.stringify(chipStockImportState.moves));
+  if (!commitMaterialChange(next)) return;
+  $('#modalChipImport').classList.add('hidden');
+  renderChipStockPage();
+  alert(`导入完成：库存 ${chipStockImportState.stocks.length} 条，变动记录 ${chipStockImportState.moves.length} 条。`);
+}
+function buildChipStockXlsx(stockRows, moveRows) {
+  const sheets = [
+    { name: '芯片数量', header: CHIP_STOCK_HEADERS, rows: stockRows },
+    { name: '芯片变动情况', header: CHIP_MOVE_HEADERS, rows: moveRows }
+  ];
+  const ct = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' + sheets.map((s, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('') + '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>';
+  const rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
+  const wb = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' + sheets.map((s, i) => `<sheet name="${xmlEsc(s.name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('') + '</sheets></workbook>';
+  const wbRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + sheets.map((s, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('') + `<Relationship Id="rId${sheets.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+  const styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf/></cellStyleXfs><cellXfs count="2"><xf xfId="0"/><xf fontId="1" xfId="0" applyFont="1"/></cellXfs></styleSheet>';
+  const files = [{ name: '[Content_Types].xml', data: ct }, { name: '_rels/.rels', data: rels }, { name: 'xl/workbook.xml', data: wb }, { name: 'xl/_rels/workbook.xml.rels', data: wbRels }, { name: 'xl/styles.xml', data: styles }];
+  sheets.forEach((s, i) => files.push({ name: `xl/worksheets/sheet${i + 1}.xml`, data: sheetXml(s.header, s.rows) }));
+  return makeZip(files);
+}
+function exportChipStockXlsx() {
+  const stockRows = chipStocks().map(s => [s.seq, s.model, s.source, s.inDate, s.batchNo, Number(s.inQty) || 0, (s.records || []).join(','), Number(s.qty) || 0, s.updatedAt, s.note]);
+  const moveRows = chipMoves().map(m => [m.id, m.date, m.applicant, m.region, m.customer, m.customerType, m.project, m.model, Number(m.qty) || 0, m.batchNo, m.recorder, m.purpose, m.note]);
+  const blob = buildChipStockXlsx(stockRows, moveRows);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `芯片库存_${dateStr()}.xlsx`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
 bindComponentDrag();
 loadAll();
 </script>
