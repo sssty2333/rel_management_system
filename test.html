@@ -510,7 +510,9 @@ let currentElfrCardId = null;
 let bomImportState = { chipId: null, boardKey: '', parsedRows: [] };
 
 /* 工作量权重（内部使用，界面不显示分值） */
-/* 一次投实验 = 2 个单位，一次 FT = 1 个单位；按“参与次数”计，不按颗数 */
+/* 一次投实验 = 2 个单位，一次 FT = 1 个单位；按“参与次数”计，不按颗数。
+   120 颗去 3 人、80 颗去 2 人，人均都是 40 颗，所以两种批次的一次参与工作量相同，
+   不需要再乘批次系数。 */
 const WORK_INJ_SLOT = 2;
 const WORK_FT_SLOT = 1;
 
