@@ -3404,13 +3404,19 @@ function showChipMoves(id) {
   const rows = list.map(m => `<tr><td class="mono">${esc(m.id)||'—'}</td><td>${esc(m.date)||'—'}</td><td>${esc(m.applicant)||'—'}</td><td>${esc(m.customer)||'—'}</td><td>${esc(m.project)||'—'}</td><td class="num">${Number(m.qty)||0}</td><td>${esc(m.purpose)||'—'}</td></tr>`).join('');
   openMatModal(`${esc(s.model)||'芯片'} · ${esc(s.batchNo)||'无批号'} 的变动记录`, `<div style="margin-bottom:10px;color:var(--text-sec);font-size:12px;">现有数量 ${Number(s.qty)||0}</div>` + (list.length ? `<div class="table-container"><table><thead><tr><th>编号</th><th>日期</th><th>申请人</th><th>客户</th><th>项目</th><th class="num">数量</th><th>用途</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="empty">没有关联的变动记录</div>'), () => true);
 }
+function nextChipStockSeq(stocks) {
+  let max = 0;
+  (stocks || []).forEach(x => { const n = parseInt(String(x.seq), 10); if (Number.isFinite(n) && n > max) max = n; });
+  return String(max + 1);
+}
 function openChipStockModal(id) {
   const s = id ? chipStocks().find(x => x.id === id) : null;
   if (id && !s) return alert('库存记录不存在');
-  const v = s || { seq:'', model:'', source:'', inDate:'', batchNo:'', inQty:0, qty:0, updatedAt:'', note:'' };
+  // 标签号自动排下一个（现有最大序号 +1），也可以手动改
+  const v = s || { seq: nextChipStockSeq(chipStocks()), model:'', source:'', inDate:'', batchNo:'', inQty:0, qty:0, updatedAt:'', note:'' };
   const html = `<input type="hidden" id="cs_id" value="${esc(s ? s.id : '')}">
     <div class="form-grid">
-      <div class="form-group"><label>序号</label><input id="cs_seq" value="${esc(v.seq)}"></div>
+      <div class="form-group"><label>序号（标签号）</label><input id="cs_seq" value="${esc(v.seq)}" title="贴在包装上的标签号，自动排下一个，可手动改"></div>
       <div class="form-group"><label>型号 *</label><input id="cs_model" value="${esc(v.model)}"></div>
       <div class="form-group"><label>来源</label><input id="cs_source" value="${esc(v.source)}"></div>
       <div class="form-group"><label>批号</label><input id="cs_batch" value="${esc(v.batchNo)}"></div>
@@ -3431,8 +3437,13 @@ function saveChipStock(origId) {
   const next = materialClone();
   const record = origId ? next.chipStocks.find(s => s.id === origId) : { id: 'cs_' + uid() };
   if (origId && !record) { alert('库存记录不存在'); return false; }
+  // 标签号：留空自动排下一个；撞号拦住（物理标签要唯一）
+  let seq = $('#cs_seq').value.trim();
+  if (!seq) seq = nextChipStockSeq(next.chipStocks.filter(x => x.id !== (origId || '')));
+  const dup = next.chipStocks.find(x => x.id !== (origId || '') && String(x.seq) === seq);
+  if (dup) { alert(`标签号 ${seq} 已经贴在「${dup.model}」上了，标签号要唯一。建议用自动排的 ${nextChipStockSeq(next.chipStocks.filter(x => x.id !== (origId || '')))}。`); return false; }
   Object.assign(record, {
-    seq: $('#cs_seq').value.trim(), model, source: $('#cs_source').value.trim(),
+    seq, model, source: $('#cs_source').value.trim(),
     inDate: $('#cs_inDate').value, batchNo: $('#cs_batch').value.trim(),
     inQty, qty, updatedAt: $('#cs_updatedAt').value || getLocalToday(), note: $('#cs_note').value.trim()
   });
@@ -3568,7 +3579,7 @@ function parseChipStockRows(rows) {
     if (!model && !cell(r, '批号') && !cell(r, '来源')) return;
     const rec = cell(r, '变动情况(对应sheet2变动记录编号)') || cell(r, '变动情况');
     stocks.push({
-      id: 'cs_' + uid(), seq: String(i + 1), model, source: cell(r, '来源'), inDate: cell(r, '入库日期'),
+      id: 'cs_' + uid(), seq: cell(r, '序号') || String(i + 1), model, source: cell(r, '来源'), inDate: cell(r, '入库日期'),
       batchNo: cell(r, '批号'), inQty: Math.max(0, parseInt(cell(r, '包装入库数量'), 10) || 0),
       records: rec ? rec.split(/[,，、;；\s]+/).filter(Boolean) : [],
       qty: Math.max(0, parseInt(cell(r, '现有数量'), 10) || 0), updatedAt: cell(r, '更新日期'), note: cell(r, '备注')
