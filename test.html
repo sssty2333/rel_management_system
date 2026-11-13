@@ -110,6 +110,10 @@ aside.board-aside { width: 270px; background: #fff; border: 1px solid var(--bord
 .tc-devices-label { color: var(--text-sec); font-size: 11px; }
 .tc-devices .badge { white-space: nowrap; }
 .tc-devices-none { color: var(--text-sec); font-size: 11px; }
+.tc-code { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin: 12px 0 2px; padding: 7px 10px; background: #f7f9fd; border-radius: 5px; font-size: 12px; }
+.tc-code-label { font-size: 11px; color: var(--text-sec); }
+.tc-code-ver { font-weight: 600; color: var(--primary); font-family: Consolas, monospace; }
+.tc-code-note { color: var(--text-sec); overflow-wrap: anywhere; }
 #modalMatBody table input, #modalMatBody table select { width: 100%; height: 32px; padding: 0 8px; border: 1px solid var(--border); border-radius: 5px; font: inherit; font-size: 12px; }
 .bom-qty { width: 64px; height: 28px; padding: 0 6px; border: 1px solid var(--border); border-radius: 5px; font-size: 12px; font-family: inherit; text-align: right; }
 .bom-qty:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); outline: none; }
@@ -505,11 +509,10 @@ let copyBomTarget = null;
 let currentElfrCardId = null;
 let bomImportState = { chipId: null, boardKey: '', parsedRows: [] };
 
-/* 工作量权重（内部使用，界面不显示） */
-/* 投实验 40颗=10分 → 每颗 0.25 分 */
-/* FT 60颗=5分 → 每颗 5/60 分 */
-const SCORE_INJ_PER_PILL = 0.25;
-const SCORE_FT_PER_PILL = 5/60;
+/* 工作量权重（内部使用，界面不显示分值） */
+/* 一次投实验 = 2 个单位，一次 FT = 1 个单位；按“参与次数”计，不按颗数 */
+const WORK_INJ_SLOT = 2;
+const WORK_FT_SLOT = 1;
 
 const CARD_STATUSES = ['待准备', '已送样', '实验中', '已取回', '已FT'];
 /* 实验设备：不引用资产台账，就在卡片里记一笔。三档状态，够用就行。 */
@@ -569,6 +572,9 @@ function normalizeElfrBatch(b) {
   const requested = Number(b.injCount);
   b.injCount = Math.max(Number.isSafeInteger(requested) && requested > 0 ? requested : Number(b.qty) >= 120 ? 3 : 2, b.injectors.length);
   while (b.injectors.length < b.injCount) b.injectors.push('');
+  // 手工改过的名额打锁，重新平衡时保留
+  if (!Array.isArray(b.injectorLocked)) b.injectorLocked = [];
+  while (b.injectorLocked.length < b.injCount) b.injectorLocked.push(false);
   if (b.ftCount == null || b.ftCount === '') b.ftCount = 2;
   if (b.injectDate == null) b.injectDate = '';
   if (!Array.isArray(b.ftTests)) b.ftTests = [];
@@ -580,6 +586,8 @@ function normalizeElfrBatch(b) {
     if (!hadPlannedPeople && t.done === true && uniqueElfrPeople(originalPeople).length !== 2) t.legacyCompleted = true;
     if (!Array.isArray(t.actualTesters)) t.actualTesters = originalPeople.slice();
     while (t.actualTesters.length < 2) t.actualTesters.push('');
+    if (!Array.isArray(t.testerLocked)) t.testerLocked = [false, false];
+    while (t.testerLocked.length < 2) t.testerLocked.push(false);
     if (t.id == null || t.id === '') t.id = 'ft_' + uid();
     else t.id = String(t.id);
     if (t.qty == null) t.qty = b.qty;
@@ -729,6 +737,9 @@ function normalizeImportedState(d, currentMaterial = materialDb, currentTest = t
       dueDate: isValidDateOnly(String(d.dueDate || '')) ? String(d.dueDate) : '',
       note: String(d.note || '')
     })).filter(d => d.name);
+    // 实验代码（选填）：2.4/2.5 的卡片没有这两个字段，补空串即可
+    if (card.codeVersion == null) card.codeVersion = '';
+    if (card.codeNote == null) card.codeNote = '';
     if (card.elfrBatches == null) card.elfrBatches = [];
     else if (!Array.isArray(card.elfrBatches)) throw new Error('ELFR 分批记录必须是数组，已取消加载');
     card.elfrBatches.forEach(batch => {
@@ -2015,7 +2026,10 @@ function renderBoard() {
       : '<span class="tc-devices-none">未登记</span>';
     const devicesHtml = `<div class="tc-devices"><span class="tc-devices-label">设备</span>${devChips}<button class="link" onclick="openDeviceEditor(${idArg})">管理</button></div>`;
     const deviceWarn = (finished && devOpen.length) ? `<div class="blocker-note">⚠ 实验已完成，还有 ${devOpen.length} 台设备未归还</div>` : '';
-    return `<article class="tc-card"><div class="tc-header"><div><h3 class="tc-title">${esc(c.name)}</h3><div class="tc-sub">样品 ${esc(c.qty)} pcs</div></div><span class="badge ${statusClass(status)}">${esc(experimentStatusLabel(status))}</span></div><div class="tc-body">${c.remark ? `<div class="remark-box">${esc(c.remark)}</div>` : '<div class="remark-box empty">当前进展待更新</div>'}${elfrHtml}<div class="info-row"><div class="info-label">试验条件</div><div class="info-val">${esc(c.note) || '未设置'}</div></div><div class="info-row"><div class="info-label">预计完成</div><div class="info-val" style="color:var(--text-sec)">${timeData.endDate || '未设置'}</div></div>${devicesHtml}${deviceWarn}${actionHtml}${blockerHtml}<div class="progress-wrap"><div class="progress-bar" style="width:${progress}%"></div></div><div style="display:flex;justify-content:space-between;gap:8px;font-size:10px;margin-top:6px;color:var(--text-sec)"><span>${finished?'实验已完成':`${typeof getCardProgress === 'function'?'执行':'时间'}进度 ${progress}%`}</span><span>更新 ${esc(c.updatedAt) || '未记录'}</span></div></div><div class="tc-footer"><div class="person"><div class="person-avatar">${esc(c.person ? c.person.slice(-1) : '?')}</div>${esc(c.person || '未分配')}</div><div><button class="link" onclick="openQuickUpdate(${idArg})">快速更新</button><button class="link" onclick="openBoardModal(${idArg})">全部编辑</button><button class="link danger" onclick="delCard(${idArg})">删除</button></div></div></article>`;
+    const codeHtml = (c.codeVersion || c.codeNote)
+      ? `<div class="tc-code"><span class="tc-code-label">实验代码</span>${c.codeVersion ? `<span class="tc-code-ver">${esc(c.codeVersion)}</span>` : ''}${c.codeNote ? `<span class="tc-code-note">${esc(c.codeNote)}</span>` : ''}</div>`
+      : '';
+    return `<article class="tc-card"><div class="tc-header"><div><h3 class="tc-title">${esc(c.name)}</h3><div class="tc-sub">样品 ${esc(c.qty)} pcs</div></div><span class="badge ${statusClass(status)}">${esc(experimentStatusLabel(status))}</span></div><div class="tc-body">${c.remark ? `<div class="remark-box">${esc(c.remark)}</div>` : '<div class="remark-box empty">当前进展待更新</div>'}${elfrHtml}<div class="info-row"><div class="info-label">试验条件</div><div class="info-val">${esc(c.note) || '未设置'}</div></div><div class="info-row"><div class="info-label">预计完成</div><div class="info-val" style="color:var(--text-sec)">${timeData.endDate || '未设置'}</div></div>${codeHtml}${devicesHtml}${deviceWarn}${actionHtml}${blockerHtml}<div class="progress-wrap"><div class="progress-bar" style="width:${progress}%"></div></div><div style="display:flex;justify-content:space-between;gap:8px;font-size:10px;margin-top:6px;color:var(--text-sec)"><span>${finished?'实验已完成':`${typeof getCardProgress === 'function'?'执行':'时间'}进度 ${progress}%`}</span><span>更新 ${esc(c.updatedAt) || '未记录'}</span></div></div><div class="tc-footer"><div class="person"><div class="person-avatar">${esc(c.person ? c.person.slice(-1) : '?')}</div>${esc(c.person || '未分配')}</div><div><button class="link" onclick="openQuickUpdate(${idArg})">快速更新</button><button class="link" onclick="openBoardModal(${idArg})">全部编辑</button><button class="link danger" onclick="delCard(${idArg})">删除</button></div></div></article>`;
   };
   const order = ['待准备','已送样','实验中','已取回','已FT'];
   const otherStatuses = [...new Set(cards.map(displayStatus).filter(s => !order.includes(s)))];
@@ -2045,7 +2059,7 @@ function openBoardModal(id) {
   const selectedProject = getSavedAecProject(c);
   const projectOptions = aecProjects.map(p => `<option value="${p}" ${p===selectedProject?'selected':''}>${p}</option>`).join('');
   const statusOpts = CARD_STATUSES.map(s => `<option value="${s}" ${c.status===s?'selected':''}>${s}</option>`).join('');
-  $('#boardFormBody').innerHTML = `<div class="form-group"><label>实验项目名称</label><input id="bf_name" value="${esc(c.name)}"></div><div style="background: #eff6ff; border: 1px dashed #bfdbfe; padding: 12px; border-radius: 6px;"><div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--primary);">快捷填充 AEC-Q100</div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;"><div class="form-group" style="margin: 0;"><select id="aec_grade" class="filter-select" style="width: 100%;" onchange="fillAecCondition()"><option value="">Grade 未设置（可不选）</option><option value="0" ${selectedGrade==='0'?'selected':''}>Grade 0</option><option value="1" ${selectedGrade==='1'?'selected':''}>Grade 1</option><option value="2" ${selectedGrade==='2'?'selected':''}>Grade 2</option><option value="3" ${selectedGrade==='3'?'selected':''}>Grade 3</option></select></div><div class="form-group" style="margin: 0;"><select id="aec_project" class="filter-select" style="width: 100%;" onchange="fillAecCondition()"><option value="">试验项目未设置（可不选）</option>${projectOptions}</select></div></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;"><div class="form-group"><label>样品数量</label><input id="bf_qty" type="number" value="${esc(c.qty)}"></div><div class="form-group"><label>责任人</label><input id="bf_person" value="${esc(c.person)}"></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;"><div class="form-group"><label>状态</label><select id="bf_status">${statusOpts}</select></div><div class="form-group"><label>送样时间</label><input id="bf_startDate" type="date" value="${esc(c.startDate)}"></div></div><div class="form-group"><label>预计完成日期（选填）</label><input id="bf_expectedCompletionDate" type="date" value="${esc(c.expectedCompletionDate || '')}"><small style="color:var(--text-sec)">留空时按送样日期和预计总时长估算，可随实验室安排调整。</small></div><div class="form-group"><label>进度提醒（手动标记）</label><select id="bf_attentionStatus">${[['normal','正常'],['overdue','标记逾期'],['coordination','标记需协调'],['both','标记逾期且需协调'],['none','未设置']].map(([value,label])=>`<option value="${value}" ${(c.attentionStatus || (id?'none':'normal'))===value?'selected':''}>${label}</option>`).join('')}</select></div><div class="form-group"><label>预计总时长(天)</label><input id="bf_duration" type="number" value="${esc(c.durationDays)}"></div><div class="form-group"><label>当前进展</label><textarea id="bf_remark" rows="2">${esc(c.remark)}</textarea></div><div class="form-group"><label>其他备注</label><textarea id="bf_note" rows="3">${esc(c.note)}</textarea></div><div style="border-top:1px solid var(--border);padding-top:16px;"><div class="form-group"><label>下一步（只写当前最近的一件事）</label><input id="bf_nextAction" value="${esc(c.nextAction || '')}" placeholder="例如：确认实验室档期 / 取回样品 / 完成 FT"></div><div class="form-group"><label>下一步到期日</label><input id="bf_nextDate" type="date" value="${esc(c.nextDate || '')}"></div><div class="form-group"><label>跟进说明</label><textarea id="bf_blocker" rows="2" placeholder="填写需要说明的情况；是否逾期或需协调由上方手动标记">${esc(c.blocker || '')}</textarea></div></div><input type="hidden" id="bf_id" value="${id || ''}">`;
+  $('#boardFormBody').innerHTML = `<div class="form-group"><label>实验项目名称</label><input id="bf_name" value="${esc(c.name)}"></div><div style="background: #eff6ff; border: 1px dashed #bfdbfe; padding: 12px; border-radius: 6px;"><div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--primary);">快捷填充 AEC-Q100</div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;"><div class="form-group" style="margin: 0;"><select id="aec_grade" class="filter-select" style="width: 100%;" onchange="fillAecCondition()"><option value="">Grade 未设置（可不选）</option><option value="0" ${selectedGrade==='0'?'selected':''}>Grade 0</option><option value="1" ${selectedGrade==='1'?'selected':''}>Grade 1</option><option value="2" ${selectedGrade==='2'?'selected':''}>Grade 2</option><option value="3" ${selectedGrade==='3'?'selected':''}>Grade 3</option></select></div><div class="form-group" style="margin: 0;"><select id="aec_project" class="filter-select" style="width: 100%;" onchange="fillAecCondition()"><option value="">试验项目未设置（可不选）</option>${projectOptions}</select></div></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;"><div class="form-group"><label>样品数量</label><input id="bf_qty" type="number" value="${esc(c.qty)}"></div><div class="form-group"><label>责任人</label><input id="bf_person" value="${esc(c.person)}"></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;"><div class="form-group"><label>状态</label><select id="bf_status">${statusOpts}</select></div><div class="form-group"><label>送样时间</label><input id="bf_startDate" type="date" value="${esc(c.startDate)}"></div></div><div class="form-group"><label>预计完成日期（选填）</label><input id="bf_expectedCompletionDate" type="date" value="${esc(c.expectedCompletionDate || '')}"><small style="color:var(--text-sec)">留空时按送样日期和预计总时长估算，可随实验室安排调整。</small></div><div class="form-group"><label>进度提醒（手动标记）</label><select id="bf_attentionStatus">${[['normal','正常'],['overdue','标记逾期'],['coordination','标记需协调'],['both','标记逾期且需协调'],['none','未设置']].map(([value,label])=>`<option value="${value}" ${(c.attentionStatus || (id?'none':'normal'))===value?'selected':''}>${label}</option>`).join('')}</select></div><div class="form-group"><label>预计总时长(天)</label><input id="bf_duration" type="number" value="${esc(c.durationDays)}"></div><div class="form-group"><label>当前进展</label><textarea id="bf_remark" rows="2">${esc(c.remark)}</textarea></div><div class="form-group"><label>其他备注</label><textarea id="bf_note" rows="3">${esc(c.note)}</textarea></div><div style="border-top:1px solid var(--border);padding-top:16px;"><div class="form-group"><label>下一步（只写当前最近的一件事）</label><input id="bf_nextAction" value="${esc(c.nextAction || '')}" placeholder="例如：确认实验室档期 / 取回样品 / 完成 FT"></div><div class="form-group"><label>下一步到期日</label><input id="bf_nextDate" type="date" value="${esc(c.nextDate || '')}"></div><div class="form-group"><label>跟进说明</label><textarea id="bf_blocker" rows="2" placeholder="填写需要说明的情况；是否逾期或需协调由上方手动标记">${esc(c.blocker || '')}</textarea></div></div></div><div style="border-top:1px solid var(--border);padding-top:14px;"><div style="font-size:12px;font-weight:600;color:var(--text-sec);margin-bottom:8px;">实验代码（选填）</div><div style="display:grid;grid-template-columns:150px 1fr;gap:12px;"><div class="form-group"><label>代码版本</label><input id="bf_codeVersion" value="${esc(c.codeVersion || '')}" placeholder="如 v1.2.3"></div><div class="form-group"><label>简要说明</label><input id="bf_codeNote" value="${esc(c.codeNote || '')}" placeholder="如 老化主程序 / 校准脚本"></div></div></div><input type="hidden" id="bf_id" value="${id || ''}">`;
   showModalOnTop('modalBoard');
 }
 function fillAecCondition() {
@@ -2082,7 +2096,7 @@ function saveCard() {
   const nextDate = $('#bf_nextDate').value;
   if (nextDate && !isValidDateOnly(nextDate)) return alert('请填写有效的下一步到期日');
   const now = new Date();
-  const payload = {name,qty,expectedCompletionDate,attentionStatus,aecGrade:$('#aec_grade').value,aecProject:$('#aec_project').value,person:$('#bf_person').value.trim(),status,startDate:$('#bf_startDate').value,durationDays:duration,remark:$('#bf_remark').value,note:$('#bf_note').value,nextAction:$('#bf_nextAction').value.trim(),nextDate,blocker:$('#bf_blocker').value.trim(),updatedAt:`${getLocalToday()} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`};
+  const payload = {name,qty,expectedCompletionDate,attentionStatus,aecGrade:$('#aec_grade').value,aecProject:$('#aec_project').value,person:$('#bf_person').value.trim(),status,startDate:$('#bf_startDate').value,durationDays:duration,remark:$('#bf_remark').value,note:$('#bf_note').value,nextAction:$('#bf_nextAction').value.trim(),nextDate,blocker:$('#bf_blocker').value.trim(),codeVersion:$('#bf_codeVersion').value.trim(),codeNote:$('#bf_codeNote').value.trim(),updatedAt:`${getLocalToday()} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`};
   if (card) Object.assign(card,payload);
   else testDb.cards.push({id:'c_'+uid(),batchId:currentBatchId,elfrBatches:[],...payload});
   save(); $('#modalBoard').classList.add('hidden'); renderBoard(); renderBatches();
@@ -2201,10 +2215,11 @@ function renderElfrModal() {
     <div class="elfr-toolbar">
       <button class="primary" onclick="autoAssignElfr()">生成建议安排</button>
       <button class="ghost" onclick="addElfrBatch()">+ 新增批次</button>
+      <button class="ghost" onclick="rebalanceElfrAssignments()" title="保留你手工改过的人，其余名额按工作量重新分配">⚖️ 重新平衡</button>
       <button class="ghost" onclick="batchSetElfrStatus()" title="一次性把所有批次设成统一状态">🔄 批量设置状态</button>
     </div>
     ${oldWarn}
-    <div style="font-size:12px;color:var(--text-sec);margin:0 0 12px;">建议安排可随时调整；临时换人只修改对应记录，完成后再勾选“完成”，无需重排全部批次。</div>
+    <div style="font-size:12px;color:var(--text-sec);margin:0 0 12px;">建议安排可随时调整；临时换人只修改对应记录，完成后再勾选“完成”，无需重排全部批次。<br>手动改过的名字会被记住，点「⚖️ 重新平衡」只重排没锁定的名额（已完成/已开始的批次不动）。</div>
     <div id="elfrSummary" class="elfr-summary-bar"></div>
     <div id="elfrBatchCards">${cardsHtml}</div>
   `;
@@ -2335,18 +2350,14 @@ function collectElfrWorkload(batches, personList) {
   const ftTimes = Object.fromEntries(personList.map(p => [p, 0]));
   for (const b of batches || []) {
     const injectors = uniqueElfrPeople(b.injectors || []);
-    const qty = Math.max(0, Number(b.qty) || 0);
-    const injSlots = Math.max(injectors.length, Number(b.injCount) || injectors.length || 1);
     for (const p of injectors) if (Object.hasOwn(scores, p)) {
-      scores[p] += qty * SCORE_INJ_PER_PILL / injSlots;
+      scores[p] += WORK_INJ_SLOT;
       injTimes[p]++;
     }
     for (const t of b.ftTests || []) {
       const testers = uniqueElfrPeople(t.actualTesters || t.plannedTesters || []);
-      const testQty = Math.max(0, Number(t.qty ?? qty) || 0);
-      const ftSlots = Math.max(2, testers.length);
       for (const p of testers) if (Object.hasOwn(scores, p)) {
-        scores[p] += testQty * SCORE_FT_PER_PILL / ftSlots;
+        scores[p] += WORK_FT_SLOT;
         ftTimes[p]++;
       }
     }
@@ -2377,7 +2388,9 @@ function setElfrInjCount(batchId, val) {
   const n = Math.max(2, Math.min(3, Number(val) || 3));
   b.injCount = n;
   while (b.injectors.length < n) b.injectors.push('');
-  while (b.injectors.length > n) b.injectors.pop();
+  if (!Array.isArray(b.injectorLocked)) b.injectorLocked = [];
+  while (b.injectorLocked.length < n) b.injectorLocked.push(false);
+  while (b.injectors.length > n) { b.injectors.pop(); b.injectorLocked.pop(); }
   save(); renderElfrModal(); renderBoard();
 }
 
@@ -2385,6 +2398,8 @@ function setElfrInjector(batchId, idx, val) {
   const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
   const b = c.elfrBatches.find(x => x.id === batchId); if (!b) return;
   b.injectors[idx] = (val || '').trim();
+  if (!Array.isArray(b.injectorLocked)) b.injectorLocked = [];
+  b.injectorLocked[idx] = true;
   save();
   const injFilled = b.injectors.filter(Boolean).length;
   const el = document.getElementById('elfr_inj_stat_' + batchId);
@@ -2406,7 +2421,7 @@ function addElfrFt(batchId) {
   if (!Array.isArray(b.ftTests)) b.ftTests = [];
   const inj = (b.injectors || []).filter(Boolean);
   const people = [inj[0] || '', inj[1] || ''];
-  b.ftTests.push({ id: 'ft_' + uid(), date: '', qty: Number(b.qty) || 120, plannedTesters: people.slice(), actualTesters: people.slice(), swapNote: '', remark: '', done: false });
+  b.ftTests.push({ id: 'ft_' + uid(), date: '', qty: Number(b.qty) || 120, plannedTesters: people.slice(), actualTesters: people.slice(), testerLocked: [false, false], swapNote: '', remark: '', done: false });
   reconcileElfrFtStatus(b);
   save(); renderElfrModal(); renderBoard();
 }
@@ -2416,8 +2431,8 @@ function setFtValue(batchId, ftId, field, val) {
   const b = c.elfrBatches.find(x => x.id === batchId); if (!b) return;
   const t = (b.ftTests || []).find(x => x.id === ftId); if (!t) return;
   if (field === 'date') t.date = val || '';
-  else if (field === 't0') t.actualTesters[0] = (val || '').trim();
-  else if (field === 't1') t.actualTesters[1] = (val || '').trim();
+  else if (field === 't0') { t.actualTesters[0] = (val || '').trim(); if (!Array.isArray(t.testerLocked)) t.testerLocked = [false, false]; t.testerLocked[0] = true; }
+  else if (field === 't1') { t.actualTesters[1] = (val || '').trim(); if (!Array.isArray(t.testerLocked)) t.testerLocked = [false, false]; t.testerLocked[1] = true; }
   else if (field === 'qty') t.qty = Math.max(0, Number(val) || 0);
   else if (field === 'swapNote') t.swapNote = (val || '').trim();
   reconcileElfrFtStatus(b);
@@ -2555,8 +2570,8 @@ function computeAssignment(totalQty, personList, options = {}) {
   const jobs = [];
   batchQtys.forEach((qty, batch) => {
     const injCount = Math.min(qty >= 120 ? 3 : 2, n);
-    for (let k = 0; k < injCount; k++) jobs.push({ batch, role: 'inj', amount: qty * SCORE_INJ_PER_PILL / injCount });
-    for (let k = 0; k < 2; k++) jobs.push({ batch, role: 'ft', amount: qty * SCORE_FT_PER_PILL / 2 });
+    for (let k = 0; k < injCount; k++) jobs.push({ batch, role: 'inj', amount: WORK_INJ_SLOT });
+    for (let k = 0; k < 2; k++) jobs.push({ batch, role: 'ft', amount: WORK_FT_SLOT });
   });
   jobs.sort((a, b) => b.amount - a.amount || a.batch - b.batch || a.role.localeCompare(b.role));
   const metric = loads => [Math.max(...loads), loads.reduce((sum, v) => sum + v * v, 0), Math.max(...loads) - Math.min(...loads)];
@@ -2576,7 +2591,11 @@ function computeAssignment(totalQty, personList, options = {}) {
     jobs.forEach((job, index) => {
       const pool = people.map((_, k) => k).filter(p => !used(index, p));
       pool.sort((a, b) => loads[a] - loads[b] || roleCounts[job.role][a] - roleCounts[job.role][b] || rank(a) - rank(b));
-      const p = pool[0]; owners[index] = p; loads[p] += job.amount; roleCounts[job.role][p]++;
+      // 负载相同的人之间随机挑一个：每次生成结果不同，但均衡性不变
+      const minLoad = loads[pool[0]];
+      const tied = pool.filter(p => Math.abs(loads[p] - minLoad) < 1e-9);
+      const p = tied.length > 1 ? tied[Math.floor(Math.random() * tied.length)] : pool[0];
+      owners[index] = p; loads[p] += job.amount; roleCounts[job.role][p]++;
     });
     // Only alter the newly generated draft. Existing and completed work remain fixed.
     if (jobs.length <= 250) for (let pass = 0; pass < 8; pass++) {
@@ -2613,19 +2632,77 @@ function computeAssignment(totalQty, personList, options = {}) {
   }
   const batches = batchQtys.map(qty => ({
     id: 'eb_' + uid(), name: '', qty, injCount: Math.min(qty >= 120 ? 3 : 2, n), ftCount: 2, status: '待准备',
-    injectors: [], injectDate: '', ftTests: [{ id: 'ft_' + uid(), date: '', qty, actualTesters: [], plannedTesters: [], swapNote: '', remark: '', done: false }], remark: ''
+    injectors: [], injectorLocked: [], injectDate: '', ftTests: [{ id: 'ft_' + uid(), date: '', qty, actualTesters: [], plannedTesters: [], testerLocked: [false, false], swapNote: '', remark: '', done: false }], remark: ''
   }));
   jobs.forEach((job, i) => {
     const b = batches[job.batch], person = people[best.owners[i]];
     if (job.role === 'inj') b.injectors.push(person); else b.ftTests[0].actualTesters.push(person);
   });
-  batches.forEach(b => { b.ftTests[0].plannedTesters = b.ftTests[0].actualTesters.slice(); });
+  batches.forEach(b => { b.ftTests[0].plannedTesters = b.ftTests[0].actualTesters.slice(); b.injectorLocked = b.injectors.map(() => false); });
   const workload = collectElfrWorkload((options.existingBatches || []).concat(batches), people);
   return { batches, ...workload, plan, totalQty, personList: people };
 }
 
 function canReplaceElfrDraft(b) {
   return b.status === '待准备' && !b.injectDate && !(b.ftTests || []).some(t => t.done || t.date || t.swapNote);
+}
+
+/* 重新平衡：保留手工锁定的名额，其余按「投实验=2、FT=1」重新分配；已开始/已完成批次不动 */
+function rebalanceElfrAssignments() {
+  const c = testDb.cards.find(x => x.id === currentElfrCardId);
+  if (!c || !Array.isArray(c.elfrBatches) || !c.elfrBatches.length) return alert('暂无批次');
+  const batches = c.elfrBatches;
+  const people = uniqueElfrPeople(batches.flatMap(b => (b.injectors || []).concat((b.ftTests || []).flatMap(t => t.actualTesters || []))));
+  if (people.length < 2) return alert('至少需要两名参与人员，先把人名填上再平衡');
+  const executed = batches.filter(b => !canReplaceElfrDraft(b));
+  const drafts = batches.filter(canReplaceElfrDraft);
+  if (!drafts.length) return alert('所有批次都已开始或已完成，没有可以重排的草案');
+  const baseline = collectElfrWorkload(executed, people);
+  const loads = Object.fromEntries(people.map(p => [p, baseline.scores[p] || 0]));
+  const pickFor = taken => {
+    const pool = people.filter(p => !taken.includes(p));
+    if (!pool.length) return '';
+    const min = Math.min(...pool.map(p => loads[p]));
+    const tied = pool.filter(p => Math.abs(loads[p] - min) < 1e-9);
+    return tied[Math.floor(Math.random() * tied.length)];
+  };
+  let locked = 0, changed = 0;
+  drafts.forEach(b => {
+    const injCount = Math.max(2, Math.min(3, Number(b.injCount) || (Number(b.qty) >= 120 ? 3 : 2)));
+    b.injCount = injCount;
+    if (!Array.isArray(b.injectors)) b.injectors = [];
+    while (b.injectors.length < injCount) b.injectors.push('');
+    if (!Array.isArray(b.injectorLocked)) b.injectorLocked = [];
+    while (b.injectorLocked.length < injCount) b.injectorLocked.push(false);
+    const taken = [];
+    for (let i = 0; i < injCount; i++) {
+      if (b.injectorLocked[i] && b.injectors[i]) { taken.push(b.injectors[i]); loads[b.injectors[i]] += WORK_INJ_SLOT; locked++; }
+    }
+    for (let i = 0; i < injCount; i++) {
+      if (b.injectorLocked[i] && b.injectors[i]) continue;
+      const p = pickFor(taken);
+      if (!p) break;
+      if (b.injectors[i] !== p) changed++;
+      b.injectors[i] = p; taken.push(p); loads[p] += WORK_INJ_SLOT;
+    }
+    (b.ftTests || []).forEach(t => {
+      if (!Array.isArray(t.actualTesters)) t.actualTesters = [];
+      while (t.actualTesters.length < 2) t.actualTesters.push('');
+      if (!Array.isArray(t.testerLocked)) t.testerLocked = [false, false];
+      while (t.testerLocked.length < 2) t.testerLocked.push(false);
+      const picked = [];
+      for (let i = 0; i < 2; i++) if (t.testerLocked[i] && t.actualTesters[i]) { picked.push(t.actualTesters[i]); loads[t.actualTesters[i]] += WORK_FT_SLOT; locked++; }
+      for (let i = 0; i < 2; i++) {
+        if (t.testerLocked[i] && t.actualTesters[i]) continue;
+        const p = pickFor(picked);
+        if (!p) break;
+        if (t.actualTesters[i] !== p) changed++;
+        t.actualTesters[i] = p; picked.push(p); loads[p] += WORK_FT_SLOT;
+      }
+    });
+  });
+  save(); renderElfrModal(); renderBoard();
+  setTimeout(() => alert(`已重新平衡 ${drafts.length} 个草案批次：保留 ${locked} 处手工调整，改动 ${changed} 处名额。`), 50);
 }
 
 function autoAssignElfr() {
