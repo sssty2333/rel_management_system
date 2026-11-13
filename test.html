@@ -442,7 +442,7 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
           <div id="batchProgress"></div>
           <div class="theme-work-toolbar">
             <div class="toolbar-left"><select id="filterPerson" onchange="renderBoard()" class="filter-select" aria-label="筛选当前主题责任人"><option value="">全部责任人</option></select></div>
-            <div class="toolbar-right"><button class="ghost" onclick="exportExperimentSchedule()" title="导出当前主题全部安排，不受责任人筛选影响">导出实验安排</button></div>
+            <div class="toolbar-right"><button class="ghost" onclick="exportExperimentSchedule()" title="导出全部主题的实验安排（准备 / 投实验 / FT），不受当前主题和责任人筛选影响">导出全部实验安排</button></div>
           </div>
           <div class="theme-cards-head"><h3 class="theme-card-caption">试验项与执行进展</h3><button class="primary" onclick="openBoardModal()">＋ 新增试验项</button></div>
           <div class="board-state-groups" id="cardGrid"></div>
@@ -1573,7 +1573,7 @@ function renderBoardOverview(data) {
   const risks=t=>[t.overdueCount?`<span class="badge st-danger">标记逾期 ${value(t.overdueCount)}</span>`:'',t.blockedCount?`<span class="badge st-warn">标记需协调 ${value(t.blockedCount)}</span>`:'',t.normalCount?`<span class="badge st-ok">正常 ${value(t.normalCount)}</span>`:'',t.unsetAttentionCount?`<span class="badge st-muted">未设置 ${value(t.unsetAttentionCount)}</span>`:''].filter(Boolean).join('') || '<span style="color:var(--text-sec)">—</span>';
   const forecast=t=>`${esc(t.expectedLabel || '待排期')}${t.expectedMissing?`<div style="font-size:11px;color:var(--text-sec)">另有 ${value(t.expectedMissing)} 项未排期，日期待确认</div>`:''}`;
   const active=value(data.sentCount)+value(data.runningCount)+value(data.returnedCount);
-  return `<div class="board-overview-header"><div><h2>整体实验进度</h2><p>${themes.length} 个实验主题 · 查看已完成实验、当前进展和预计完成时间</p></div><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span class="board-date">${esc(getLocalToday())}</span><button class="ghost" onclick="exportBoardOverview()">导出总览</button></div></div>
+  return `<div class="board-overview-header"><div><h2>整体实验进度</h2><p>${themes.length} 个实验主题 · 查看已完成实验、当前进展和预计完成时间</p></div><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span class="board-date">${esc(getLocalToday())}</span><button class="ghost" onclick="exportExperimentSchedule()" title="导出全部主题的实验安排">导出实验安排</button><button class="ghost" onclick="exportBoardOverview()">导出总览</button></div></div>
   <div class="leader-metrics">
     <div class="leader-metric leader-metric-main"><div class="leader-metric-label">已完成实验</div><div class="leader-metric-value">${value(data.done)}<small>/ ${value(data.total)} 项</small></div><div class="leader-metric-note">实验完成率 <b>${value(data.completionRate)}%</b></div><div class="leader-progress-track"><div class="leader-progress-fill" style="width:${value(data.completionRate)}%"></div></div></div>
     <div class="leader-metric"><div class="leader-metric-label">进行中实验</div><div class="leader-metric-value">${active}<small>项</small></div><div class="leader-metric-note">实验中 ${value(data.runningCount)} · 待结项 ${value(data.returnedCount)}<br>已送样 ${value(data.sentCount)} · 待准备 ${value(data.waitingCount)}</div></div>
@@ -2770,46 +2770,74 @@ function preparationScheduleRows(theme) {
   return (theme.preparations || []).map(p=>[String(theme.name || ''),'实验准备','',String(p.name || ''),prepReady(p)?'准备已就绪':prepQuantityReady(p)?'验收准备事项':'备齐准备事项',Number(p.qty)||0,String(p.person || ''),String(p.person || ''),String(p.dueDate || ''),prepStage(p),`需要 ${p.qty ?? 0}，已备 ${p.done ?? 0}，${prepVerified(p)?'已验收':'待验收'}`,String(p.dueDate || ''),String(p.remark || ''),'','','',String(p.dueDate || ''),'—']);
 }
 
-function collectExperimentScheduleRows(batchId) {
-  const theme = testDb.batches.find(b => b.id === batchId);
+/* 没有 ELFR 分批的实验，按阶段给一条可执行的安排 */
+function scheduleCardWork(status) {
+  if (status === '待准备') return '送样';
+  if (status === '已取回') return '结项';
+  if (status === '已FT') return '已完成';
+  return '实验';
+}
+
+function collectThemeScheduleRows(theme) {
   if (!theme) return [];
   const rows = preparationScheduleRows(theme);
+  testDb.cards.filter(c => c.batchId === theme.id).forEach(c => { rows.push(...scheduleRowsForCard(theme, c)); });
+  return rows;
+}
+
+function scheduleRowsForCard(theme, c) {
+  const rows = [];
   const people = values => [...new Set((Array.isArray(values) ? values : []).map(p => String(p || '').trim()).filter(Boolean))].join(' / ');
   const quantity = value => value === '' || value == null || !Number.isFinite(Number(value)) ? '' : Number(value);
   const joinNotes = (...values) => values.map(v => String(v || '').trim()).filter(Boolean).join('；');
-  testDb.cards.filter(c => c.batchId === batchId).forEach(c => {
-    const project = typeof getSavedAecProject === 'function' ? getSavedAecProject(c) : c.aecProject || '';
-    const grade = c.aecGrade ?? c.grade ?? '';
-    const gradeText = grade === '' || grade == null ? '' : `Grade ${String(grade)}`;
-    const status = typeof getCardDisplayStatus === 'function' ? getCardDisplayStatus(c) : c.status || '待准备';
-    const endDate = typeof calcTime === 'function' ? calcTime(c.startDate,c.durationDays).endDate : '';
-    const dueDate = c.nextDate || '';
-    const expectedDate=getExperimentExpectedDate(c);
-    const prefix = [String(theme.name || ''),String(c.name || ''),String(project || '')];
-    const suffix = [String(c.nextAction || ''),String(dueDate),String(c.remark || '')];
-    const makeRow = (batch,work,qty,planned,current,date,rowStatus,extra) => prefix.concat([
-      String(batch || ''),work,quantity(qty),String(planned || ''),String(current || ''),String(date || ''),rowStatus
-    ],suffix,[joinNotes(c.blocker,extra),String(c.note || ''),gradeText,expectedDate,experimentAttentionLabel(c)]);
-    rows.push(makeRow('','实验概况',c.qty,c.person || '','',c.startDate || '',status,''));
-    (Array.isArray(c.elfrBatches) ? c.elfrBatches : []).forEach(b => {
-      const injectionCurrent = people(b.injectors);
-      const injectionPlanned = people(Array.isArray(b.plannedInjectors) ? b.plannedInjectors : b.injectors);
-      // 日期可能只是计划档期；是否已经执行以业务状态为准。
-      const sent = ['已送样','实验中','已取回','已FT'].includes(b.status);
-      rows.push(makeRow(b.name,'投实验',b.qty,injectionPlanned,injectionCurrent,b.injectDate || '',sent ? (b.injectDate ? '已投实验' : '已投实验（日期未登记）') : '待投实验',b.remark));
-      const tests = Array.isArray(b.ftTests) ? b.ftTests : [];
-      if (!tests.length) {
-        rows.push(makeRow(b.name,'FT',b.qty,'','','',b.status === '已FT' ? 'FT记录待核对' : 'FT待安排','尚无 FT 执行记录'));
-      }
-      tests.forEach(t => {
-        const planned = people(Array.isArray(t.plannedTesters) ? t.plannedTesters : t.actualTesters);
-        const current = people(t.actualTesters);
-        const changed = planned !== current;
-        const note = joinNotes(changed ? '执行人与原计划不同' : '',t.swapNote,t.remark);
-        rows.push(makeRow(b.name,'FT',t.qty,planned,current,t.date || '',t.done ? 'FT已完成' : 'FT待执行',note));
-      });
+  const project = typeof getSavedAecProject === 'function' ? getSavedAecProject(c) : c.aecProject || '';
+  const grade = c.aecGrade ?? c.grade ?? '';
+  const gradeText = grade === '' || grade == null ? '' : `Grade ${String(grade)}`;
+  const status = typeof getCardDisplayStatus === 'function' ? getCardDisplayStatus(c) : c.status || '待准备';
+  const dueDate = c.nextDate || '';
+  const expectedDate = getExperimentExpectedDate(c);
+  const prefix = [String(theme.name || ''),String(c.name || ''),String(project || '')];
+  const suffix = [String(c.nextAction || ''),String(dueDate),String(c.remark || '')];
+  const makeRow = (batch,work,qty,planned,current,date,rowStatus,extra) => prefix.concat([
+    String(batch || ''),work,quantity(qty),String(planned || ''),String(current || ''),String(date || ''),rowStatus
+  ],suffix,[joinNotes(c.blocker,extra),String(c.note || ''),gradeText,expectedDate,experimentAttentionLabel(c)]);
+  const elfrList = Array.isArray(c.elfrBatches) ? c.elfrBatches : [];
+  if (!elfrList.length) {
+    // 没有分批记录的实验：给一条阶段安排（送样 / 实验 / 结项），不再自动填「实验概况」
+    const workDate = status === '待准备' ? (c.startDate || '') : (expectedDate || dueDate || '');
+    rows.push(makeRow('', scheduleCardWork(status), c.qty, c.person || '', '', workDate, status, ''));
+  }
+  elfrList.forEach(b => {
+    const injectionCurrent = people(b.injectors);
+    const injectionPlanned = people(Array.isArray(b.plannedInjectors) ? b.plannedInjectors : b.injectors);
+    // 日期可能只是计划档期；是否已经执行以业务状态为准。
+    const sent = ['已送样','实验中','已取回','已FT'].includes(b.status);
+    rows.push(makeRow(b.name,'投实验',b.qty,injectionPlanned,injectionCurrent,b.injectDate || '',sent ? (b.injectDate ? '已投实验' : '已投实验（日期未登记）') : '待投实验',b.remark));
+    const tests = Array.isArray(b.ftTests) ? b.ftTests : [];
+    if (!tests.length) {
+      rows.push(makeRow(b.name,'FT',b.qty,'','','',b.status === '已FT' ? 'FT记录待核对' : 'FT待安排','尚无 FT 执行记录'));
+    }
+    tests.forEach(t => {
+      const planned = people(Array.isArray(t.plannedTesters) ? t.plannedTesters : t.actualTesters);
+      const current = people(t.actualTesters);
+      const changed = planned !== current;
+      const note = joinNotes(changed ? '执行人与原计划不同' : '',t.swapNote,t.remark);
+      rows.push(makeRow(b.name,'FT',t.qty,planned,current,t.date || '',t.done ? 'FT已完成' : 'FT待执行',note));
     });
   });
+  return rows;
+}
+
+/* 默认导出全部主题；传 batchId 时只导该主题 */
+function collectExperimentScheduleRows(batchId = null) {
+  let rows = [];
+  const themes = batchId ? (testDb.batches || []).filter(b => b.id === batchId) : (testDb.batches || []);
+  themes.forEach(theme => { rows = rows.concat(collectThemeScheduleRows(theme)); });
+  if (!batchId) {
+    const known = new Set((testDb.batches || []).map(b => b.id));
+    const orphanTheme = { id: '__orphan__', name: '（未归属主题）', preparations: [] };
+    testDb.cards.filter(c => !known.has(c.batchId)).forEach(c => { rows = rows.concat(scheduleRowsForCard(orphanTheme, c)); });
+  }
   return rows;
 }
 async function buildExperimentScheduleXlsx(rows) {
@@ -2823,18 +2851,15 @@ async function buildExperimentScheduleXlsx(rows) {
   return makeZip(Object.entries(files).map(([name,data])=>({name,data})));
 }
 async function exportExperimentSchedule() {
-  const theme = testDb.batches.find(b => b.id === currentBatchId);
-  if (!theme) return alert('请先选择试验主题');
-  const rows = collectExperimentScheduleRows(theme.id);
-  if (!rows.length) return alert('当前主题没有可导出的实验安排');
+  const rows = collectExperimentScheduleRows();
+  if (!rows.length) return alert('还没有可导出的实验安排');
   let blob;
   try { blob = await buildExperimentScheduleXlsx(rows); }
   catch (err) { alert('导出失败：' + err.message); return; }
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  const filename = String(theme.name || '试验主题').replace(/[<>:"/\\|?*\u0000-\u001f]/g,'_');
   link.href = url;
-  link.download = `${filename}_实验安排_${dateStr()}.xlsx`;
+  link.download = `实验安排_全部主题_${dateStr()}.xlsx`;
   document.body.appendChild(link);
   link.click(); link.remove();
   setTimeout(() => URL.revokeObjectURL(url),1000);
