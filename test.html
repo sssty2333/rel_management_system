@@ -3377,7 +3377,19 @@ function chipMoves() { return materialDb.chipMovements || []; }
 function renderChipStockPage() { renderChipStockTable(); renderChipMoveTable(); }
 
 function linkedChipMoves(s) {
-  return chipMoves().filter(m => m.stockId === s.id || (m.batchNo && m.batchNo === s.batchNo && (!m.model || !s.model || m.model === s.model || s.model.indexOf(m.model) >= 0)));
+  const recs = new Set((s.records || []).map(String));
+  return chipMoves().filter(m => m.stockId === s.id || recs.has(String(m.id)) || (m.batchNo && m.batchNo === s.batchNo && (!m.model || !s.model || m.model === s.model || s.model.indexOf(m.model) >= 0)));
+}
+/* 导入时把「变动情况(对应sheet2变动记录编号)」里的编号与变动记录对应起来 */
+function linkChipStockMoves(stocks, moves) {
+  const byId = new Map(moves.map(m => [String(m.id), m]));
+  stocks.forEach(s => {
+    (s.records || []).forEach(rec => {
+      const m = byId.get(String(rec));
+      if (m && m.stockId == null) m.stockId = s.id;
+    });
+  });
+  return { stocks, moves };
 }
 function renderChipStockTable() {
   const tb = $('#chipStockBody');
@@ -3623,6 +3635,8 @@ async function handleChipStockExcel(file) {
     if (!stockDef || !moveDef) throw new Error('需要「芯片数量」和「芯片变动情况」两个工作表');
     const stocks = parseChipStockRows(parseSheetXml(files[stockDef.path] || '', shared));
     const moves = parseChipMoveRows(parseSheetXml(files[moveDef.path] || '', shared));
+    // 按库存行里逗号分隔的记录编号，把变动记录对应到库存
+    linkChipStockMoves(stocks, moves);
     chipStockImportState = { stocks, moves, signature: JSON.stringify({ s: materialDb.chipStocks, m: materialDb.chipMovements }), fileName: file.name };
     status.textContent = `${file.name}：库存 ${stocks.length} 条，变动记录 ${moves.length} 条。核对后点确认导入（会整体替换当前数据）。`;
     preview.innerHTML = `<div class="table-container"><table><thead><tr><th>库存序号</th><th>型号</th><th>批号</th><th class="num">入库</th><th class="num">现有</th></tr></thead><tbody>${stocks.map(s => `<tr><td>${esc(s.seq)}</td><td>${esc(s.model)}</td><td>${esc(s.batchNo) || '—'}</td><td class="num">${s.inQty}</td><td class="num">${s.qty}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">库存表没有数据行</td></tr>'}</tbody></table></div><div class="table-container" style="margin-top:12px;"><table><thead><tr><th>编号</th><th>日期</th><th>申请人</th><th>型号</th><th class="num">数量</th><th>批号</th></tr></thead><tbody>${moves.map(m => `<tr><td>${esc(m.id)}</td><td>${esc(m.date)}</td><td>${esc(m.applicant)}</td><td>${esc(m.model)}</td><td class="num">${m.qty}</td><td>${esc(m.batchNo) || '—'}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">变动表没有数据行</td></tr>'}</tbody></table></div>`;
