@@ -492,7 +492,7 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
         <button class="primary" onclick="openChipMoveModal()">＋ 新增变动记录</button>
       </div>
       <div id="chipMoveFilterBar"></div>
-      <div class="table-container"><table><thead><tr><th>记录编号</th><th>变动日期</th><th>申请人</th><th>地区</th><th>客户</th><th>类型</th><th>项目</th><th>产品型号</th><th class="num">变动数量</th><th class="num">库存数量</th><th>批号</th><th>记录人</th><th>用途</th><th>备注</th><th>操作</th></tr></thead><tbody id="chipMoveBody"></tbody></table></div>
+      <div class="table-container"><table><thead><tr><th>记录编号</th><th>变动日期</th><th>申请人</th><th>地区</th><th>客户</th><th>类型</th><th>项目</th><th>产品型号</th><th class="num">需求数量</th><th class="num">样品数量</th><th class="num">库存数量</th><th>批号</th><th>记录人</th><th>用途</th><th>备注</th><th>操作</th></tr></thead><tbody id="chipMoveBody"></tbody></table></div>
     </div>
   </div>
 </div>
@@ -796,6 +796,7 @@ function normalizeImportedState(d, currentMaterial = materialDb, currentTest = t
     project: String(m.project || ''),
     model: String(m.model || ''),
     qty: Math.max(0, Number(m.qty) || 0),
+    demandQty: Math.max(0, Number(m.demandQty) || 0),
     stockQty: Math.max(0, Number(m.stockQty) || 0),
     batchNo: String(m.batchNo || ''),
     recorder: String(m.recorder || ''),
@@ -3389,7 +3390,7 @@ function exportShortageXlsx() {
   
 /* ========== 芯片库存（V3.0） ========== */
 const CHIP_STOCK_HEADERS = ['序号','型号','来源','入库日期','批号','包装入库数量','变动情况(对应sheet2变动记录编号)','现有数量','样品数量','项目需求量','更新日期','备注'];
-const CHIP_MOVE_HEADERS = ['记录编号','变动日期','申请人','地区','客户','客户类型（内部/外部）','项目','产品型号','变动数量','库存数量','批号','记录人','用途','备注'];
+const CHIP_MOVE_HEADERS = ['记录编号','变动日期','申请人','地区','客户','客户类型（内部/外部）','项目','产品型号','需求数量','样品数量','库存数量','批号','记录人','用途','备注'];
 
 function chipStocks() { return materialDb.chipStocks || []; }
 function chipMoves() { return materialDb.chipMovements || []; }
@@ -3448,10 +3449,10 @@ function renderChipMoveTable() {
     list = linkedChipMoves(filterStock);
     if (bar) bar.innerHTML = `<div class="chip-filter-bar">只看「${esc(filterStock.model)} · ${esc(filterStock.batchNo || '无批号')}」的变动记录（${list.length} 条）<button class="link" onclick="clearChipMoveFilter()">清除筛选</button></div>`;
   } else if (bar) bar.innerHTML = '';
-  if (!list.length) { tb.innerHTML = '<tr><td colspan="15" class="empty">暂无变动记录：点「＋ 新增变动记录」或导入 Excel</td></tr>'; return; }
+  if (!list.length) { tb.innerHTML = '<tr><td colspan="16" class="empty">暂无变动记录：点「＋ 新增变动记录」或导入 Excel</td></tr>'; return; }
   tb.innerHTML = list.map(m => {
     const idArg = esc(JSON.stringify(String(m.id)));
-    return `<tr><td class="mono">${esc(m.id) || '—'}</td><td>${esc(m.date) || '—'}</td><td>${esc(m.applicant) || '—'}</td><td>${esc(m.region) || '—'}</td><td>${esc(m.customer) || '—'}</td><td>${esc(m.customerType) || '—'}</td><td>${esc(m.project) || '—'}</td><td>${esc(m.model) || '—'}</td><td class="num">${Number(m.qty) || 0}</td><td class="num">${m.stockQty ? Number(m.stockQty) : '—'}</td><td class="mono">${esc(m.batchNo) || '—'}</td><td>${esc(m.recorder) || '—'}</td><td>${esc(m.purpose) || '—'}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(m.note)}">${esc(m.note) || '—'}</td><td><button class="link" onclick="openChipMoveModal(${idArg})">编辑</button><button class="link danger" onclick="delChipMove(${idArg})">删除</button></td></tr>`;
+    return `<tr><td class="mono">${esc(m.id) || '—'}</td><td>${esc(m.date) || '—'}</td><td>${esc(m.applicant) || '—'}</td><td>${esc(m.region) || '—'}</td><td>${esc(m.customer) || '—'}</td><td>${esc(m.customerType) || '—'}</td><td>${esc(m.project) || '—'}</td><td>${esc(m.model) || '—'}</td><td class="num">${Number(m.demandQty) || 0}</td><td class="num">${Number(m.qty) || 0}</td><td class="num">${m.stockQty ? Number(m.stockQty) : '—'}</td><td class="mono">${esc(m.batchNo) || '—'}</td><td>${esc(m.recorder) || '—'}</td><td>${esc(m.purpose) || '—'}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(m.note)}">${esc(m.note) || '—'}</td><td><button class="link" onclick="openChipMoveModal(${idArg})">编辑</button><button class="link danger" onclick="delChipMove(${idArg})">删除</button></td></tr>`;
   }).join('');
 }
 function nextChipStockSeq(stocks) {
@@ -3530,7 +3531,8 @@ function openChipMoveModal(id) {
       <div class="form-group"><label>客户类型</label><select id="cm_customerType"><option value="" ${!v.customerType?'selected':''}>—</option><option value="内部" ${v.customerType==='内部'?'selected':''}>内部</option><option value="外部" ${v.customerType==='外部'?'selected':''}>外部</option></select></div>
       <div class="form-group"><label>项目</label><input id="cm_project" value="${esc(v.project)}"></div>
       <div class="form-group"><label>产品型号</label><input id="cm_model" value="${esc(v.model)}"></div>
-      <div class="form-group"><label>变动数量 *</label><input id="cm_qty" type="number" min="0" value="${Number(v.qty)||0}"></div>
+      <div class="form-group"><label>需求数量</label><input id="cm_demandQty" type="number" min="0" value="${Number(v.demandQty)||0}" title="客户/项目要的数量"></div>
+      <div class="form-group"><label>样品数量 *（实际给的）</label><input id="cm_qty" type="number" min="0" value="${Number(v.qty)||0}"></div>
       <div class="form-group"><label>库存数量（变动后，选填）</label><input id="cm_stockQty" type="number" min="0" value="${Number(v.stockQty)||0}" title="留空时，关联了库存就自动填扣减后的剩余"></div>
       <div class="form-group"><label>批号</label><input id="cm_batch" value="${esc(v.batchNo)}"></div>
       <div class="form-group"><label>记录人</label><input id="cm_recorder" value="${esc(v.recorder)}"></div>
@@ -3543,10 +3545,11 @@ function openChipMoveModal(id) {
 function saveChipMove(origId) {
   const date = $('#cm_date').value;
   if (!date || !isValidDateOnly(date)) { alert('请填写有效的变动日期'); return false; }
-  let qty, stockQty;
+  let qty, stockQty, demandQty;
   try {
-    qty = stockInteger($('#cm_qty').value || 0, '变动数量');
+    qty = stockInteger($('#cm_qty').value || 0, '样品数量');
     stockQty = stockInteger($('#cm_stockQty').value || 0, '库存数量');
+    demandQty = stockInteger($('#cm_demandQty').value || 0, '需求数量');
   }
   catch (err) { alert(err.message); return false; }
   const idText = $('#cm_id_text').value.trim();
@@ -3591,7 +3594,7 @@ function saveChipMove(origId) {
   Object.assign(record, {
     date, applicant: $('#cm_applicant').value.trim(), region: $('#cm_region').value.trim(),
     customer: $('#cm_customer').value.trim(), customerType: $('#cm_customerType').value,
-    project: $('#cm_project').value.trim(), model: $('#cm_model').value.trim(), qty, stockQty: newStockQty,
+    project: $('#cm_project').value.trim(), model: $('#cm_model').value.trim(), demandQty, qty, stockQty: newStockQty,
     batchNo: $('#cm_batch').value.trim(), recorder: $('#cm_recorder').value.trim(),
     purpose: $('#cm_purpose').value.trim(), note: $('#cm_note').value.trim(), stockId
   });
@@ -3684,7 +3687,8 @@ function parseChipMoveRows(rows) {
     moves.push({
       id, date: cell(r, ['变动日期']), applicant: cell(r, ['申请人']), region: cell(r, ['地区']),
       customer: cell(r, ['客户']), customerType: cell(r, ['客户类型（内部/外部）', '客户类型']), project: cell(r, ['项目']),
-      model: cell(r, ['产品型号', '型号', '芯片型号']), qty: Math.max(0, parseInt(cell(r, ['变动数量', '样品数量', '出库数量', '领取数量']), 10) || 0),
+      model: cell(r, ['产品型号', '型号', '芯片型号']), demandQty: Math.max(0, parseInt(cell(r, ['需求数量', '需求量', '项目需求量', '项目需求']), 10) || 0),
+      qty: Math.max(0, parseInt(cell(r, ['样品数量', '变动数量', '出库数量', '领取数量']), 10) || 0),
       stockQty: Math.max(0, parseInt(cell(r, ['库存数量', '变动后库存']), 10) || 0),
       batchNo: cell(r, ['批号']), recorder: cell(r, ['记录人']), purpose: cell(r, ['用途']), note: cell(r, ['备注']), stockId: null
     });
@@ -3741,7 +3745,7 @@ function buildChipStockXlsx(stockRows, moveRows) {
 }
 function exportChipStockXlsx() {
   const stockRows = chipStocks().map(s => [s.seq, s.model, s.source, s.inDate, s.batchNo, Number(s.inQty) || 0, (s.records || []).join(','), Number(s.qty) || 0, Number(s.sampleQty) || 0, Number(s.demandQty) || 0, s.updatedAt, s.note]);
-  const moveRows = chipMoves().map(m => [m.id, m.date, m.applicant, m.region, m.customer, m.customerType, m.project, m.model, Number(m.qty) || 0, Number(m.stockQty) || 0, m.batchNo, m.recorder, m.purpose, m.note]);
+  const moveRows = chipMoves().map(m => [m.id, m.date, m.applicant, m.region, m.customer, m.customerType, m.project, m.model, Number(m.demandQty) || 0, Number(m.qty) || 0, Number(m.stockQty) || 0, m.batchNo, m.recorder, m.purpose, m.note]);
   const blob = buildChipStockXlsx(stockRows, moveRows);
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
