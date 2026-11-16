@@ -484,7 +484,7 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
         <h2 style="margin:0;">芯片数量</h2>
         <button class="ghost" onclick="openChipStockModal()">＋ 新增库存</button>
       </div>
-      <div class="table-container"><table><thead><tr><th>序号</th><th>型号</th><th>来源</th><th>入库日期</th><th>批号</th><th class="num">入库数量</th><th class="num">现有数量</th><th>更新日期</th><th>备注</th><th>变动记录</th><th>操作</th></tr></thead><tbody id="chipStockBody"></tbody></table></div>
+      <div class="table-container"><table><thead><tr><th>序号</th><th>型号</th><th>来源</th><th>入库日期</th><th>批号</th><th class="num">入库数量</th><th class="num">现有数量</th><th class="num">样品数量</th><th class="num">项目需求量</th><th>更新日期</th><th>备注</th><th>变动记录</th><th>操作</th></tr></thead><tbody id="chipStockBody"></tbody></table></div>
     </div>
     <div id="chipMovePanel" hidden>
       <div style="display:flex;justify-content:space-between;align-items:center;margin:0 0 12px;">
@@ -492,7 +492,7 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
         <button class="primary" onclick="openChipMoveModal()">＋ 新增变动记录</button>
       </div>
       <div id="chipMoveFilterBar"></div>
-      <div class="table-container"><table><thead><tr><th>记录编号</th><th>变动日期</th><th>申请人</th><th>地区</th><th>客户</th><th>类型</th><th>项目</th><th>产品型号</th><th class="num">样品数量</th><th>批号</th><th>记录人</th><th>用途</th><th>备注</th><th>操作</th></tr></thead><tbody id="chipMoveBody"></tbody></table></div>
+      <div class="table-container"><table><thead><tr><th>记录编号</th><th>变动日期</th><th>申请人</th><th>地区</th><th>客户</th><th>类型</th><th>项目</th><th>产品型号</th><th class="num">变动数量</th><th class="num">库存数量</th><th>批号</th><th>记录人</th><th>用途</th><th>备注</th><th>操作</th></tr></thead><tbody id="chipMoveBody"></tbody></table></div>
     </div>
   </div>
 </div>
@@ -779,6 +779,8 @@ function normalizeImportedState(d, currentMaterial = materialDb, currentTest = t
     inQty: Math.max(0, Number(s.inQty) || 0),
     records: Array.isArray(s.records) ? s.records.map(String) : (s.records ? String(s.records).split(/[,，、;；\s]+/).filter(Boolean) : []),
     qty: Math.max(0, Number(s.qty) || 0),
+    sampleQty: Math.max(0, Number(s.sampleQty) || 0),
+    demandQty: Math.max(0, Number(s.demandQty) || 0),
     updatedAt: String(s.updatedAt || ''),
     note: String(s.note || '')
   })).filter(s => s.model || s.batchNo);
@@ -794,6 +796,7 @@ function normalizeImportedState(d, currentMaterial = materialDb, currentTest = t
     project: String(m.project || ''),
     model: String(m.model || ''),
     qty: Math.max(0, Number(m.qty) || 0),
+    stockQty: Math.max(0, Number(m.stockQty) || 0),
     batchNo: String(m.batchNo || ''),
     recorder: String(m.recorder || ''),
     purpose: String(m.purpose || ''),
@@ -3385,8 +3388,8 @@ function exportShortageXlsx() {
 
   
 /* ========== 芯片库存（V3.0） ========== */
-const CHIP_STOCK_HEADERS = ['序号','型号','来源','入库日期','批号','包装入库数量','变动情况(对应sheet2变动记录编号)','现有数量','更新日期','备注'];
-const CHIP_MOVE_HEADERS = ['记录编号','变动日期','申请人','地区','客户','客户类型（内部/外部）','项目','产品型号','样品数量','批号','记录人','用途','备注'];
+const CHIP_STOCK_HEADERS = ['序号','型号','来源','入库日期','批号','包装入库数量','变动情况(对应sheet2变动记录编号)','现有数量','样品数量','项目需求量','更新日期','备注'];
+const CHIP_MOVE_HEADERS = ['记录编号','变动日期','申请人','地区','客户','客户类型（内部/外部）','项目','产品型号','变动数量','库存数量','批号','记录人','用途','备注'];
 
 function chipStocks() { return materialDb.chipStocks || []; }
 function chipMoves() { return materialDb.chipMovements || []; }
@@ -3429,11 +3432,11 @@ function linkChipStockMoves(stocks, moves) {
 function renderChipStockTable() {
   const tb = $('#chipStockBody');
   const list = chipStocks();
-  if (!list.length) { tb.innerHTML = '<tr><td colspan="11" class="empty">暂无库存：点「导入 Excel」或「＋ 新增库存」</td></tr>'; return; }
+  if (!list.length) { tb.innerHTML = '<tr><td colspan="13" class="empty">暂无库存：点「导入 Excel」或「＋ 新增库存」</td></tr>'; return; }
   tb.innerHTML = list.map(s => {
     const idArg = esc(JSON.stringify(String(s.id)));
     const linked = linkedChipMoves(s).length;
-    return `<tr><td>${esc(s.seq) || '—'}</td><td><strong>${esc(s.model) || '—'}</strong></td><td>${esc(s.source) || '—'}</td><td>${esc(s.inDate) || '—'}</td><td class="mono">${esc(s.batchNo) || '—'}</td><td class="num">${Number(s.inQty) || 0}</td><td class="num ${Number(s.qty) <= 0 ? 'text-danger' : ''}">${Number(s.qty) || 0}</td><td>${esc(s.updatedAt) || '—'}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(s.note)}">${esc(s.note) || '—'}</td><td>${linked ? `<span class="badge st-info">${linked} 条</span>` : '—'}</td><td><button class="link" onclick="viewChipMoves(${idArg})">记录</button><button class="link" onclick="openChipStockModal(${idArg})">编辑</button><button class="link danger" onclick="delChipStock(${idArg})">删除</button></td></tr>`;
+    return `<tr><td>${esc(s.seq) || '—'}</td><td><strong>${esc(s.model) || '—'}</strong></td><td>${esc(s.source) || '—'}</td><td>${esc(s.inDate) || '—'}</td><td class="mono">${esc(s.batchNo) || '—'}</td><td class="num">${Number(s.inQty) || 0}</td><td class="num ${Number(s.qty) <= 0 ? 'text-danger' : ''}">${Number(s.qty) || 0}</td><td class="num">${Number(s.sampleQty) || 0}</td><td class="num">${Number(s.demandQty) || 0}</td><td>${esc(s.updatedAt) || '—'}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(s.note)}">${esc(s.note) || '—'}</td><td>${linked ? `<span class="badge st-info">${linked} 条</span>` : '—'}</td><td><button class="link" onclick="viewChipMoves(${idArg})">记录</button><button class="link" onclick="openChipStockModal(${idArg})">编辑</button><button class="link danger" onclick="delChipStock(${idArg})">删除</button></td></tr>`;
   }).join('');
 }
 function renderChipMoveTable() {
@@ -3445,10 +3448,10 @@ function renderChipMoveTable() {
     list = linkedChipMoves(filterStock);
     if (bar) bar.innerHTML = `<div class="chip-filter-bar">只看「${esc(filterStock.model)} · ${esc(filterStock.batchNo || '无批号')}」的变动记录（${list.length} 条）<button class="link" onclick="clearChipMoveFilter()">清除筛选</button></div>`;
   } else if (bar) bar.innerHTML = '';
-  if (!list.length) { tb.innerHTML = '<tr><td colspan="14" class="empty">暂无变动记录：点「＋ 新增变动记录」或导入 Excel</td></tr>'; return; }
+  if (!list.length) { tb.innerHTML = '<tr><td colspan="15" class="empty">暂无变动记录：点「＋ 新增变动记录」或导入 Excel</td></tr>'; return; }
   tb.innerHTML = list.map(m => {
     const idArg = esc(JSON.stringify(String(m.id)));
-    return `<tr><td class="mono">${esc(m.id) || '—'}</td><td>${esc(m.date) || '—'}</td><td>${esc(m.applicant) || '—'}</td><td>${esc(m.region) || '—'}</td><td>${esc(m.customer) || '—'}</td><td>${esc(m.customerType) || '—'}</td><td>${esc(m.project) || '—'}</td><td>${esc(m.model) || '—'}</td><td class="num">${Number(m.qty) || 0}</td><td class="mono">${esc(m.batchNo) || '—'}</td><td>${esc(m.recorder) || '—'}</td><td>${esc(m.purpose) || '—'}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(m.note)}">${esc(m.note) || '—'}</td><td><button class="link" onclick="openChipMoveModal(${idArg})">编辑</button><button class="link danger" onclick="delChipMove(${idArg})">删除</button></td></tr>`;
+    return `<tr><td class="mono">${esc(m.id) || '—'}</td><td>${esc(m.date) || '—'}</td><td>${esc(m.applicant) || '—'}</td><td>${esc(m.region) || '—'}</td><td>${esc(m.customer) || '—'}</td><td>${esc(m.customerType) || '—'}</td><td>${esc(m.project) || '—'}</td><td>${esc(m.model) || '—'}</td><td class="num">${Number(m.qty) || 0}</td><td class="num">${m.stockQty ? Number(m.stockQty) : '—'}</td><td class="mono">${esc(m.batchNo) || '—'}</td><td>${esc(m.recorder) || '—'}</td><td>${esc(m.purpose) || '—'}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(m.note)}">${esc(m.note) || '—'}</td><td><button class="link" onclick="openChipMoveModal(${idArg})">编辑</button><button class="link danger" onclick="delChipMove(${idArg})">删除</button></td></tr>`;
   }).join('');
 }
 function nextChipStockSeq(stocks) {
@@ -3471,6 +3474,8 @@ function openChipStockModal(id) {
       <div class="form-group"><label>更新日期</label><input id="cs_updatedAt" type="date" value="${esc(v.updatedAt)}"></div>
       <div class="form-group"><label>包装入库数量</label><input id="cs_inQty" type="number" min="0" value="${Number(v.inQty)||0}"></div>
       <div class="form-group"><label>现有数量</label><input id="cs_qty" type="number" min="0" value="${Number(v.qty)||0}"></div>
+      <div class="form-group"><label>样品数量（累计领用）</label><input id="cs_sampleQty" type="number" min="0" value="${Number(v.sampleQty)||0}"></div>
+      <div class="form-group"><label>项目需求量</label><input id="cs_demandQty" type="number" min="0" value="${Number(v.demandQty)||0}"></div>
       <div class="form-group full"><label>备注</label><input id="cs_note" value="${esc(v.note)}"></div>
     </div>`;
   openMatModal(s ? '编辑芯片库存' : '新增芯片库存', html, () => saveChipStock(s ? s.id : null));
@@ -3478,8 +3483,11 @@ function openChipStockModal(id) {
 function saveChipStock(origId) {
   const model = $('#cs_model').value.trim();
   if (!model) { alert('请填写型号'); return false; }
-  let inQty, qty;
-  try { inQty = stockInteger($('#cs_inQty').value || 0, '入库数量'); qty = stockInteger($('#cs_qty').value || 0, '现有数量'); }
+  let inQty, qty, sampleQty, demandQty;
+  try {
+    inQty = stockInteger($('#cs_inQty').value || 0, '入库数量'); qty = stockInteger($('#cs_qty').value || 0, '现有数量');
+    sampleQty = stockInteger($('#cs_sampleQty').value || 0, '样品数量'); demandQty = stockInteger($('#cs_demandQty').value || 0, '项目需求量');
+  }
   catch (err) { alert(err.message); return false; }
   const next = materialClone();
   const record = origId ? next.chipStocks.find(s => s.id === origId) : { id: 'cs_' + uid() };
@@ -3492,7 +3500,7 @@ function saveChipStock(origId) {
   Object.assign(record, {
     seq, model, source: $('#cs_source').value.trim(),
     inDate: $('#cs_inDate').value, batchNo: $('#cs_batch').value.trim(),
-    inQty, qty, updatedAt: $('#cs_updatedAt').value || getLocalToday(), note: $('#cs_note').value.trim()
+    inQty, qty, sampleQty, demandQty, updatedAt: $('#cs_updatedAt').value || getLocalToday(), note: $('#cs_note').value.trim()
   });
   if (!origId) next.chipStocks.push(record);
   if (!commitMaterialChange(next)) return false;
@@ -3522,7 +3530,8 @@ function openChipMoveModal(id) {
       <div class="form-group"><label>客户类型</label><select id="cm_customerType"><option value="" ${!v.customerType?'selected':''}>—</option><option value="内部" ${v.customerType==='内部'?'selected':''}>内部</option><option value="外部" ${v.customerType==='外部'?'selected':''}>外部</option></select></div>
       <div class="form-group"><label>项目</label><input id="cm_project" value="${esc(v.project)}"></div>
       <div class="form-group"><label>产品型号</label><input id="cm_model" value="${esc(v.model)}"></div>
-      <div class="form-group"><label>样品数量 *</label><input id="cm_qty" type="number" min="0" value="${Number(v.qty)||0}"></div>
+      <div class="form-group"><label>变动数量 *</label><input id="cm_qty" type="number" min="0" value="${Number(v.qty)||0}"></div>
+      <div class="form-group"><label>库存数量（变动后，选填）</label><input id="cm_stockQty" type="number" min="0" value="${Number(v.stockQty)||0}" title="留空时，关联了库存就自动填扣减后的剩余"></div>
       <div class="form-group"><label>批号</label><input id="cm_batch" value="${esc(v.batchNo)}"></div>
       <div class="form-group"><label>记录人</label><input id="cm_recorder" value="${esc(v.recorder)}"></div>
       <div class="form-group"><label>用途</label><input id="cm_purpose" value="${esc(v.purpose)}"></div>
@@ -3534,27 +3543,38 @@ function openChipMoveModal(id) {
 function saveChipMove(origId) {
   const date = $('#cm_date').value;
   if (!date || !isValidDateOnly(date)) { alert('请填写有效的变动日期'); return false; }
-  let qty;
-  try { qty = stockInteger($('#cm_qty').value || 0, '样品数量'); }
+  let qty, stockQty;
+  try {
+    qty = stockInteger($('#cm_qty').value || 0, '变动数量');
+    stockQty = stockInteger($('#cm_stockQty').value || 0, '库存数量');
+  }
   catch (err) { alert(err.message); return false; }
   const idText = $('#cm_id_text').value.trim();
   const stockId = $('#cm_stockId').value || null;
   const next = materialClone();
   const orig = origId ? next.chipMovements.find(m => m.id === origId) : null;
   if (origId && !orig) { alert('变动记录不存在'); return false; }
-  // 先撤销旧关联的扣减
+  // 先撤销旧关联的扣减（库存、累计领用、记录编号）
   if (orig && orig.stockId) {
     const st = next.chipStocks.find(s => s.id === orig.stockId);
-    if (st) { st.qty = stockInteger(Number(st.qty || 0) + Number(orig.qty || 0), '库存回补'); st.records = (st.records || []).filter(r => r !== orig.id); st.updatedAt = getLocalToday(); }
+    if (st) {
+      st.qty = stockInteger(Number(st.qty || 0) + Number(orig.qty || 0), '库存回补');
+      st.sampleQty = Math.max(0, Number(st.sampleQty || 0) - Number(orig.qty || 0));
+      st.records = (st.records || []).filter(r => r !== orig.id);
+      st.updatedAt = getLocalToday();
+    }
   }
   // 新扣减
+  let newStockQty = stockQty;
   if (stockId) {
     const st = next.chipStocks.find(s => s.id === stockId);
     if (!st) { alert('关联的库存不存在'); return false; }
     if (Number(st.qty || 0) < qty) { alert(`库存不足：「${st.model} ${st.batchNo || ''}」现有 ${Number(st.qty)||0}，本次要扣 ${qty}。请先核对库存或改为不扣库存。`); return false; }
     st.qty = stockInteger(Number(st.qty || 0) - qty, '扣减后库存');
+    st.sampleQty = stockInteger(Number(st.sampleQty || 0) + qty, '累计领用');
     if (!Array.isArray(st.records)) st.records = [];
     st.updatedAt = getLocalToday();
+    if (!newStockQty) newStockQty = st.qty;   // 变动后剩余，自动填
   }
   // 编号：优先手填，否则取现有最大编号 +1
   let newId = idText;
@@ -3571,7 +3591,7 @@ function saveChipMove(origId) {
   Object.assign(record, {
     date, applicant: $('#cm_applicant').value.trim(), region: $('#cm_region').value.trim(),
     customer: $('#cm_customer').value.trim(), customerType: $('#cm_customerType').value,
-    project: $('#cm_project').value.trim(), model: $('#cm_model').value.trim(), qty,
+    project: $('#cm_project').value.trim(), model: $('#cm_model').value.trim(), qty, stockQty: newStockQty,
     batchNo: $('#cm_batch').value.trim(), recorder: $('#cm_recorder').value.trim(),
     purpose: $('#cm_purpose').value.trim(), note: $('#cm_note').value.trim(), stockId
   });
@@ -3592,7 +3612,12 @@ function delChipMove(id) {
   const next = materialClone();
   if (st) {
     const st2 = next.chipStocks.find(s => s.id === st.id);
-    if (st2) { st2.qty = stockInteger(Number(st2.qty || 0) + Number(m.qty || 0), '库存回补'); st2.records = (st2.records || []).filter(r => r !== m.id); st2.updatedAt = getLocalToday(); }
+    if (st2) {
+      st2.qty = stockInteger(Number(st2.qty || 0) + Number(m.qty || 0), '库存回补');
+      st2.sampleQty = Math.max(0, Number(st2.sampleQty || 0) - Number(m.qty || 0));
+      st2.records = (st2.records || []).filter(r => r !== m.id);
+      st2.updatedAt = getLocalToday();
+    }
   }
   next.chipMovements = next.chipMovements.filter(x => x.id !== id);
   if (commitMaterialChange(next)) renderChipStockPage();
@@ -3619,17 +3644,24 @@ function parseChipStockRows(rows) {
   }
   if (header < 0) throw new Error('「芯片数量」表里找不到表头（需要含「型号」列）');
   const h = rows[header].map(c => String(c ?? '').trim());
-  const cell = (r, name) => { const ci = findHeaderIndex(h, [name]); return ci >= 0 ? String(r[ci] ?? '').trim() : ''; };
+  // 组里模板和旧模板表头叫法不同，按别名认列
+  const cell = (r, names) => {
+    for (const n of names) { const ci = findHeaderIndex(h, [n]); if (ci >= 0) return String(r[ci] ?? '').trim(); }
+    return '';
+  };
   const stocks = [];
   rows.slice(header + 1).forEach((r, i) => {
-    const model = cell(r, '型号');
-    if (!model && !cell(r, '批号') && !cell(r, '来源')) return;
-    const rec = cell(r, '变动情况(对应sheet2变动记录编号)') || cell(r, '变动情况');
+    const model = cell(r, ['型号', '产品型号', '芯片型号']);
+    if (!model && !cell(r, ['批号']) && !cell(r, ['来源'])) return;
+    const rec = cell(r, ['变动情况(对应sheet2变动记录编号)', '变动情况', '变动记录编号']);
     stocks.push({
-      id: 'cs_' + uid(), seq: cell(r, '序号') || String(i + 1), model, source: cell(r, '来源'), inDate: cell(r, '入库日期'),
-      batchNo: cell(r, '批号'), inQty: Math.max(0, parseInt(cell(r, '包装入库数量'), 10) || 0),
+      id: 'cs_' + uid(), seq: cell(r, ['序号']) || String(i + 1), model, source: cell(r, ['来源']), inDate: cell(r, ['入库日期']),
+      batchNo: cell(r, ['批号']), inQty: Math.max(0, parseInt(cell(r, ['包装入库数量', '入库数量']), 10) || 0),
       records: rec ? rec.split(/[,，、;；\s]+/).filter(Boolean) : [],
-      qty: Math.max(0, parseInt(cell(r, '现有数量'), 10) || 0), updatedAt: cell(r, '更新日期'), note: cell(r, '备注')
+      qty: Math.max(0, parseInt(cell(r, ['现有数量', '库存数量', '现有库存', '剩余数量']), 10) || 0),
+      sampleQty: Math.max(0, parseInt(cell(r, ['样品数量', '累计领用', '累计出库']), 10) || 0),
+      demandQty: Math.max(0, parseInt(cell(r, ['项目需求量', '需求量', '项目需求']), 10) || 0),
+      updatedAt: cell(r, ['更新日期']), note: cell(r, ['备注'])
     });
   });
   return stocks;
@@ -3641,16 +3673,20 @@ function parseChipMoveRows(rows) {
   }
   if (header < 0) throw new Error('「芯片变动情况」表里找不到表头（需要含「记录编号」列）');
   const h = rows[header].map(c => String(c ?? '').trim());
-  const cell = (r, name) => { const ci = findHeaderIndex(h, [name]); return ci >= 0 ? String(r[ci] ?? '').trim() : ''; };
+  const cell = (r, names) => {
+    for (const n of names) { const ci = findHeaderIndex(h, [n]); if (ci >= 0) return String(r[ci] ?? '').trim(); }
+    return '';
+  };
   const moves = [];
   rows.slice(header + 1).forEach(r => {
-    const id = cell(r, '记录编号');
-    if (!id && !cell(r, '产品型号') && !cell(r, '批号')) return;
+    const id = cell(r, ['记录编号']);
+    if (!id && !cell(r, ['产品型号', '型号']) && !cell(r, ['批号'])) return;
     moves.push({
-      id, date: cell(r, '变动日期'), applicant: cell(r, '申请人'), region: cell(r, '地区'),
-      customer: cell(r, '客户'), customerType: cell(r, '客户类型（内部/外部）'), project: cell(r, '项目'),
-      model: cell(r, '产品型号'), qty: Math.max(0, parseInt(cell(r, '样品数量'), 10) || 0),
-      batchNo: cell(r, '批号'), recorder: cell(r, '记录人'), purpose: cell(r, '用途'), note: cell(r, '备注'), stockId: null
+      id, date: cell(r, ['变动日期']), applicant: cell(r, ['申请人']), region: cell(r, ['地区']),
+      customer: cell(r, ['客户']), customerType: cell(r, ['客户类型（内部/外部）', '客户类型']), project: cell(r, ['项目']),
+      model: cell(r, ['产品型号', '型号', '芯片型号']), qty: Math.max(0, parseInt(cell(r, ['变动数量', '样品数量', '出库数量', '领取数量']), 10) || 0),
+      stockQty: Math.max(0, parseInt(cell(r, ['库存数量', '变动后库存']), 10) || 0),
+      batchNo: cell(r, ['批号']), recorder: cell(r, ['记录人']), purpose: cell(r, ['用途']), note: cell(r, ['备注']), stockId: null
     });
   });
   return moves;
@@ -3704,8 +3740,8 @@ function buildChipStockXlsx(stockRows, moveRows) {
   return makeZip(files);
 }
 function exportChipStockXlsx() {
-  const stockRows = chipStocks().map(s => [s.seq, s.model, s.source, s.inDate, s.batchNo, Number(s.inQty) || 0, (s.records || []).join(','), Number(s.qty) || 0, s.updatedAt, s.note]);
-  const moveRows = chipMoves().map(m => [m.id, m.date, m.applicant, m.region, m.customer, m.customerType, m.project, m.model, Number(m.qty) || 0, m.batchNo, m.recorder, m.purpose, m.note]);
+  const stockRows = chipStocks().map(s => [s.seq, s.model, s.source, s.inDate, s.batchNo, Number(s.inQty) || 0, (s.records || []).join(','), Number(s.qty) || 0, Number(s.sampleQty) || 0, Number(s.demandQty) || 0, s.updatedAt, s.note]);
+  const moveRows = chipMoves().map(m => [m.id, m.date, m.applicant, m.region, m.customer, m.customerType, m.project, m.model, Number(m.qty) || 0, Number(m.stockQty) || 0, m.batchNo, m.recorder, m.purpose, m.note]);
   const blob = buildChipStockXlsx(stockRows, moveRows);
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
