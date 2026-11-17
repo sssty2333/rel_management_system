@@ -3712,6 +3712,11 @@ function parseChipMoveRows(rows) {
     for (const n of names) { const ci = findHeaderIndex(h, [n]); if (ci >= 0) return String(r[ci] ?? '').trim(); }
     return '';
   };
+  // 模糊兜底：表头叫法五花八门时，找包含关键词的列（避开“变动日期”这类日期列）
+  const cellFuzzy = (r, keywords) => {
+    for (const kw of keywords) { const ci = h.findIndex(x => x.includes(kw) && !x.includes('日期')); if (ci >= 0) return String(r[ci] ?? '').trim(); }
+    return '';
+  };
   const moves = [];
   rows.slice(header + 1).forEach(r => {
     const id = cell(r, ['记录编号']);
@@ -3723,19 +3728,53 @@ function parseChipMoveRows(rows) {
       if (/[入增退补返还]/.test(typeRaw)) type = '入库';
       else if (/[出发减领取]/.test(typeRaw)) type = '出库';
     }
-    const rawQty = parseInt(cell(r, ['样品数量', '变动数量', '出库数量', '领取数量']), 10) || 0;
+    const qtyText = cell(r, ['样品数量', '变动数量', '出库数量', '领取数量']) || cellFuzzy(r, ['样品', '实际', '实发', '发出', '送出', '变动', '出库', '领用', '送样']);
+    const demandText = cell(r, ['需求数量', '需求量', '项目需求量', '项目需求']) || cellFuzzy(r, ['需求', '申请', '要货']);
+    const rawQty = parseInt(qtyText, 10) || 0;
     if (rawQty < 0) type = '入库';
     moves.push({
       id, date: cell(r, ['变动日期']), applicant: cell(r, ['申请人']), region: cell(r, ['地区']),
       customer: cell(r, ['客户']), customerType: cell(r, ['客户类型（内部/外部）', '客户类型']), project: cell(r, ['项目']),
       model: cell(r, ['产品型号', '型号', '芯片型号']), type,
-      demandQty: Math.max(0, parseInt(cell(r, ['需求数量', '需求量', '项目需求量', '项目需求']), 10) || 0),
+      demandQty: Math.max(0, parseInt(demandText, 10) || 0),
       qty: Math.abs(rawQty),
       stockQty: Math.max(0, parseInt(cell(r, ['库存数量', '变动后库存']), 10) || 0),
       batchNo: cell(r, ['批号']), recorder: cell(r, ['记录人']), purpose: cell(r, ['用途']), note: cell(r, ['备注']), stockId: null
     });
   });
   return moves;
+}
+/* 导入时的列名识别报告：哪列认出来了、哪列没找到 */
+function chipMoveHeaderReport(rows) {
+  let header = -1;
+  for (let i = 0; i < Math.min(10, rows.length); i++) {
+    if (rows[i].some(c => String(c || '').includes('记录编号'))) { header = i; break; }
+  }
+  if (header < 0) return { headers: '', qty: '', demand: '', stockQty: '', type: '' };
+  const h = rows[header].map(c => String(c ?? '').trim());
+  const find = names => { for (const n of names) { const ci = findHeaderIndex(h, [n]); if (ci >= 0) return h[ci]; } return ''; };
+  const fuzzy = kws => { for (const kw of kws) { const f = h.find(x => x.includes(kw) && !x.includes('日期')); if (f) return f; } return ''; };
+  return {
+    headers: h.filter(Boolean).join('、'),
+    qty: find(['样品数量', '变动数量', '出库数量', '领取数量']) || fuzzy(['样品', '实际', '实发', '发出', '送出', '变动', '出库', '领用', '送样']),
+    demand: find(['需求数量', '需求量', '项目需求量', '项目需求']) || fuzzy(['需求', '申请', '要货']),
+    stockQty: find(['库存数量', '变动后库存']),
+    type: find(['类型', '变动类型', '方向', '出入库'])
+  };
+}
+function chipStockHeaderReport(rows) {
+  let header = -1;
+  for (let i = 0; i < Math.min(10, rows.length); i++) {
+    if (rows[i].some(c => String(c || '').includes('型号'))) { header = i; break; }
+  }
+  if (header < 0) return { headers: '', qty: '', inQty: '' };
+  const h = rows[header].map(c => String(c ?? '').trim());
+  const find = names => { for (const n of names) { const ci = findHeaderIndex(h, [n]); if (ci >= 0) return h[ci]; } return ''; };
+  return {
+    headers: h.filter(Boolean).join('、'),
+    qty: find(['现有数量', '库存数量', '现有库存', '剩余数量']),
+    inQty: find(['包装入库数量', '入库数量'])
+  };
 }
 async function handleChipStockExcel(file) {
   const status = $('#chipImportStatus'), preview = $('#chipImportPreview');
@@ -3750,13 +3789,17 @@ async function handleChipStockExcel(file) {
     const stockDef = sheets.find(s => s.name === '芯片数量');
     const moveDef = sheets.find(s => s.name === '芯片变动情况');
     if (!stockDef || !moveDef) throw new Error('需要「芯片数量」和「芯片变动情况」两个工作表');
-    const stocks = parseChipStockRows(parseSheetXml(files[stockDef.path] || '', shared));
-    const moves = parseChipMoveRows(parseSheetXml(files[moveDef.path] || '', shared));
+    const stockRaw = parseSheetXml(files[stockDef.path] || '', shared);
+    const moveRaw = parseSheetXml(files[moveDef.path] || '', shared);
+    const sReport = chipStockHeaderReport(stockRaw);
+    const mReport = chipMoveHeaderReport(moveRaw);
+    const stocks = parseChipStockRows(stockRaw);
+    const moves = parseChipMoveRows(moveRaw);
     // 按库存行里逗号分隔的记录编号，把变动记录对应到库存
     linkChipStockMoves(stocks, moves);
     const checks = chipStockImportCheck(stocks, moves);
     chipStockImportState = { stocks, moves, signature: JSON.stringify({ s: materialDb.chipStocks, m: materialDb.chipMovements }), fileName: file.name };
-    status.textContent = `${file.name}：库存 ${stocks.length} 条，变动记录 ${moves.length} 条。核对后点确认导入（会整体替换当前数据）。${checks.length ? ` 另：${checks.length} 条库存的现有数量与变动记录对不上（保持原值，仅提醒）。` : ''}`;
+    status.innerHTML = `${file.name}：库存 ${stocks.length} 条，变动记录 ${moves.length} 条。核对后点确认导入（会整体替换当前数据）。${checks.length ? ` 另：${checks.length} 条库存的现有数量与变动记录对不上（保持原值，仅提醒）。` : ''}<div style="margin-top:8px;font-size:11px;color:var(--text-sec);">列名识别：需求数量→『${mReport.demand || '未找到'}』；样品数量→『${mReport.qty || '未找到'}』；库存数量→『${mReport.stockQty || '未找到'}』；类型→『${mReport.type || '未找到（默认出库）'}』</div>`;
     preview.innerHTML = `<div class="table-container"><table><thead><tr><th>库存序号</th><th>型号</th><th>批号</th><th class="num">入库</th><th class="num">现有</th></tr></thead><tbody>${stocks.map(s => `<tr><td>${esc(s.seq)}</td><td>${esc(s.model)}</td><td>${esc(s.batchNo) || '—'}</td><td class="num">${s.inQty}</td><td class="num">${s.qty}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">库存表没有数据行</td></tr>'}</tbody></table></div><div class="table-container" style="margin-top:12px;"><table><thead><tr><th>编号</th><th>日期</th><th>申请人</th><th>型号</th><th class="num">数量</th><th>批号</th></tr></thead><tbody>${moves.map(m => `<tr><td>${esc(m.id)}</td><td>${esc(m.date)}</td><td>${esc(m.applicant)}</td><td>${esc(m.model)}</td><td class="num">${m.qty}</td><td>${esc(m.batchNo) || '—'}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">变动表没有数据行</td></tr>'}</tbody></table></div>${checks.length ? `<div style="margin-top:12px;padding:10px 12px;background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;font-size:12px;color:#92400e;line-height:1.8;"><b>核对提示（不覆盖，仅提醒）</b>：以下库存的现有数量与变动记录算出来的不一致，导入后<b>保持表里原值</b>，可之后手工调整。<br>${checks.slice(0, 8).map(x => `· 序号 ${esc(x.seq)} ${esc(x.model)}${x.batchNo ? ' · ' + esc(x.batchNo) : ''}：表写 ${x.imported}，按记录算 ${x.expected}`).join('<br>')}${checks.length > 8 ? `<br>…另有 ${checks.length - 8} 条` : ''}</div>` : ''}`;
     $('#chipImportConfirm').disabled = false;
   } catch (err) { status.textContent = '解析失败：' + err.message; }
