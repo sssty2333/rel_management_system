@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>可靠性综合管理中心 V3.0</title>
+<title>可靠性综合管理中心 V3.1</title>
 <style>
 :root { --bg:#f4f6f8;--surface:#fff;--border:#e2e8f0;--text:#1e293b;--text-sec:#64748b;--primary:#2563eb;--primary-bg:#eff6ff;--success:#10b981;--success-bg:#ecfdf5;--warning:#f59e0b;--warning-bg:#fffbeb;--danger:#dc2626;--danger-bg:#fef2f2; }
 * { box-sizing: border-box; }
@@ -358,7 +358,7 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
 <body>
 
 <aside class="app-sidebar">
-  <div class="app-brand"><span class="brand-mark">◈</span><div>可靠性管理<span class="brand-sub">综合管理中心 · V3.0</span></div></div>
+  <div class="app-brand"><span class="brand-mark">◈</span><div>可靠性管理<span class="brand-sub">综合管理中心 · V3.1</span></div></div>
   <nav class="nav-tabs" aria-label="工作模块">
     <button type="button" class="nav-tab active" onclick="switchPage('components')"><span class="nav-number">01</span>元器件台账</button>
     <button type="button" class="nav-tab" onclick="switchPage('chips')"><span class="nav-number">02</span>BOM</button>
@@ -376,7 +376,8 @@ button:focus-visible,summary:focus-visible,.nav-tab:focus-visible { outline:2px 
     <details class="data-menu"><summary>数据管理</summary><div class="data-popover">
       <button class="hl" onclick="autoLoadFromSameDir()">自动加载 data.json</button>
       <button onclick="document.getElementById('serverJsonFile').click()">选择 data.json</button>
-      <button onclick="copySharePath()">复制数据路径</button><hr>
+      <button onclick="copySharePath()">复制数据路径</button>
+      <button onclick="setShareUnc()">设置共享目录</button><hr>
       <button onclick="exportServerJson()">导出为 data.json</button>
       <button onclick="exportJSON()">导出备份</button>
       <button onclick="document.getElementById('importFile').click()">导入备份</button>
@@ -526,9 +527,23 @@ let currentBatchId = null;
 let saveTimer = null;
 let currentPage = 'components';
 
-const SHARE_UNC = '\\\\sjnas01\\semi\\嵌入式产品中心\\工控MCU\\音频功放\\★秘密★可靠性\\★一般★可靠性实验系统';
+/* 共享目录路径只保存在本机浏览器里，不写死在代码中（仓库是公开的） */
 const DATA_FILE_NAME = 'data.json';
-const DATA_FULL_UNC = SHARE_UNC + '\\' + DATA_FILE_NAME;
+const SHARE_UNC_KEY = 'rel.shareUnc';
+function getShareUnc() {
+  try { return localStorage.getItem(SHARE_UNC_KEY) || ''; } catch (e) { return ''; }
+}
+function setShareUnc() {
+  const val = prompt('团队共享目录（UNC 路径，例如 \\\\server\\share\\目录）。留空表示清除：', getShareUnc());
+  if (val === null) return;
+  const v = val.trim();
+  try { if (v) localStorage.setItem(SHARE_UNC_KEY, v); else localStorage.removeItem(SHARE_UNC_KEY); } catch (e) {}
+  alert(v ? '已记住共享目录（只存在本机浏览器，不会写进 data.json，也不会同步给别人）' : '已清除共享目录设置');
+}
+function shareDataPath() {
+  const dir = getShareUnc().replace(/[\\\/]+$/, '');
+  return dir ? dir + '\\' + DATA_FILE_NAME : '';
+}
 
 const BOARD_KEYS = ['base','hast','top'];
 const BOARD_NAMES = {base:'可靠性底板', hast:'可靠性HAST板', top:'可靠性顶板'};
@@ -607,7 +622,9 @@ function normalizeElfrBatch(b) {
   if (b.qty == null || b.qty === '') b.qty = 120;
   if (!Array.isArray(b.injectors)) b.injectors = b.person ? [String(b.person)] : [];
   const requested = Number(b.injCount);
-  b.injCount = Math.max(Number.isSafeInteger(requested) && requested > 0 ? requested : Number(b.qty) >= 120 ? 3 : 2, b.injectors.length);
+  const fallbackCount = Number(b.qty) >= 120 ? 3 : 2;
+  const capCount = Math.max(8, b.injectors.length);
+  b.injCount = Math.max(Math.min(Number.isSafeInteger(requested) && requested > 0 ? requested : fallbackCount, capCount), b.injectors.length);
   while (b.injectors.length < b.injCount) b.injectors.push('');
   // 手工改过的名额打锁，重新平衡时保留
   if (!Array.isArray(b.injectorLocked)) b.injectorLocked = [];
@@ -988,9 +1005,11 @@ function copyText(text) {
   try { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); document.body.removeChild(ta); return Promise.resolve(ok); } catch(e) { return Promise.resolve(false); }
 }
 function copySharePath() {
-  copyText(DATA_FULL_UNC).then(ok => {
-    if (ok) alert('已复制完整路径：\n\n' + DATA_FULL_UNC + '\n\n用法：点「📂 选择 data.json」→ 文件对话框顶部地址栏 Ctrl+A 全选 → Ctrl+V 粘贴 → 回车 → 选中 data.json');
-    else prompt('请手动复制：', DATA_FULL_UNC);
+  const full = shareDataPath();
+  if (!full) { alert('还没设置共享目录。点「数据管理 → 设置共享目录」填一次路径，之后就会记住。'); return; }
+  copyText(full).then(ok => {
+    if (ok) alert('已复制完整路径：\n\n' + full + '\n\n用法：点「选择 data.json」→ 文件对话框顶部地址栏 Ctrl+A 全选 → Ctrl+V 粘贴 → 回车 → 选中 data.json');
+    else prompt('请手动复制：', full);
   });
 }
 function handleJsonFile(file) {
@@ -1040,10 +1059,13 @@ window.addEventListener('dragover', e => { e.preventDefault(); });
 window.addEventListener('drop', e => { e.preventDefault(); dragCounter = 0; document.getElementById('dropOverlay')?.classList.remove('on'); const f = e.dataTransfer && e.dataTransfer.files[0]; if (f) handleJsonFile(f); });
 function exportServerJson() {
   forceSave();
-  const allData = { version: '3.0', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
+  const allData = { version: '3.1', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
   const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = DATA_FILE_NAME; a.click();
-  setTimeout(() => alert('已导出 ' + DATA_FILE_NAME + '。\n\n请覆盖到共享目录：\n' + SHARE_UNC), 100);
+  setTimeout(() => {
+    const full = shareDataPath();
+    alert('已导出 ' + DATA_FILE_NAME + '。' + (full ? '\n\n请覆盖到共享目录：\n' + full : '\n\n请复制到团队共享目录；可在「数据管理 → 设置共享目录」里记住路径。'));
+  }, 100);
 }
 
 /* ========== 物料台账 ========== */
@@ -2306,6 +2328,7 @@ function renderElfrModal() {
       <button class="ghost" onclick="addElfrBatch()">+ 新增批次</button>
       <button class="ghost" onclick="rebalanceElfrAssignments()" title="保留你手工改过的人，其余名额按工作量重新分配">⚖️ 重新平衡</button>
       <button class="ghost" onclick="batchSetElfrStatus()" title="一次性把所有批次设成统一状态">🔄 批量设置状态</button>
+      <button class="link" style="margin-left:auto; font-size:11.5px; color:var(--text-sec); opacity:.85;" onclick="openElfrWorkload()" title="看看每个人投实验 / FT 的次数和折算工作量（投实验 = 2，FT = 1），方便自己安排人">👥 工作量</button>
     </div>
     ${oldWarn}
     <div style="font-size:12px;color:var(--text-sec);margin:0 0 12px;">建议安排可随时调整；临时换人只修改对应记录，完成后再勾选“完成”，无需重排全部批次。<br>手动改过的名字会被记住，点「⚖️ 重新平衡」只重排没锁定的名额（已完成/已开始的批次不动）。</div>
@@ -2384,10 +2407,8 @@ function renderElfrBatchCard(b) {
           <span>🧑‍🔬 投实验安排 · ${b.injCount} 人 · ${b.qty} 颗</span>
           <div style="display:flex; gap:8px; align-items:center;">
             <span id="elfr_inj_stat_${b.id}" style="color:${injStatColor}; font-weight:600; font-size:11.5px;">已填 ${injFilled}/${b.injCount}</span>
-            <select onchange="setElfrInjCount('${b.id}', this.value)" style="height:24px; padding:0 6px; font-size:11.5px; border:1px solid #fdba74; background:#fff; border-radius:4px;">
-              <option value="2" ${b.injCount===2?'selected':''}>2 人</option>
-              <option value="3" ${b.injCount===3?'selected':''}>3 人</option>
-            </select>
+            <input type="number" min="1" max="8" value="${b.injCount}" onchange="setElfrInjCount('${b.id}', this.value)" style="width:46px; height:24px; padding:0 4px; font-size:11.5px; border:1px solid #fdba74; background:#fff; border-radius:4px; text-align:center;" title="投实验人数（1–8，可自由填）">
+            <span style="font-size:11.5px; color:#92400e;">人</span>
           </div>
         </div>
         <div class="elfr-injector-inputs" style="grid-template-columns: ${injGridCols};">${injInputs.join('')}</div>
@@ -2454,6 +2475,39 @@ function collectElfrWorkload(batches, personList) {
   return { scores, injTimes, ftTimes };
 }
 
+/* 每人工作量明细：投实验一次 = 2，FT 一次 = 1；同批多人不摊分颗数，按参与次数记 */
+function elfrWorkloadRows(batches) {
+  const stats = new Map();
+  const touch = name => {
+    if (!stats.has(name)) stats.set(name, { name, injTimes: 0, ftTimes: 0, score: 0 });
+    return stats.get(name);
+  };
+  for (const b of batches || []) {
+    for (const p of uniqueElfrPeople(b.injectors || [])) { const row = touch(p); row.injTimes++; row.score += WORK_INJ_SLOT; }
+    for (const t of b.ftTests || []) {
+      for (const p of uniqueElfrPeople(t.actualTesters || t.plannedTesters || [])) { const row = touch(p); row.ftTimes++; row.score += WORK_FT_SLOT; }
+    }
+  }
+  return [...stats.values()].sort((a, b) => b.score - a.score || b.injTimes - a.injTimes || a.name.localeCompare(b.name, 'zh-CN'));
+}
+/* 隐藏一点的小入口：给自己排人时看谁忙谁闲 */
+function openElfrWorkload() {
+  const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
+  const batches = c.elfrBatches || [];
+  const rows = elfrWorkloadRows(batches);
+  const totalQty = batches.reduce((s, b) => s + (Number(b.qty) || 0), 0);
+  const table = rows.length
+    ? `<div class="table-container"><table><thead><tr><th>姓名</th><th class="num">投实验次数</th><th class="num">FT 次数</th><th class="num">工作量</th></tr></thead><tbody>${rows.map(r => `<tr><td><strong>${esc(r.name)}</strong></td><td class="num">${r.injTimes}</td><td class="num">${r.ftTimes}</td><td class="num">${r.score}</td></tr>`).join('')}</tbody></table></div>`
+    : '<div class="empty" style="padding:18px 0;">这个主题还没有填过人员</div>';
+  const max = rows.length ? Math.max(...rows.map(r => r.score)) : 0;
+  const min = rows.length ? Math.min(...rows.map(r => r.score)) : 0;
+  openMatModal('每人工作量', `${table}
+    <div style="margin-top:12px; font-size:12px; color:var(--text-sec); line-height:1.8;">
+      共 ${batches.length} 批 · ${totalQty} 颗；口径：一次投实验 = 2，一次 FT = 1。<br>
+      ${rows.length ? `最高 ${max} / 最低 ${min}，差 ${max - min}。` : ''}同一批去几个人，颗数不摊分，按参与次数记。
+    </div>`, () => true);
+}
+
 /* ===== 🔄 批量设置状态 ===== */
 function batchSetElfrStatus() {
   const c = testDb.cards.find(x => x.id === currentElfrCardId);
@@ -2474,7 +2528,7 @@ function batchSetElfrStatus() {
 function setElfrInjCount(batchId, val) {
   const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
   const b = c.elfrBatches.find(x => x.id === batchId); if (!b) return;
-  const n = Math.max(2, Math.min(3, Number(val) || 3));
+  const n = Math.max(1, Math.min(8, Math.round(Number(val)) || 1));
   b.injCount = n;
   while (b.injectors.length < n) b.injectors.push('');
   if (!Array.isArray(b.injectorLocked)) b.injectorLocked = [];
@@ -2586,19 +2640,20 @@ function addElfrBatch() {
   const c = testDb.cards.find(x => x.id === currentElfrCardId); if (!c) return;
   openInputModal('新增 ELFR 批次', [
     { id: 'name', label: '批次名', placeholder: '如：第1批' },
-    { id: 'qty', label: '投料数量（120 或 80）', type: 'number', value: 120 },
+    { id: 'qty', label: '投料数量（颗，可自由填写）', type: 'number', value: 120 },
+    { id: 'injCount', label: '投实验人数（1–8 人，可自由填写）', type: 'number', value: 2 },
     { id: 'status', label: '状态', type: 'select', options: CARD_STATUSES, value: '待准备' }
-  ], ({ name, qty, status }) => {
-    name = (name || '').trim(); const n = Number(qty);
+  ], ({ name, qty, injCount, status }) => {
+    name = (name || '').trim(); const n = Number(qty); const k = Number(injCount);
     if (!name) { alert('请输入批次名'); return false; }
-    if (!Number.isSafeInteger(n) || n <= 0) { alert('数量必须是有效正整数'); return false; }
+    if (!Number.isSafeInteger(n) || n <= 0) { alert('投料数量必须是有效正整数'); return false; }
+    if (!Number.isSafeInteger(k) || k < 1 || k > 8) { alert('投实验人数需在 1–8 之间'); return false; }
     if (!c.elfrBatches) c.elfrBatches = [];
-    const injCount = n >= 120 ? 3 : 2;
     c.elfrBatches.push({
       id: 'eb_' + uid(), name, qty: n,
       status: CARD_STATUSES.includes(status) ? status : '待准备',
-      injCount, ftCount: 2,
-      injectors: Array(injCount).fill(''),
+      injCount: k, ftCount: 2,
+      injectors: Array(k).fill(''), injectorLocked: Array(k).fill(false),
       injectDate: '', ftTests: [], remark: ''
     });
     save(); renderElfrModal(); renderBoard();
@@ -2610,12 +2665,19 @@ function editElfrBatch(batchId) {
   const b = c.elfrBatches.find(x => x.id === batchId); if (!b) return;
   openInputModal('编辑批次', [
     { id: 'name', label: '批次名', value: b.name },
-    { id: 'qty', label: '投料数量', type: 'number', value: b.qty }
-  ], ({ name, qty }) => {
-    name = (name || '').trim(); const n = Number(qty);
+    { id: 'qty', label: '投料数量（颗）', type: 'number', value: b.qty },
+    { id: 'injCount', label: '投实验人数（1–8 人）', type: 'number', value: b.injCount }
+  ], ({ name, qty, injCount }) => {
+    name = (name || '').trim(); const n = Number(qty); const k = Number(injCount);
     if (!name) { alert('请输入批次名'); return false; }
-    if (!Number.isSafeInteger(n) || n <= 0) { alert('数量必须是有效正整数'); return false; }
+    if (!Number.isSafeInteger(n) || n <= 0) { alert('投料数量必须是有效正整数'); return false; }
+    if (!Number.isSafeInteger(k) || k < 1 || k > 8) { alert('投实验人数需在 1–8 之间'); return false; }
     b.name = name; b.qty = n;
+    if (!Array.isArray(b.injectors)) b.injectors = [];
+    if (!Array.isArray(b.injectorLocked)) b.injectorLocked = [];
+    while (b.injectors.length < k) { b.injectors.push(''); b.injectorLocked.push(false); }
+    while (b.injectors.length > k) { b.injectors.pop(); b.injectorLocked.pop(); }
+    b.injCount = k;
     reconcileElfrFtStatus(b);
     save(); renderElfrModal(); renderBoard();
     return true;
@@ -2642,11 +2704,16 @@ function updateElfrStatus(batchId, newStatus) {
 /* ===== 建议安排：较重任务优先 + 多起点均衡 + 有限局部调整 ===== */
 function planBatchCombination(total) {
   if (!Number.isSafeInteger(total) || total <= 0) return null;
+  // 优先凑 120 / 80 的整批，均衡性最好
   for (let n120 = Math.floor(total / 120); n120 >= 0; n120--) {
     const rest = total - n120 * 120;
-    if (rest % 80 === 0) return { n120, n80: rest / 80, batches: n120 + rest / 80 };
+    if (rest % 80 === 0) return { n120, n80: rest / 80, extras: [], batches: n120 + rest / 80 };
   }
-  return null;
+  // 余量凑不成 80 的整数倍：整 120 批 + 一批自由颗数（老板可以直接改成 2 人 80 颗那种）
+  const n120 = Math.floor(total / 120);
+  const rest = total - n120 * 120;
+  if (n120 === 0) return { n120: 0, n80: 0, extras: [total], batches: 1 };
+  return { n120, n80: 0, extras: [rest], batches: n120 + 1 };
 }
 
 function computeAssignment(totalQty, personList, options = {}) {
@@ -2655,7 +2722,7 @@ function computeAssignment(totalQty, personList, options = {}) {
   if (!plan || people.length < 2 || plan.batches > 1000) return null;
   const n = people.length;
   const baseline = collectElfrWorkload(options.existingBatches || [], people);
-  const batchQtys = Array(plan.n120).fill(120).concat(Array(plan.n80).fill(80));
+  const batchQtys = Array(plan.n120).fill(120).concat(Array(plan.n80).fill(80)).concat(plan.extras || []);
   const jobs = [];
   batchQtys.forEach((qty, batch) => {
     const injCount = Math.min(qty >= 120 ? 3 : 2, n);
@@ -2757,7 +2824,7 @@ function rebalanceElfrAssignments() {
   };
   let locked = 0, changed = 0;
   drafts.forEach(b => {
-    const injCount = Math.max(2, Math.min(3, Number(b.injCount) || (Number(b.qty) >= 120 ? 3 : 2)));
+    const injCount = Math.max(1, Math.min(8, Number(b.injCount) || (Number(b.qty) >= 120 ? 3 : 2)));
     b.injCount = injCount;
     if (!Array.isArray(b.injectors)) b.injectors = [];
     while (b.injectors.length < injCount) b.injectors.push('');
@@ -2799,7 +2866,7 @@ function autoAssignElfr() {
   const existing = c.elfrBatches || [];
   const knownPeople = uniqueElfrPeople(existing.flatMap(b => (b.injectors || []).concat((b.ftTests || []).flatMap(t => t.actualTesters || []))));
   openInputModal('生成 ELFR 建议安排', [
-    { id: 'total', label: '本次新增 / 重建的颗数（每批 120 或 80）', type: 'number', value: 800 },
+    { id: 'total', label: '本次新增 / 重建的颗数（按 120 拆批，余量单独成批）', type: 'number', value: 800 },
     { id: 'persons', label: '本次可参与人员（逗号或空格分隔）', value: knownPeople.join(', '), placeholder: '张三, 李四, 王五' },
     { id: 'mode', label: '处理方式', type: 'select', options: ['追加新批次，保留现有记录', '重建未开始草案，保留执行记录'], value: '追加新批次，保留现有记录' }
   ], ({ total, persons, mode }) => {
@@ -2810,7 +2877,7 @@ function autoAssignElfr() {
     const replaceIds = mode.startsWith('重建') ? current.filter(canReplaceElfrDraft).map(b => b.id) : [];
     const retained = current.filter(b => !replaceIds.includes(b.id));
     const result = computeAssignment(totalQty, personList, { existingBatches: retained, rotation: c.assignmentRotation || 0 });
-    if (!result) { alert('无法按 120 / 80 组成完整批次，或一次生成超过 1000 批。例：800 = 6×120 + 1×80。'); return false; }
+    if (!result) { alert('至少需要两名不同的参与人员，且一次生成不要超过 1000 批。'); return false; }
     result.targetCardId = c.id;
     result.sourceSignature = JSON.stringify(current);
     result.replaceIds = replaceIds;
@@ -2822,9 +2889,13 @@ function autoAssignElfr() {
 function showAssignPreview(result, mode) {
   const { batches, plan, totalQty, replaceIds = [] } = result;
   const rows = batches.map((b, i) => `<tr><td>新批 ${i + 1}</td><td class="num">${b.qty}</td><td>${esc(b.injectors.join(' / '))}</td><td>${esc(b.ftTests[0].actualTesters.join(' / '))}</td></tr>`).join('');
+  const parts = [];
+  if (plan.n120) parts.push(`${plan.n120}×120`);
+  if (plan.n80) parts.push(`${plan.n80}×80`);
+  (plan.extras || []).forEach(q => parts.push(`1×${q}`));
   $('#modalMatTitle').textContent = '建议安排预览';
   $('#modalMatBody').innerHTML = `
-    <div style="margin-bottom:14px;">本次 <b>${batches.length}</b> 批 · <b>${totalQty}</b> 颗（${plan.n120}×120 + ${plan.n80}×80）</div>
+    <div style="margin-bottom:14px;">本次 <b>${batches.length}</b> 批 · <b>${totalQty}</b> 颗（${parts.join(' + ')}）</div>
     <div class="table-container"><table><thead><tr><th>批次</th><th class="num">数量</th><th>拟投实验人员</th><th>拟 FT 人员</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div style="margin-top:12px;color:var(--text-sec);font-size:12px;line-height:1.7;">
       ${replaceIds.length ? `将替换 ${replaceIds.length} 个未开始草案；有执行日期或完成记录的批次保持原样。<br>` : '现有批次与完成记录保持原样。<br>'}
@@ -3240,7 +3311,7 @@ function buildXlsx(header, rows, sheetName){
 
 function exportJSON() {
   try { forceSave(); } catch (err) { setStatus('导出本页快照：' + err.message, 'var(--warning)'); }
-  const allData = { version: '3.0', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
+  const allData = { version: '3.1', exportDate: new Date().toISOString(), material: materialDb, test: testDb };
   const blob = new Blob([JSON.stringify(allData, null, 2)], {type:'application/json'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `综合系统备份_${dateStr()}.json`; a.click();
   setTimeout(() => alert(`导出完成：元器件 ${(materialDb.components||[]).length} 条，主题 ${(testDb.batches||[]).length} 个，卡片 ${(testDb.cards||[]).length} 条，设备 ${(testDb.equipments||[]).length} 台`), 100);
